@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_training_screen.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../../../core/responsive/responsive_layout.dart';
+import 'package:resistance_system_app/presentation/pages/personnel/personnel_update_screen.dart';
+import 'package:resistance_system_app/presentation/pages/personnel/personnel_equipment_screen.dart';
+import 'package:resistance_system_app/presentation/pages/personnel/personnel_entitlements_screen.dart';
+import 'package:resistance_system_app/presentation/pages/personnel/personnel_reports_screen.dart';
 
 class PersonnelDetailScreen extends StatelessWidget {
   final int personnelId;
@@ -71,7 +75,7 @@ class PersonnelDetailScreen extends StatelessWidget {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildActionButton('السجل التدريبي', Icons.school, () => PersonnelTrainingScreen(personnelId: personnelId, personnelName: 'personnelName')),
+            _buildActionButton('السجل التدريبي', Icons.school, () => _showTrainingHistory(context)),
             _buildActionButton('التحركات', Icons.directions, () => _showMovements(context)),
             _buildActionButton('الاستحقاقات', Icons.attach_money, () => _showEntitlements(context)),
             _buildActionButton('المعدات', Icons.security, () => _showEquipment(context)),
@@ -244,8 +248,11 @@ class PersonnelDetailScreen extends StatelessWidget {
   }
 
   void _editPersonnel(BuildContext context) {
-    _showComingSoonDialog(context, 'تعديل بيانات المستنفر');
-  }
+    Navigator.push(
+      context, 
+      MaterialPageRoute(builder: (_) => PersonnelUpdateScreen(personnelId: personnelId, personnelName: 'احمد محمد احمد',))
+    );
+    }
 
   void _sharePersonnel(BuildContext context) {
     _showComingSoonDialog(context, 'مشاركة بيانات المستنفر');
@@ -260,20 +267,41 @@ class PersonnelDetailScreen extends StatelessWidget {
   }
 
   void _showMovements(BuildContext context) {
-    _showComingSoonDialog(context, 'سجل التحركات');
+   
   }
 
   void _showEntitlements(BuildContext context) {
-    _showComingSoonDialog(context, 'الاستحقاقات المالية');
-  }
+ Navigator.push(
+    context, 
+    MaterialPageRoute(
+      builder: (_) => PersonnelEntitlementsScreen(
+        personnelId: personnelId, 
+        personnelName: 'أحمد محمد أحمد'
+      )
+    )
+  );  }
 
   void _showEquipment(BuildContext context) {
-    _showComingSoonDialog(context, 'المعدات والأسلحة');
-  }
+  Navigator.push(
+    context, 
+    MaterialPageRoute(
+      builder: (_) => PersonnelEquipmentScreen(
+        personnelId: personnelId, 
+        personnelName: 'أحمد محمد أحمد'
+      )
+    )
+  );  }
 
   void _showReports(BuildContext context) {
-    _showComingSoonDialog(context, 'التقارير');
-  }
+ Navigator.push(
+    context, 
+    MaterialPageRoute(
+      builder: (_) => PersonnelReportsScreen(
+        personnelId: personnelId, 
+        personnelName: 'أحمد محمد أحمد'
+      )
+    )
+  );  }
 
   void _showComingSoonDialog(BuildContext context, String feature) {
     showDialog(
