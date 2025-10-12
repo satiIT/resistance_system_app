@@ -87,34 +87,63 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         ],
       ),
       body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: isWeb ? _buildWebLayout() : _buildMobileLayout(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Form(
+              key: _formKey,
+              child: isWeb ? _buildWebLayout(constraints) : _buildMobileLayout(constraints),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildWebLayout() {
+  Widget _buildWebLayout(BoxConstraints constraints) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // نموذج بيانات المهمة
-        Expanded(flex: 1, child: _buildAssignmentForm()),
+        Expanded(
+          flex: 1,
+          child: SingleChildScrollView(
+            child: _buildAssignmentForm(),
+          ),
+        ),
         // قائمة المستنفرين
-        Expanded(flex: 1, child: _buildPersonnelSelection()),
+        Expanded(
+          flex: 1,
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: _buildPersonnelSelection(),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(BoxConstraints constraints) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildAssignmentForm(),
-          SizedBox(height: 24),
-          _buildPersonnelSelection(),
-        ],
+      physics: AlwaysScrollableScrollPhysics(),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: constraints.maxHeight,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            children: [
+              _buildAssignmentForm(),
+              SizedBox(height: 20),
+              _buildPersonnelSelection(),
+              SizedBox(height: 20), // مساحة إضافية
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -235,7 +264,7 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                 labelText: 'وصف المهمة',
                 hintText: 'أدخل تفاصيل المهمة المطلوبة',
               ),
-              maxLines: 4,
+              maxLines: 3,
               onChanged: (value) {
                 setState(() {
                   _assignmentData['description'] = value;
@@ -342,11 +371,11 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
             SizedBox(height: 16),
 
             // قائمة المستنفرين
-            SizedBox(
-              height: math.min(400, MediaQuery.of(context).size.height * 0.5),
+            Container(
+              height: 300,
               child: ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: AlwaysScrollableScrollPhysics(),
                 itemCount: _filteredPersonnel.length,
                 itemBuilder: (context, index) {
                   final personnel = _filteredPersonnel[index];
@@ -404,19 +433,20 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         },
         title: Text(
           personnel['name'],
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('الرقم العسكري: ${personnel['military_id']}'),
-            Text('الوحدة: ${personnel['unit']}'),
+            Text('الرقم العسكري: ${personnel['military_id']}', style: TextStyle(fontSize: 12)),
+            Text('الوحدة: ${personnel['unit']}', style: TextStyle(fontSize: 12)),
             Text(
               'الحالة: ${personnel['status']}',
               style: TextStyle(
                 color: personnel['status'] == 'نشط'
                     ? Colors.green
                     : Colors.orange,
+                fontSize: 12,
               ),
             ),
           ],
@@ -425,7 +455,7 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
           backgroundColor: Colors.blue,
           child: Text(
             personnel['military_id'].toString().substring(2),
-            style: TextStyle(color: Colors.white, fontSize: 12),
+            style: TextStyle(color: Colors.white, fontSize: 10),
           ),
         ),
       ),
@@ -567,3 +597,4 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
     );
   }
 }
+            

@@ -122,7 +122,13 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
           IconButton(icon: Icon(Icons.refresh), onPressed: _refreshData),
         ],
       ),
-      body: SafeArea(child: isWeb ? _buildWebLayout() : _buildMobileLayout()),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return isWeb ? _buildWebLayout(constraints) : _buildMobileLayout(constraints);
+          },
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _navigateToBulkAssignment(context),
         icon: Icon(Icons.group_add),
@@ -132,54 +138,84 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
     );
   }
 
-  Widget _buildWebLayout() {
+  Widget _buildWebLayout(BoxConstraints constraints) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildStatsRow(),
-          SizedBox(height: 24),
-          Row(
+      physics: AlwaysScrollableScrollPhysics(),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: constraints.maxHeight,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    _buildMovementsChart(),
-                    SizedBox(height: 16),
-                    _buildGeographicalChart(),
-                  ],
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(flex: 1, child: _buildRecentMovementsPanel()),
+              _buildStatsRow(),
+              SizedBox(height: 24),
+              _buildChartsSection(constraints),
+              SizedBox(height: 24),
+              _buildDistributionMap(),
+              SizedBox(height: 24),
+              _buildQuickReports(),
+              SizedBox(height: 80), // مساحة للزر العائم
             ],
           ),
-          SizedBox(height: 24),
-          _buildDistributionMap(),
-          SizedBox(height: 24),
-          _buildQuickReports(),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(BoxConstraints constraints) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
+      physics: AlwaysScrollableScrollPhysics(),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: constraints.maxHeight,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            children: [
+              _buildStatsGrid(),
+              SizedBox(height: 16),
+              _buildMovementsChart(),
+              SizedBox(height: 16),
+              _buildGeographicalChart(),
+              SizedBox(height: 16),
+              _buildRecentMovementsPanel(),
+              SizedBox(height: 16),
+              _buildQuickReports(),
+              SizedBox(height: 80), // مساحة للزر العائم
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartsSection(BoxConstraints constraints) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: constraints.maxHeight * 0.6,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatsGrid(),
-          SizedBox(height: 16),
-          _buildMovementsChart(),
-          SizedBox(height: 16),
-          _buildGeographicalChart(),
-          SizedBox(height: 16),
-          _buildRecentMovementsPanel(),
-          SizedBox(height: 16),
-          _buildQuickReports(),
+          Expanded(
+            flex: 2,
+            child: Column(
+              children: [
+                _buildMovementsChart(),
+                SizedBox(height: 16),
+                _buildGeographicalChart(),
+              ],
+            ),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            flex: 1,
+            child: _buildRecentMovementsPanel(),
+          ),
         ],
       ),
     );
@@ -197,7 +233,7 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
             Colors.blue,
             Icons.trending_up,
           ),
-          SizedBox(width: 16),
+          SizedBox(width: 12),
           _buildStatCard(
             'تحركات اليوم',
             _statsData['today_movements'].toString(),
@@ -205,7 +241,7 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
             Colors.green,
             Icons.update,
           ),
-          SizedBox(width: 16),
+          SizedBox(width: 12),
           _buildStatCard(
             'قيد التنفيذ',
             _statsData['pending_movements'].toString(),
@@ -213,7 +249,7 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
             Colors.orange,
             Icons.access_time,
           ),
-          SizedBox(width: 16),
+          SizedBox(width: 12),
           _buildStatCard(
             'مكتملة',
             _statsData['completed_movements'].toString(),
@@ -231,9 +267,9 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.5,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 1.3,
       children: [
         _buildStatCard(
           'إجمالي التحركات',
@@ -275,9 +311,9 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
     IconData trendIcon,
   ) {
     return Card(
-      elevation: 4,
+      elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -285,23 +321,23 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(icon, color: color, size: 24),
+                  child: Icon(icon, color: color, size: 20),
                 ),
-                Icon(trendIcon, color: Colors.green, size: 20),
+                Icon(trendIcon, color: Colors.green, size: 16),
               ],
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 12),
             Text(
               value,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 14, color: Colors.grey)),
+            Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
@@ -311,7 +347,7 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
   Widget _buildMovementsChart() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12),
         child: Column(
           children: [
             Row(
@@ -319,7 +355,7 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
               children: [
                 Text(
                   'توزيع التحركات',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 DropdownButton<String>(
                   value: _selectedChartType,
@@ -332,16 +368,17 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
                       )
                       .toList(),
                   onChanged: (String? newValue) {
+                    if (newValue == null) return;
                     setState(() {
-                      _selectedChartType = newValue!;
+                      _selectedChartType = newValue;
                     });
                   },
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            SizedBox(
-              height: math.min(300, MediaQuery.of(context).size.height * 0.45),
+            SizedBox(height: 12),
+            Container(
+              height: 250,
               child: _buildChart(),
             ),
           ],
@@ -377,23 +414,25 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
           ],
         );
       default:
-        return Container(child: Center(child: Text('لا توجد بيانات')));
+        return Container(
+          child: Center(child: Text('لا توجد بيانات')),
+        );
     }
   }
 
   Widget _buildGeographicalChart() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12),
         child: Column(
           children: [
             Text(
               'التوزيع الجغرافي',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
-            SizedBox(
-              height: math.min(300, MediaQuery.of(context).size.height * 0.35),
+            SizedBox(height: 12),
+            Container(
+              height: 250,
               child: SfCartesianChart(
                 primaryXAxis: CategoryAxis(),
                 primaryYAxis: NumericAxis(minimum: 0),
@@ -417,7 +456,7 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
   Widget _buildRecentMovementsPanel() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -426,7 +465,7 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
               children: [
                 Text(
                   'آخر التحركات',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: () => _viewAllMovements(context),
@@ -434,12 +473,12 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 12),
             Container(
-              height: math.min(400, MediaQuery.of(context).size.height * 0.45),
+              height: 300,
               child: ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: AlwaysScrollableScrollPhysics(),
                 itemCount: _statsData['recent_movements'].length,
                 itemBuilder: (context, index) {
                   final movement = _statsData['recent_movements'][index];
@@ -463,19 +502,19 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
         leading: _getMovementIcon(movement['movement_type']),
         title: Text(
           movement['personnel_name'],
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${movement['movement_type']} - ${movement['date']}'),
-            Text('من ${movement['from_unit']} إلى ${movement['to_unit']}'),
+            Text('${movement['movement_type']} - ${movement['date']}', style: TextStyle(fontSize: 12)),
+            Text('من ${movement['from_unit']} إلى ${movement['to_unit']}', style: TextStyle(fontSize: 12)),
           ],
         ),
         trailing: Chip(
           label: Text(
             movement['status'],
-            style: TextStyle(color: Colors.white, fontSize: 12),
+            style: TextStyle(color: Colors.white, fontSize: 10),
           ),
           backgroundColor: movement['status'] == 'مكتمل'
               ? Colors.green
@@ -489,17 +528,17 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
   Widget _buildDistributionMap() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'خريطة التوزيع',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 12),
             Container(
-              height: 300,
+              height: 250,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey[300]!),
                 borderRadius: BorderRadius.circular(8),
@@ -508,22 +547,22 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.map, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
+                    Icon(Icons.map, size: 48, color: Colors.grey),
+                    SizedBox(height: 12),
                     Text(
                       'خريطة التوزيع الجغرافي',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 14),
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: 6),
                     Text(
                       'سيتم دمج الخرائط عند توصيل بيانات GPS',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: () => _showMapInfo(context),
-                      icon: Icon(Icons.info),
-                      label: Text('معلومات الخريطة'),
+                      icon: Icon(Icons.info, size: 16),
+                      label: Text('معلومات الخريطة', style: TextStyle(fontSize: 12)),
                     ),
                   ],
                 ),
@@ -538,18 +577,18 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
   Widget _buildQuickReports() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'التقارير السريعة',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 12),
             Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _buildReportChip(
                   'تقرير التحركات اليومية',
@@ -604,18 +643,18 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: color),
-            SizedBox(width: 8),
-            Text(title, style: TextStyle(fontSize: 14, color: color)),
+            Icon(icon, size: 16, color: color),
+            SizedBox(width: 6),
+            Text(title, style: TextStyle(fontSize: 12, color: color)),
           ],
         ),
       ),
@@ -625,15 +664,15 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
   Icon _getMovementIcon(String movementType) {
     switch (movementType) {
       case 'مهمة':
-        return Icon(Icons.assignment, color: Colors.blue);
+        return Icon(Icons.assignment, color: Colors.blue, size: 20);
       case 'نقل':
-        return Icon(Icons.swap_horiz, color: Colors.green);
+        return Icon(Icons.swap_horiz, color: Colors.green, size: 20);
       case 'توزيع':
-        return Icon(Icons.group, color: Colors.orange);
+        return Icon(Icons.group, color: Colors.orange, size: 20);
       case 'إجازة':
-        return Icon(Icons.beach_access, color: Colors.purple);
+        return Icon(Icons.beach_access, color: Colors.purple, size: 20);
       default:
-        return Icon(Icons.directions, color: Colors.grey);
+        return Icon(Icons.directions, color: Colors.grey, size: 20);
     }
   }
 

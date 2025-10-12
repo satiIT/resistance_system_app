@@ -18,9 +18,10 @@ class LoginScreen extends StatelessWidget {
       appBar: isWeb ? null : _buildAppBar(isMobile),
       body: Container(
         width: double.infinity,
-        height: double.infinity,
         decoration: isWeb ? _buildWebBackground() : null,
-        child: isWeb ? _buildWebLayout(context, isMobile) : _buildMobileLayout(context, isMobile),
+        child: isWeb
+            ? _buildWebLayout(context, isMobile)
+            : _buildMobileLayout(context, isMobile),
       ),
     );
   }
@@ -29,9 +30,7 @@ class LoginScreen extends StatelessWidget {
     return AppBar(
       title: Text(
         'تسجيل الدخول',
-        style: TextStyle(
-          fontSize: isMobile ? 18 : 20,
-        ),
+        style: TextStyle(fontSize: isMobile ? 18 : 20),
       ),
       centerTitle: true,
     );
@@ -42,25 +41,26 @@ class LoginScreen extends StatelessWidget {
       gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
-        colors: [
-          Color(0xFF764ba2),
-          Color(0xFF667eea),
-        ],
+        colors: [Color(0xFF764ba2), Color(0xFF667eea)],
       ),
     );
   }
 
   Widget _buildWebLayout(BuildContext context, bool isMobile) {
     return Center(
-      child: Container(
-        width: isMobile ? 350 : 400,
-        margin: EdgeInsets.all(20),
-        child: Card(
-          elevation: 8,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: EdgeInsets.all(isMobile ? 24 : 32),
-            child: _buildLoginForm(context, isWeb: true, isMobile: isMobile),
+      child: SingleChildScrollView(
+        child: Container(
+          width: isMobile ? 350 : 400,
+          margin: EdgeInsets.all(20),
+          child: Card(
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(isMobile ? 24 : 32),
+              child: _buildLoginForm(context, isWeb: true, isMobile: isMobile),
+            ),
           ),
         ),
       ),
@@ -68,26 +68,44 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget _buildMobileLayout(BuildContext context, bool isMobile) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      child: _buildLoginForm(context, isWeb: false, isMobile: isMobile),
+    return SafeArea(
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 100,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLoginForm(context, isWeb: false, isMobile: isMobile),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildLoginForm(BuildContext context, {required bool isWeb, required bool isMobile}) {
+  Widget _buildLoginForm(
+    BuildContext context, {
+    required bool isWeb,
+    required bool isMobile,
+  }) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // الشعار
         if (isWeb) ...[
-          Icon(Icons.security, 
-            size: isMobile ? 60 : 80, 
+          Icon(
+            Icons.security,
+            size: isMobile ? 60 : 80,
             color: isWeb ? Colors.white : Theme.of(context).colorScheme.primary,
           ),
           SizedBox(height: isMobile ? 15 : 20),
         ],
-        
+
         // العنوان
         Text(
           'نظام إدارة موارد المقاومة الشعبية',
@@ -106,11 +124,12 @@ class LoginScreen extends StatelessWidget {
           decoration: InputDecoration(
             labelText: 'اسم المستخدم',
             prefixIcon: Icon(Icons.person),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: isWeb 
-                ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16, horizontal: 12)
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            contentPadding: isWeb
+                ? EdgeInsets.symmetric(
+                    vertical: isMobile ? 14 : 16,
+                    horizontal: 12,
+                  )
                 : EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           ),
         ),
@@ -123,11 +142,12 @@ class LoginScreen extends StatelessWidget {
           decoration: InputDecoration(
             labelText: 'كلمة المرور',
             prefixIcon: Icon(Icons.lock),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: isWeb 
-                ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16, horizontal: 12)
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            contentPadding: isWeb
+                ? EdgeInsets.symmetric(
+                    vertical: isMobile ? 14 : 16,
+                    horizontal: 12,
+                  )
                 : EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           ),
         ),
@@ -143,9 +163,12 @@ class LoginScreen extends StatelessWidget {
               style: TextStyle(fontSize: isMobile ? 14 : (isWeb ? 18 : 16)),
             ),
             style: ElevatedButton.styleFrom(
-              padding: isWeb 
+              padding: isWeb
                   ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16)
-                  : EdgeInsets.symmetric(vertical: isMobile ? 12 : 14, horizontal: 24),
+                  : EdgeInsets.symmetric(
+                      vertical: isMobile ? 12 : 14,
+                      horizontal: 24,
+                    ),
             ),
           ),
         ),
@@ -161,11 +184,20 @@ class LoginScreen extends StatelessWidget {
               style: TextStyle(fontSize: isMobile ? 12 : 14),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: isWeb ? Colors.white : Theme.of(context).colorScheme.primary,
-              side: BorderSide(color: isWeb ? Colors.white : Theme.of(context).colorScheme.primary),
-              padding: isWeb 
+              foregroundColor: isWeb
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.primary,
+              side: BorderSide(
+                color: isWeb
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.primary,
+              ),
+              padding: isWeb
                   ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16)
-                  : EdgeInsets.symmetric(vertical: isMobile ? 10 : 12, horizontal: 20),
+                  : EdgeInsets.symmetric(
+                      vertical: isMobile ? 10 : 12,
+                      horizontal: 20,
+                    ),
             ),
           ),
         ),
@@ -178,16 +210,16 @@ class LoginScreen extends StatelessWidget {
           Text(
             'يدعم جميع المتصفحات الحديثة',
             style: TextStyle(
-              color: Colors.white70, 
-              fontSize: isMobile ? 12 : 14
+              color: Colors.white70,
+              fontSize: isMobile ? 12 : 14,
             ),
           ),
           SizedBox(height: isMobile ? 8 : 12),
           Text(
             'لجنة الإسناد خريجي جامعة الخرطوم الثمانينات',
             style: TextStyle(
-              color: Colors.white70, 
-              fontSize: isMobile ? 10 : 12
+              color: Colors.white70,
+              fontSize: isMobile ? 10 : 12,
             ),
             textAlign: TextAlign.center,
           ),
@@ -200,17 +232,11 @@ class LoginScreen extends StatelessWidget {
           SizedBox(height: isMobile ? 12 : 16),
           Text(
             'المقاومة الشعبية',
-            style: TextStyle(
-              color: Colors.grey, 
-              fontSize: isMobile ? 12 : 14
-            ),
+            style: TextStyle(color: Colors.grey, fontSize: isMobile ? 12 : 14),
           ),
           Text(
             'لجنة الإسناد خريجي جامعة الخرطوم الثمانينات',
-            style: TextStyle(
-              color: Colors.grey, 
-              fontSize: isMobile ? 10 : 12
-            ),
+            style: TextStyle(color: Colors.grey, fontSize: isMobile ? 10 : 12),
             textAlign: TextAlign.center,
           ),
         ],
@@ -230,15 +256,15 @@ class LoginScreen extends StatelessWidget {
 
     // مؤقتاً للانتقال للشاشة الرئيسية (سيتم استبدالها بالمصادقة الحقيقية)
     Navigator.pushReplacement(
-      context, 
-      MaterialPageRoute(builder: (_) => MainDashboard())
+      context,
+      MaterialPageRoute(builder: (_) => MainDashboard()),
     );
   }
 
   void _navigateToIntelligence(BuildContext context) {
     Navigator.push(
-      context, 
-      MaterialPageRoute(builder: (_) => IntelligenceLoginScreen())
+      context,
+      MaterialPageRoute(builder: (_) => IntelligenceLoginScreen()),
     );
   }
 
@@ -246,10 +272,7 @@ class LoginScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          'خطأ',
-          style: TextStyle(fontSize: 18),
-        ),
+        title: Text('خطأ', style: TextStyle(fontSize: 18)),
         content: Text(message),
         actions: [
           TextButton(
