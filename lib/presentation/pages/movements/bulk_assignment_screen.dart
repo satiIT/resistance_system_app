@@ -46,7 +46,7 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         {
           'id': 1002,
           'name': 'محمد سعيد علي',
-          'military_id': '1002', 
+          'military_id': '1002',
           'unit': 'عهد الرجال 1',
           'status': 'نشط',
           'selected': false,
@@ -83,10 +83,7 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         title: Text('إسناد مهمة جماعية'),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _submitAssignment,
-          ),
+          IconButton(icon: Icon(Icons.save), onPressed: _submitAssignment),
         ],
       ),
       body: SafeArea(
@@ -102,15 +99,9 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
     return Row(
       children: [
         // نموذج بيانات المهمة
-        Expanded(
-          flex: 1,
-          child: _buildAssignmentForm(),
-        ),
+        Expanded(flex: 1, child: _buildAssignmentForm()),
         // قائمة المستنفرين
-        Expanded(
-          flex: 1,
-          child: _buildPersonnelSelection(),
-        ),
+        Expanded(flex: 1, child: _buildPersonnelSelection()),
       ],
     );
   }
@@ -135,15 +126,20 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('بيانات المهمة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'بيانات المهمة',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
-            
+
             // نوع التحرك
             DropdownButtonFormField<String>(
               value: _assignmentData['movement_type'],
               decoration: InputDecoration(labelText: 'نوع التحرك'),
               items: ['مهمة', 'نقل', 'توزيع', 'دورة تدريبية', 'إجازة جماعية']
-                  .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                  .map(
+                    (type) => DropdownMenuItem(value: type, child: Text(type)),
+                  )
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -172,7 +168,12 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
               value: _assignmentData['priority'],
               decoration: InputDecoration(labelText: 'أولوية المهمة'),
               items: ['عادية', 'عالية', 'عاجلة']
-                  .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))
+                  .map(
+                    (priority) => DropdownMenuItem(
+                      value: priority,
+                      child: Text(priority),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -193,7 +194,11 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(_assignmentData['start_date']?.isEmpty ?? true ? 'اختر التاريخ' : _assignmentData['start_date']),
+                    Text(
+                      _assignmentData['start_date']?.isEmpty ?? true
+                          ? 'اختر التاريخ'
+                          : _assignmentData['start_date'],
+                    ),
                     Icon(Icons.calendar_today),
                   ],
                 ),
@@ -212,7 +217,11 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(_assignmentData['end_date']?.isEmpty ?? true ? 'اختر التاريخ' : _assignmentData['end_date']),
+                    Text(
+                      _assignmentData['end_date']?.isEmpty ?? true
+                          ? 'اختر التاريخ'
+                          : _assignmentData['end_date'],
+                    ),
                     Icon(Icons.calendar_today),
                   ],
                 ),
@@ -255,7 +264,9 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
   }
 
   Widget _buildPersonnelSelection() {
-    final int selectedCount = _availablePersonnel.where((p) => p['selected'] == true).length;
+    final int selectedCount = _availablePersonnel
+        .where((p) => p['selected'] == true)
+        .length;
 
     return Card(
       child: Padding(
@@ -265,9 +276,15 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('اختيار المستنفرين', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  'اختيار المستنفرين',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 Chip(
-                  label: Text('محدد: $selectedCount', style: TextStyle(color: Colors.white)),
+                  label: Text(
+                    'محدد: $selectedCount',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   backgroundColor: Colors.blue,
                 ),
               ],
@@ -350,7 +367,10 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('تم تحديد $selectedCount مستنفر', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      'تم تحديد $selectedCount مستنفر',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     TextButton(
                       onPressed: _showSelectedSummary,
                       child: Text('عرض الملخص'),
@@ -374,21 +394,31 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
           setState(() {
             personnel['selected'] = value;
             // تحديث القائمة الرئيسية أيضاً
-            final mainIndex = _availablePersonnel.indexWhere((p) => p['id'] == personnel['id']);
+            final mainIndex = _availablePersonnel.indexWhere(
+              (p) => p['id'] == personnel['id'],
+            );
             if (mainIndex != -1) {
               _availablePersonnel[mainIndex]['selected'] = value;
             }
           });
         },
-        title: Text(personnel['name'], style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          personnel['name'],
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('الرقم العسكري: ${personnel['military_id']}'),
             Text('الوحدة: ${personnel['unit']}'),
-            Text('الحالة: ${personnel['status']}', style: TextStyle(
-              color: personnel['status'] == 'نشط' ? Colors.green : Colors.orange,
-            )),
+            Text(
+              'الحالة: ${personnel['status']}',
+              style: TextStyle(
+                color: personnel['status'] == 'نشط'
+                    ? Colors.green
+                    : Colors.orange,
+              ),
+            ),
           ],
         ),
         secondary: CircleAvatar(
@@ -408,8 +438,10 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         _filteredPersonnel = List.from(_availablePersonnel);
       } else {
         _filteredPersonnel = _availablePersonnel.where((personnel) {
-          return personnel['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
-                 personnel['military_id'].toString().contains(query);
+          return personnel['name'].toString().toLowerCase().contains(
+                query.toLowerCase(),
+              ) ||
+              personnel['military_id'].toString().contains(query);
         }).toList();
       }
     });
@@ -439,8 +471,10 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
   }
 
   void _showSelectedSummary() {
-    final selectedPersonnel = _availablePersonnel.where((p) => p['selected'] == true).toList();
-    
+    final selectedPersonnel = _availablePersonnel
+        .where((p) => p['selected'] == true)
+        .toList();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -458,7 +492,9 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                   child: Text(personnel['military_id'].toString().substring(2)),
                 ),
                 title: Text(personnel['name']),
-                subtitle: Text('${personnel['unit']} - ${personnel['military_id']}'),
+                subtitle: Text(
+                  '${personnel['unit']} - ${personnel['military_id']}',
+                ),
               );
             },
           ),
@@ -488,8 +524,10 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
   }
 
   void _submitAssignment() {
-    final selectedPersonnel = _availablePersonnel.where((p) => p['selected'] == true).toList();
-    
+    final selectedPersonnel = _availablePersonnel
+        .where((p) => p['selected'] == true)
+        .toList();
+
     if (selectedPersonnel.isEmpty) {
       _showError('يرجى اختيار مستنفر واحد على الأقل');
       return;
@@ -525,10 +563,7 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 }

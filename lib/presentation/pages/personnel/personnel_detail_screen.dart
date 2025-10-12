@@ -13,7 +13,8 @@ import 'package:resistance_system_app/presentation/pages/personnel/personnel_rep
 class PersonnelDetailScreen extends StatelessWidget {
   final int personnelId;
 
-  const PersonnelDetailScreen({Key? key, required this.personnelId}) : super(key: key);
+  const PersonnelDetailScreen({Key? key, required this.personnelId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +27,19 @@ class PersonnelDetailScreen extends StatelessWidget {
         title: Text('تفاصيل المستنفر'),
         centerTitle: true,
         actions: [
-          IconButton(icon: Icon(Icons.edit), onPressed: () => _editPersonnel(context)),
-          IconButton(icon: Icon(Icons.share), onPressed: () => _sharePersonnel(context)),
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () => _editPersonnel(context),
+          ),
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () => _sharePersonnel(context),
+          ),
         ],
       ),
-      body: SafeArea(child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context)),
+      body: SafeArea(
+        child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      ),
     );
   }
 
@@ -77,18 +86,42 @@ class PersonnelDetailScreen extends StatelessWidget {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildActionButton('السجل التدريبي', Icons.school, () => _showTrainingHistory(context)),
-            _buildActionButton('التحركات', Icons.directions, () => _showMovements(context)),
-            _buildActionButton('الاستحقاقات', Icons.attach_money, () => _showEntitlements(context)),
-            _buildActionButton('المعدات', Icons.security, () => _showEquipment(context)),
-            _buildActionButton('التقارير', Icons.assessment, () => _showReports(context)),
+            _buildActionButton(
+              'السجل التدريبي',
+              Icons.school,
+              () => _showTrainingHistory(context),
+            ),
+            _buildActionButton(
+              'التحركات',
+              Icons.directions,
+              () => _showMovements(context),
+            ),
+            _buildActionButton(
+              'الاستحقاقات',
+              Icons.attach_money,
+              () => _showEntitlements(context),
+            ),
+            _buildActionButton(
+              'المعدات',
+              Icons.security,
+              () => _showEquipment(context),
+            ),
+            _buildActionButton(
+              'التقارير',
+              Icons.assessment,
+              () => _showReports(context),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButton(String title, IconData icon, VoidCallback onPressed) {
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(bottom: 8),
@@ -114,7 +147,10 @@ class PersonnelDetailScreen extends StatelessWidget {
               backgroundColor: Colors.blue,
               child: Text(
                 '1001',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             SizedBox(width: 16),
@@ -122,7 +158,10 @@ class PersonnelDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('أحمد محمد أحمد', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(
+                    'أحمد محمد أحمد',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                   Text('الرقم العسكري: 1001'),
                   Text('الرقم الوطني: 12345678901234'),
                   Text('الحالة: نشط', style: TextStyle(color: Colors.green)),
@@ -132,7 +171,10 @@ class PersonnelDetailScreen extends StatelessWidget {
             Column(
               children: [
                 Chip(label: Text('جندي'), backgroundColor: Colors.blue[100]),
-                Chip(label: Text('عهد الرجال 1'), backgroundColor: Colors.green[100]),
+                Chip(
+                  label: Text('عهد الرجال 1'),
+                  backgroundColor: Colors.green[100],
+                ),
               ],
             ),
           ],
@@ -251,10 +293,15 @@ class PersonnelDetailScreen extends StatelessWidget {
 
   void _editPersonnel(BuildContext context) {
     Navigator.push(
-      context, 
-      MaterialPageRoute(builder: (_) => PersonnelUpdateScreen(personnelId: personnelId, personnelName: 'احمد محمد احمد',))
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelUpdateScreen(
+          personnelId: personnelId,
+          personnelName: 'احمد محمد احمد',
+        ),
+      ),
     );
-    }
+  }
 
   void _sharePersonnel(BuildContext context) {
     _showComingSoonDialog(context, 'مشاركة بيانات المستنفر');
@@ -262,56 +309,64 @@ class PersonnelDetailScreen extends StatelessWidget {
 
   // ignore: unused_element
   void _showTrainingHistory(BuildContext context) {
-     Navigator.push(
-    context, 
-    MaterialPageRoute(builder: (_) => PersonnelTrainingScreen(personnelId: personnelId, personnelName: 'احمد محمد أحمد'))
-  );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelTrainingScreen(
+          personnelId: personnelId,
+          personnelName: 'احمد محمد أحمد',
+        ),
+      ),
+    );
   }
 
   void _showMovements(BuildContext context) {
-     Navigator.push(
-    context, 
-    MaterialPageRoute(
-      builder: (_) => PersonnelMovementsScreen(
-        personnelId: personnelId, 
-        personnelName: 'أحمد محمد أحمد'
-      )
-    )
-  );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelMovementsScreen(
+          personnelId: personnelId,
+          personnelName: 'أحمد محمد أحمد',
+        ),
+      ),
+    );
   }
 
   void _showEntitlements(BuildContext context) {
- Navigator.push(
-    context, 
-    MaterialPageRoute(
-      builder: (_) => PersonnelEntitlementsScreen(
-        personnelId: personnelId, 
-        personnelName: 'أحمد محمد أحمد'
-      )
-    )
-  );  }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelEntitlementsScreen(
+          personnelId: personnelId,
+          personnelName: 'أحمد محمد أحمد',
+        ),
+      ),
+    );
+  }
 
   void _showEquipment(BuildContext context) {
-  Navigator.push(
-    context, 
-    MaterialPageRoute(
-      builder: (_) => PersonnelEquipmentScreen(
-        personnelId: personnelId, 
-        personnelName: 'أحمد محمد أحمد'
-      )
-    )
-  );  }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelEquipmentScreen(
+          personnelId: personnelId,
+          personnelName: 'أحمد محمد أحمد',
+        ),
+      ),
+    );
+  }
 
   void _showReports(BuildContext context) {
- Navigator.push(
-    context, 
-    MaterialPageRoute(
-      builder: (_) => PersonnelReportsScreen(
-        personnelId: personnelId, 
-        personnelName: 'أحمد محمد أحمد'
-      )
-    )
-  );  }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelReportsScreen(
+          personnelId: personnelId,
+          personnelName: 'أحمد محمد أحمد',
+        ),
+      ),
+    );
+  }
 
   void _showComingSoonDialog(BuildContext context, String feature) {
     showDialog(

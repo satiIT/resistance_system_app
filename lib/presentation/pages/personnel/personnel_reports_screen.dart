@@ -9,7 +9,11 @@ class PersonnelReportsScreen extends StatefulWidget {
   final int personnelId;
   final String personnelName;
 
-  const PersonnelReportsScreen({Key? key, required this.personnelId, required this.personnelName}) : super(key: key);
+  const PersonnelReportsScreen({
+    Key? key,
+    required this.personnelId,
+    required this.personnelName,
+  }) : super(key: key);
 
   @override
   _PersonnelReportsScreenState createState() => _PersonnelReportsScreenState();
@@ -45,11 +49,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           'late': 2,
           'percentage': 90.0,
         },
-        'equipment': {
-          'assigned': 8,
-          'maintenance': 2,
-          'returned': 1,
-        },
+        'equipment': {'assigned': 8, 'maintenance': 2, 'returned': 1},
         'financial': {
           'totalReceived': 1850000.0,
           'pending': 300000.0,
@@ -80,7 +80,9 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           ),
         ],
       ),
-      body: SafeArea(child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context)),
+      body: SafeArea(
+        child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      ),
     );
   }
 
@@ -130,7 +132,10 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('التقارير والإحصائيات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    'التقارير والإحصائيات',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   Text('آخر تحديث: ${DateTime.now().toString().split(' ')[0]}'),
                   Text('فترة التقرير: من 2024-01-01 إلى 2024-04-30'),
                 ],
@@ -149,13 +154,9 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   Widget _buildChartsRow() {
     return Row(
       children: [
-        Expanded(
-          child: _buildPerformanceChart(),
-        ),
+        Expanded(child: _buildPerformanceChart()),
         SizedBox(width: 16),
-        Expanded(
-          child: _buildAttendanceChart(),
-        ),
+        Expanded(child: _buildAttendanceChart()),
       ],
     );
   }
@@ -166,7 +167,10 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('أداء المستنفر', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'أداء المستنفر',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             SizedBox(
               height: math.min(300, MediaQuery.of(context).size.height * 0.45),
@@ -175,11 +179,13 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
                 series: <CartesianSeries>[
                   LineSeries<Map<String, dynamic>, String>(
                     dataSource: _reportData['performance'],
-                    xValueMapper: (Map<String, dynamic> data, _) => data['month'],
-                    yValueMapper: (Map<String, dynamic> data, _) => data['score'],
+                    xValueMapper: (Map<String, dynamic> data, _) =>
+                        data['month'],
+                    yValueMapper: (Map<String, dynamic> data, _) =>
+                        data['score'],
                     name: 'التقييم',
                     dataLabelSettings: DataLabelSettings(isVisible: true),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -196,7 +202,10 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('الحضور والغياب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'الحضور والغياب',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             SizedBox(
               height: math.min(300, MediaQuery.of(context).size.height * 0.45),
@@ -204,15 +213,30 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
                 series: <CircularSeries>[
                   DoughnutSeries<Map<String, dynamic>, String>(
                     dataSource: [
-                      {'type': 'حضور', 'value': attendance['present'], 'color': Colors.green},
-                      {'type': 'غياب', 'value': attendance['absent'], 'color': Colors.red},
-                      {'type': 'تأخير', 'value': attendance['late'], 'color': Colors.orange},
+                      {
+                        'type': 'حضور',
+                        'value': attendance['present'],
+                        'color': Colors.green,
+                      },
+                      {
+                        'type': 'غياب',
+                        'value': attendance['absent'],
+                        'color': Colors.red,
+                      },
+                      {
+                        'type': 'تأخير',
+                        'value': attendance['late'],
+                        'color': Colors.orange,
+                      },
                     ],
-                    xValueMapper: (Map<String, dynamic> data, _) => data['type'],
-                    yValueMapper: (Map<String, dynamic> data, _) => data['value'],
-                    pointColorMapper: (Map<String, dynamic> data, _) => data['color'],
+                    xValueMapper: (Map<String, dynamic> data, _) =>
+                        data['type'],
+                    yValueMapper: (Map<String, dynamic> data, _) =>
+                        data['value'],
+                    pointColorMapper: (Map<String, dynamic> data, _) =>
+                        data['color'],
                     dataLabelSettings: DataLabelSettings(isVisible: true),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -229,15 +253,38 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('إحصائيات الحضور', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'إحصائيات الحضور',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatCircle('الحضور', attendance['present'], Colors.green, Icons.check_circle),
-                _buildStatCircle('الغياب', attendance['absent'], Colors.red, Icons.cancel),
-                _buildStatCircle('التأخير', attendance['late'], Colors.orange, Icons.schedule),
-                _buildStatCircle('النسبة %', attendance['percentage'], Colors.blue, Icons.percent),
+                _buildStatCircle(
+                  'الحضور',
+                  attendance['present'],
+                  Colors.green,
+                  Icons.check_circle,
+                ),
+                _buildStatCircle(
+                  'الغياب',
+                  attendance['absent'],
+                  Colors.red,
+                  Icons.cancel,
+                ),
+                _buildStatCircle(
+                  'التأخير',
+                  attendance['late'],
+                  Colors.orange,
+                  Icons.schedule,
+                ),
+                _buildStatCircle(
+                  'النسبة %',
+                  attendance['percentage'],
+                  Colors.blue,
+                  Icons.percent,
+                ),
               ],
             ),
           ],
@@ -246,7 +293,12 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     );
   }
 
-  Widget _buildStatCircle(String title, dynamic value, Color color, IconData icon) {
+  Widget _buildStatCircle(
+    String title,
+    dynamic value,
+    Color color,
+    IconData icon,
+  ) {
     return Column(
       children: [
         Container(
@@ -262,7 +314,14 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
             children: [
               Icon(icon, color: color, size: 20),
               SizedBox(height: 4),
-              Text(value.toString(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+              Text(
+                value.toString(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
             ],
           ),
         ),
@@ -279,20 +338,30 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('التقدم في التدريب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'التقدم في التدريب',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             Column(
               children: training.map<Widget>((course) {
                 return ListTile(
                   leading: Icon(
-                    course['status'] == 'مكتمل' ? Icons.check_circle : Icons.schedule,
-                    color: course['status'] == 'مكتمل' ? Colors.green : Colors.orange,
+                    course['status'] == 'مكتمل'
+                        ? Icons.check_circle
+                        : Icons.schedule,
+                    color: course['status'] == 'مكتمل'
+                        ? Colors.green
+                        : Colors.orange,
                   ),
                   title: Text(course['course']),
                   subtitle: Text(course['status']),
-                  trailing: course['score'] != null 
+                  trailing: course['score'] != null
                       ? Chip(
-                          label: Text('${course['score']}%', style: TextStyle(color: Colors.white)),
+                          label: Text(
+                            '${course['score']}%',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           backgroundColor: Colors.blue,
                         )
                       : null,
@@ -312,14 +381,29 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('ملخص مالي', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'ملخص مالي',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildFinancialItem('إجمالي المستلم', financial['totalReceived'], Colors.green),
-                _buildFinancialItem('المعلقة', financial['pending'], Colors.orange),
-                _buildFinancialItem('المتوسط الشهري', financial['monthlyAverage'], Colors.blue),
+                _buildFinancialItem(
+                  'إجمالي المستلم',
+                  financial['totalReceived'],
+                  Colors.green,
+                ),
+                _buildFinancialItem(
+                  'المعلقة',
+                  financial['pending'],
+                  Colors.orange,
+                ),
+                _buildFinancialItem(
+                  'المتوسط الشهري',
+                  financial['monthlyAverage'],
+                  Colors.blue,
+                ),
               ],
             ),
           ],
@@ -331,8 +415,14 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   Widget _buildFinancialItem(String title, double amount, Color color) {
     return Column(
       children: [
-        Text(_formatCurrency(amount), 
-             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+        Text(
+          _formatCurrency(amount),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
         Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
@@ -344,18 +434,51 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('التقارير التفصيلية', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'التقارير التفصيلية',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             Wrap(
               spacing: 16,
               runSpacing: 16,
               children: [
-                _buildReportCard('تقرير الأداء', Icons.assessment, Colors.blue, () => _generatePerformanceReport()),
-                _buildReportCard('تقرير التدريب', Icons.school, Colors.green, () => _generateTrainingReport()),
-                _buildReportCard('تقرير مالي', Icons.attach_money, Colors.orange, () => _generateFinancialReport()),
-                _buildReportCard('تقرير المعدات', Icons.inventory, Colors.purple, () => _generateEquipmentReport()),
-                _buildReportCard('تقرير الحضور', Icons.calendar_today, Colors.red, () => _generateAttendanceReport()),
-                _buildReportCard('تقرير شامل', Icons.summarize, Colors.teal, () => _generateComprehensiveReport()),
+                _buildReportCard(
+                  'تقرير الأداء',
+                  Icons.assessment,
+                  Colors.blue,
+                  () => _generatePerformanceReport(),
+                ),
+                _buildReportCard(
+                  'تقرير التدريب',
+                  Icons.school,
+                  Colors.green,
+                  () => _generateTrainingReport(),
+                ),
+                _buildReportCard(
+                  'تقرير مالي',
+                  Icons.attach_money,
+                  Colors.orange,
+                  () => _generateFinancialReport(),
+                ),
+                _buildReportCard(
+                  'تقرير المعدات',
+                  Icons.inventory,
+                  Colors.purple,
+                  () => _generateEquipmentReport(),
+                ),
+                _buildReportCard(
+                  'تقرير الحضور',
+                  Icons.calendar_today,
+                  Colors.red,
+                  () => _generateAttendanceReport(),
+                ),
+                _buildReportCard(
+                  'تقرير شامل',
+                  Icons.summarize,
+                  Colors.teal,
+                  () => _generateComprehensiveReport(),
+                ),
               ],
             ),
           ],
@@ -364,7 +487,12 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     );
   }
 
-  Widget _buildReportCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildReportCard(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -380,7 +508,11 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           children: [
             Icon(icon, size: 40, color: color),
             SizedBox(height: 8),
-            Text(title, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -448,10 +580,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
 
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 }
