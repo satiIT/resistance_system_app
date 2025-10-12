@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:resistance_system_app/presentation/pages/movements/dashboard_movements_screen.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_list_screen.dart';
+import 'package:resistance_system_app/presentation/pages/personnel/personnel_training_screen.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../../core/responsive/responsive_layout.dart';
 //import '../../core/theme/app_theme.dart';
@@ -343,10 +344,11 @@ void _navigateToScreen(String title, BuildContext context) {
       Navigator.push(context, 
         MaterialPageRoute(builder: (_) => DashboardMovementsScreen()));
       break;
-  /*  case 'التدريب':
+     case 'التدريب':
       Navigator.push(context, 
-        MaterialPageRoute(builder: (_) => TrainingScreen()));
+        MaterialPageRoute(builder: (_) => PersonnelTrainingScreen(personnelId: 1, personnelName: 'personnelName')));
       break;
+    /*
     case 'المالية':
       Navigator.push(context, 
         MaterialPageRoute(builder: (_) => FinanceScreen()));
