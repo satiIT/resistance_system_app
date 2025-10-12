@@ -1,5 +1,7 @@
 // lib/presentation/pages/personnel/personnel_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+import 'package:resistance_system_app/presentation/pages/personnel/personnel_movements_screen.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_training_screen.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../../../core/responsive/responsive_layout.dart';
@@ -28,7 +30,7 @@ class PersonnelDetailScreen extends StatelessWidget {
           IconButton(icon: Icon(Icons.share), onPressed: () => _sharePersonnel(context)),
         ],
       ),
-      body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      body: SafeArea(child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context)),
     );
   }
 
@@ -155,8 +157,8 @@ class PersonnelDetailScreen extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16),
-          Container(
-            height: 400,
+          SizedBox(
+            height: math.min(400, MediaQuery.of(context).size.height * 0.6),
             child: TabBarView(
               children: [
                 _buildBasicInfoTab(),
@@ -267,7 +269,15 @@ class PersonnelDetailScreen extends StatelessWidget {
   }
 
   void _showMovements(BuildContext context) {
-   
+     Navigator.push(
+    context, 
+    MaterialPageRoute(
+      builder: (_) => PersonnelMovementsScreen(
+        personnelId: personnelId, 
+        personnelName: 'أحمد محمد أحمد'
+      )
+    )
+  );
   }
 
   void _showEntitlements(BuildContext context) {

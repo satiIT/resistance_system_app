@@ -1,5 +1,6 @@
 // lib/presentation/pages/personnel/personnel_reports_screen.dart
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:universal_platform/universal_platform.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../../core/responsive/responsive_layout.dart';
@@ -79,7 +80,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           ),
         ],
       ),
-      body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      body: SafeArea(child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context)),
     );
   }
 
@@ -167,8 +168,8 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           children: [
             Text('أداء المستنفر', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 16),
-            Container(
-              height: 300,
+            SizedBox(
+              height: math.min(300, MediaQuery.of(context).size.height * 0.45),
               child: SfCartesianChart(
                 primaryXAxis: CategoryAxis(),
                 series: <CartesianSeries>[
@@ -197,8 +198,8 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           children: [
             Text('الحضور والغياب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 16),
-            Container(
-              height: 300,
+            SizedBox(
+              height: math.min(300, MediaQuery.of(context).size.height * 0.45),
               child: SfCircularChart(
                 series: <CircularSeries>[
                   DoughnutSeries<Map<String, dynamic>, String>(

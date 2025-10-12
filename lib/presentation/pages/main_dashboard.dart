@@ -1,5 +1,6 @@
 // lib/presentation/pages/main_dashboard.dart
 import 'package:flutter/material.dart';
+import 'package:resistance_system_app/presentation/pages/movements/dashboard_movements_screen.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_list_screen.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../../core/responsive/responsive_layout.dart';
@@ -137,10 +138,7 @@ class MainDashboard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Text(
-              'آخر تحديث: ${DateTime.now().toString().split(' ')[0]}',
-              style: TextStyle(color: Colors.grey),
-            ),
+            SizedBox(height: 8),
           ],
         ),
         ElevatedButton.icon(
@@ -340,6 +338,10 @@ void _navigateToScreen(String title, BuildContext context) {
     case 'المستنفرين':
       Navigator.push(context, 
         MaterialPageRoute(builder: (_) => PersonnelListScreen()));
+      break;
+    case 'التحركات':
+      Navigator.push(context, 
+        MaterialPageRoute(builder: (_) => DashboardMovementsScreen()));
       break;
   /*  case 'التدريب':
       Navigator.push(context, 
