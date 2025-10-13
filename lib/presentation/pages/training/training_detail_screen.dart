@@ -49,7 +49,7 @@ class TrainingDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTrainingCampCard() {
+  Widget _buildBasicInfoCard() {
     return Card(
       elevation: 4,
       child: Padding(
@@ -59,29 +59,25 @@ class TrainingDetailScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.military_tech, color: Colors.blue),
+                Icon(Icons.person, color: Colors.blue),
                 SizedBox(width: 8),
-                Text('معسكر عهد الرجال',
+                Text('المعلومات الأساسية',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            if (record.trainingCampCourseName != null)
-              _buildDetailRow('الدورة التدريبية', record.trainingCampCourseName!),
-            if (record.trainingCampWeaponName != null)
-              _buildDetailRow('السلاح', record.trainingCampWeaponName!),
-            if (record.trainingCampDuration != null)
-              _buildDetailRow('مدة الدورة', '${record.trainingCampDuration} يوم'),
-            if (record.trainingCampFiringRange != null)
-              _buildDetailRow('موقع ضرب النار', record.trainingCampFiringRange!),
+            _buildDetailRow('اسم المستنفر', record.personnelName ?? 'غير محدد'),
+            _buildDetailRow('الرقم العسكري', record.militaryNumber ?? 'غير محدد'),
+            _buildDetailRow('الدورة التدريبية', record.courseName ?? 'غير محدد'),
+            _buildDetailRow('نوع الدورة', record.courseType ?? 'غير محدد'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSpecializedCourseCard() {
+  Widget _buildTrainingInfoCard() {
     return Card(
       elevation: 4,
       child: Padding(
@@ -93,23 +89,27 @@ class TrainingDetailScreen extends StatelessWidget {
               children: [
                 Icon(Icons.school, color: Colors.green),
                 SizedBox(width: 8),
-                Text('الدورات المتخصصة',
+                Text('معلومات التدريب',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            if (record.specializedCourseType != null)
-              _buildDetailRow('نوع الدورة', record.specializedCourseType!),
-            if (record.specializedCourseDetails != null)
-              _buildDetailRow('تفاصيل الدورة', record.specializedCourseDetails!),
+            if (record.priorTrainingType != null)
+              _buildDetailRow('نوع التدريب السابق', record.priorTrainingType!),
+            if (record.trainingCampName != null)
+              _buildDetailRow('معسكر التدريب', record.trainingCampName!),
+            if (record.firingLocation != null)
+              _buildDetailRow('موقع ضرب النار', record.firingLocation!),
+            if (record.weaponType != null)
+              _buildDetailRow('نوع السلاح', record.weaponType!),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWeaponCard() {
+  Widget _buildSpecializedTrainingCard() {
     return Card(
       elevation: 4,
       child: Padding(
@@ -119,24 +119,94 @@ class TrainingDetailScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.security, color: Colors.red),
+                Icon(Icons.engineering, color: Colors.orange),
                 SizedBox(width: 8),
-                Text('بيانات التسليح',
+                Text('التدريب المتخصص',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            if (record.weaponTypeReceived != null)
-              _buildDetailRow('نوع السلاح المستلم', record.weaponTypeReceived!),
-            if (record.weaponNumber != null)
-              _buildDetailRow('رقم السلاح', record.weaponNumber!),
-            if (record.weaponAccessories != null && record.weaponAccessories!.isNotEmpty)
-              _buildDetailRow('ملحقات السلاح', record.weaponAccessories!.join(', ')),
+            if (record.specializedCourseType != null)
+              _buildDetailRow('نوع الدورة المتخصصة', record.specializedCourseType!),
+            if (record.weaponTrainingType != null)
+              _buildDetailRow('نوع تدريب السلاح', record.weaponTrainingType!),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildEvaluationCard() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.assessment, color: Colors.purple),
+                SizedBox(width: 8),
+                Text('التقييم والنتائج',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            _buildDetailRow('حالة الحضور', record.attendanceStatus ?? 'غير محدد'),
+            if (record.evaluationScore != null)
+              _buildDetailRow('نتيجة التقييم', '${record.evaluationScore!} / 100'),
+            _buildDetailRow('استلام الشهادة', record.certificateReceived == true ? 'نعم' : 'لا'),
+            if (record.notes != null && record.notes!.isNotEmpty)
+              _buildDetailRow('ملاحظات', record.notes!),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCourseDetailsCard() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.calendar_today, color: Colors.red),
+                SizedBox(width: 8),
+                Text('تفاصيل الدورة',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            if (record.courseLocation != null)
+              _buildDetailRow('موقع الدورة', record.courseLocation!),
+            if (record.courseStartDate != null)
+              _buildDetailRow('تاريخ البدء', _formatDate(record.courseStartDate!)),
+            if (record.courseEndDate != null)
+              _buildDetailRow('تاريخ الانتهاء', _formatDate(record.courseEndDate!)),
+            if (record.courseDurationDays != null)
+              _buildDetailRow('مدة الدورة', '${record.courseDurationDays!} يوم'),
+            if (record.joinedAt != null)
+              _buildDetailRow('تاريخ الانضمام', _formatDateTime(record.joinedAt!)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${_formatDate(dateTime)} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -163,31 +233,26 @@ class TrainingDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoCard('المستنفر', '${record.personnelName ?? "غير محدد"} - ${record.militaryNumber ?? "غير محدد"}'),
-            SizedBox(height: 12),
-            _buildInfoCard('نوع التدريب السابق', record.previousTrainingType ?? 'غير محدد'),
+            _buildBasicInfoCard(),
+            SizedBox(height: 16),
+            _buildTrainingInfoCard(),
             SizedBox(height: 16),
             
-            if (record.trainingCampCourseName != null) ...[
-              _buildTrainingCampCard(),
+            if (record.specializedCourseType != null || record.weaponTrainingType != null) ...[
+              _buildSpecializedTrainingCard(),
               SizedBox(height: 16),
             ],
             
-            if (record.specializedCourseType != null) ...[
-              _buildSpecializedCourseCard(),
+            _buildEvaluationCard(),
+            SizedBox(height: 16),
+            
+            if (record.courseLocation != null || record.courseStartDate != null) ...[
+              _buildCourseDetailsCard(),
               SizedBox(height: 16),
             ],
             
-            if (record.weaponTypeReceived != null) ...[
-              _buildWeaponCard(),
-              SizedBox(height: 16),
-            ],
-            
-            if (record.createdAt != null) 
-              _buildInfoCard('تاريخ الإنشاء', 
-                '${record.createdAt!.toLocal().toString().split(' ')[0]} '
-                '${record.createdAt!.toLocal().toString().split(' ')[1].substring(0, 5)}'
-              ),
+            if (record.joinedAt != null) 
+              _buildInfoCard('تاريخ التسجيل', _formatDateTime(record.joinedAt!)),
           ],
         ),
       ),

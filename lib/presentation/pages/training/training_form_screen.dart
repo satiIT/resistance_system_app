@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/training_record.dart';
+import './../../../core/models/training_record.dart';
+import '../../../core/models/training_course.dart';
 import '../../../core/services/training_api.dart';
 
 class TrainingFormScreen extends StatefulWidget {
@@ -13,16 +14,15 @@ class TrainingFormScreen extends StatefulWidget {
 
 class _TrainingFormScreenState extends State<TrainingFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  TrainingRecord _trainingRecord = TrainingRecord();
+  late TrainingRecord _trainingRecord;
   bool isLoading = false;
+  bool isInitialized = false;
+
   List<Map<String, dynamic>> _personnelList = [];
-  List<String> _selectedAccessories = [];
-
-  final List<String> _trainingTypes = [
-    'مفتوح', 'أولي', 'متقدم', 'دورة سلاح معاون'
-  ];
-
-  final List<String> _specializedCourses = [
+  List<TrainingCourse> _coursesList = [];
+  List<String> _trainingTypes = ['مفتوح', 'أولي', 'متقدم', 'دورة سلاح معاون'];
+  List<String> _attendanceStatuses = ['حاضر', 'غائب', 'متأخر', 'منقطع'];
+  List<String> _specializedCourses = [
     'سواقة عربات',
     'دورة أمنية', 
     'دورة قيادة ميدان',
@@ -31,56 +31,67 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
     'دورة إسعافات أولية'
   ];
 
-  final List<String> _weaponAccessories = [
-    'خزن', 'ذخيرة', 'كفوف', 'ماسورة احتياطي', 'أخرى'
-  ];
-
   @override
   void initState() {
     super.initState();
-    _loadPersonnelData();
-    if (widget.existingRecord != null) {
-      _trainingRecord = TrainingRecord.fromJson(widget.existingRecord!.toJson());
-      _selectedAccessories = _trainingRecord.weaponAccessories ?? [];
+    _trainingRecord = widget.existingRecord ?? TrainingRecord(
+      personnelId: 0,
+      courseId: 0,
+    );
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      final [personnel, courses] = await Future.wait([
+        TrainingApi.getPersonnelList(),
+        TrainingApi.getTrainingCourses(),
+      ]);
+
+      setState(() {
+        _personnelList = personnel.cast<Map<String, dynamic>>();
+        _coursesList = courses.cast<TrainingCourse>();
+        isInitialized = true;
+      });
+    } catch (e) {
+      _showErrorSnackBar('خطأ في تحميل البيانات: $e');
+      setState(() {
+        isInitialized = true;
+      });
     }
   }
 
-  Future<void> _loadPersonnelData() async {
-    try {
-      final personnel = await TrainingApi.getPersonnelList();
-      setState(() {
-        _personnelList = personnel;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطأ في تحميل قائمة المستنفرين: $e')),
-      );
-    }
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Widget _buildPersonnelSelector() {
-    return DropdownButtonFormField<String>(
+    return DropdownButtonFormField<int>(
       decoration: InputDecoration(
         labelText: 'اختر المستنفر',
         border: OutlineInputBorder(),
         filled: true,
         fillColor: Colors.grey[50],
       ),
-      value: _trainingRecord.personnelId?.toString(),
-      onChanged: (String? newValue) {
+      value: _trainingRecord.personnelId != 0 ? _trainingRecord.personnelId : null,
+      onChanged: (int? newValue) {
         setState(() {
-          _trainingRecord.personnelId = int.parse(newValue!);
-          _loadPersonnelDataAutomatically();
+          _trainingRecord.personnelId = newValue!;
         });
       },
-      items: _personnelList.map<DropdownMenuItem<String>>((person) {
-        return DropdownMenuItem<String>(
-          value: person['id'].toString(),
+      items: _personnelList.map<DropdownMenuItem<int>>((person) {
+        return DropdownMenuItem<int>(
+          value: person['id'],
           child: Text('${person['name']} - ${person['military_number']}'),
         );
       }).toList(),
       validator: (value) {
-        if (value == null || value.isEmpty) {
+        if (value == null || value == 0) {
           return 'يرجى اختيار المستنفر';
         }
         return null;
@@ -88,50 +99,35 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
     );
   }
 
-  void _loadPersonnelDataAutomatically() {
-    final selectedPerson = _personnelList.firstWhere(
-      (person) => person['id'] == _trainingRecord.personnelId,
-      orElse: () => {},
-    );
-    
-    if (selectedPerson.isNotEmpty) {
-      setState(() {
-        _trainingRecord.personnelName = selectedPerson['name'];
-        _trainingRecord.militaryNumber = selectedPerson['military_number'];
-      });
-    }
-  }
-
-  Widget _buildTrainingTypeDropdown() {
-    return DropdownButtonFormField<String>(
+  Widget _buildCourseSelector() {
+    return DropdownButtonFormField<int>(
       decoration: InputDecoration(
-        labelText: 'نوع التدريب السابق',
+        labelText: 'اختر الدورة التدريبية',
         border: OutlineInputBorder(),
         filled: true,
         fillColor: Colors.grey[50],
       ),
-      value: _trainingRecord.previousTrainingType,
-      onChanged: (String? newValue) {
+      value: _trainingRecord.courseId != 0 ? _trainingRecord.courseId : null,
+      onChanged: (int? newValue) {
         setState(() {
-          _trainingRecord.previousTrainingType = newValue;
+          _trainingRecord.courseId = newValue ?? 0;
         });
       },
-      items: _trainingTypes.map<DropdownMenuItem<String>>((String type) {
-        return DropdownMenuItem<String>(
-          value: type,
-          child: Text(type),
+      items: _coursesList.map<DropdownMenuItem<int>>((course) {
+        return DropdownMenuItem<int>(
+          value: course.id,
+          child: Text(course.courseName),
         );
       }).toList(),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'يرجى اختيار نوع التدريب';
+        if (value == null || value == 0) {
+          return 'يرجى اختيار الدورة التدريبية';
         }
         return null;
       },
     );
   }
-
-  Widget _buildTrainingCampSection() {
+  Widget _buildTrainingTypeSection() {
     return Card(
       elevation: 4,
       child: Padding(
@@ -143,7 +139,51 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
               children: [
                 Icon(Icons.military_tech, color: Colors.blue),
                 SizedBox(width: 8),
-                Text('التدريب بمعسكر عهد الرجال',
+                Text('نوع التدريب السابق',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'نوع التدريب السابق',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              value: _trainingRecord.priorTrainingType,
+              onChanged: (String? newValue) {
+                setState(() {
+                  _trainingRecord.priorTrainingType = newValue;
+                });
+              },
+              items: _trainingTypes.map<DropdownMenuItem<String>>((String type) {
+                return DropdownMenuItem<String>(
+                  value: type,
+                  child: Text(type),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrainingDetailsSection() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.school, color: Colors.green),
+                SizedBox(width: 8),
+                Text('تفاصيل التدريب',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -151,63 +191,41 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
             SizedBox(height: 16),
             TextFormField(
               decoration: InputDecoration(
-                labelText: 'اسم الدورة التدريبية',
+                labelText: 'معسكر التدريب',
                 border: OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              initialValue: _trainingRecord.trainingCampCourseName,
+              initialValue: _trainingRecord.trainingCampName,
               onChanged: (value) {
-                _trainingRecord.trainingCampCourseName = value;
+                _trainingRecord.trainingCampName = value;
               },
             ),
             SizedBox(height: 12),
             TextFormField(
               decoration: InputDecoration(
-                labelText: 'اسم السلاح',
+                labelText: 'موقع ضرب النار',
                 border: OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              initialValue: _trainingRecord.trainingCampWeaponName,
+              initialValue: _trainingRecord.firingLocation,
               onChanged: (value) {
-                _trainingRecord.trainingCampWeaponName = value;
+                _trainingRecord.firingLocation = value;
               },
             ),
             SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'مدة الدورة (أيام)',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                    keyboardType: TextInputType.number,
-                    initialValue: _trainingRecord.trainingCampDuration?.toString(),
-                    onChanged: (value) {
-                      _trainingRecord.trainingCampDuration = int.tryParse(value);
-                    },
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'موقع ضرب النار',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                    initialValue: _trainingRecord.trainingCampFiringRange,
-                    onChanged: (value) {
-                      _trainingRecord.trainingCampFiringRange = value;
-                    },
-                  ),
-                ),
-              ],
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'نوع السلاح',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              initialValue: _trainingRecord.weaponType,
+              onChanged: (value) {
+                _trainingRecord.weaponType = value;
+              },
             ),
           ],
         ),
@@ -225,7 +243,7 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.school, color: Colors.green),
+                Icon(Icons.engineering, color: Colors.orange),
                 SizedBox(width: 8),
                 Text('الدورات المتخصصة',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -256,16 +274,14 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
             SizedBox(height: 12),
             TextFormField(
               decoration: InputDecoration(
-                labelText: 'تفاصيل إضافية عن الدورة',
+                labelText: 'نوع تدريب السلاح',
                 border: OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.grey[50],
-                alignLabelWithHint: true,
               ),
-              maxLines: 3,
-              initialValue: _trainingRecord.specializedCourseDetails,
+              initialValue: _trainingRecord.weaponTrainingType,
               onChanged: (value) {
-                _trainingRecord.specializedCourseDetails = value;
+                _trainingRecord.weaponTrainingType = value;
               },
             ),
           ],
@@ -274,7 +290,7 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
     );
   }
 
-  Widget _buildWeaponSection() {
+  Widget _buildEvaluationSection() {
     return Card(
       elevation: 4,
       child: Padding(
@@ -284,73 +300,76 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.security, color: Colors.red),
+                Icon(Icons.assessment, color: Colors.purple),
                 SizedBox(width: 8),
-                Text('بيانات التسليح',
+                Text('التقييم والمتابعة',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'نوع السلاح المستلم',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                    initialValue: _trainingRecord.weaponTypeReceived,
-                    onChanged: (value) {
-                      _trainingRecord.weaponTypeReceived = value;
-                    },
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'رقم السلاح',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                    initialValue: _trainingRecord.weaponNumber,
-                    onChanged: (value) {
-                      _trainingRecord.weaponNumber = value;
-                    },
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            Text('ملحقات السلاح:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              children: _weaponAccessories.map((accessory) {
-                return FilterChip(
-                  label: Text(accessory),
-                  selected: _selectedAccessories.contains(accessory),
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedAccessories.add(accessory);
-                      } else {
-                        _selectedAccessories.remove(accessory);
-                      }
-                      _trainingRecord.weaponAccessories = _selectedAccessories;
-                    });
-                  },
-                  selectedColor: Colors.blue[100],
-                  checkmarkColor: Colors.blue,
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'حالة الحضور',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              value: _trainingRecord.attendanceStatus,
+              onChanged: (String? newValue) {
+                setState(() {
+                  _trainingRecord.attendanceStatus = newValue;
+                });
+              },
+              items: _attendanceStatuses.map<DropdownMenuItem<String>>((String status) {
+                return DropdownMenuItem<String>(
+                  value: status,
+                  child: Text(status),
                 );
               }).toList(),
+            ),
+            SizedBox(height: 12),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'نتيجة التقييم (0-100)',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              keyboardType: TextInputType.number,
+              initialValue: _trainingRecord.evaluationScore?.toString(),
+              onChanged: (value) {
+                _trainingRecord.evaluationScore = int.tryParse(value);
+              },
+            ),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Checkbox(
+                  value: _trainingRecord.certificateReceived ?? false,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _trainingRecord.certificateReceived = value ?? false;
+                    });
+                  },
+                ),
+                Text('تم استلام الشهادة'),
+              ],
+            ),
+            SizedBox(height: 12),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'ملاحظات',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+                alignLabelWithHint: true,
+              ),
+              maxLines: 3,
+              initialValue: _trainingRecord.notes,
+              onChanged: (value) {
+                _trainingRecord.notes = value;
+              },
             ),
           ],
         ),
@@ -416,9 +435,7 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
         Navigator.pop(context, true);
         
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('حدث خطأ أثناء الحفظ: $e')),
-        );
+        _showErrorSnackBar('حدث خطأ أثناء الحفظ: $e');
       } finally {
         setState(() {
           isLoading = false;
@@ -429,6 +446,17 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!isInitialized) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('تحميل...'),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.existingRecord == null ? 
@@ -442,13 +470,15 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
             children: [
               _buildPersonnelSelector(),
               SizedBox(height: 16),
-              _buildTrainingTypeDropdown(),
+              _buildCourseSelector(),
               SizedBox(height: 16),
-              _buildTrainingCampSection(),
+              _buildTrainingTypeSection(),
+              SizedBox(height: 16),
+              _buildTrainingDetailsSection(),
               SizedBox(height: 16),
               _buildSpecializedCoursesSection(),
               SizedBox(height: 16),
-              _buildWeaponSection(),
+              _buildEvaluationSection(),
               SizedBox(height: 20),
               _buildActionButtons(),
             ],

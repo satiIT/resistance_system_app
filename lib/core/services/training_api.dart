@@ -1,76 +1,357 @@
-// ignore_for_file: unused_import
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:universal_platform/universal_platform.dart';
-// ignore: unused_import
-import 'package:flutter/foundation.dart' show kIsWeb;
-import './../models/training_record.dart';
+import '../models/training_record.dart';
+import '../models/training_course.dart';
 
 class TrainingApi {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://localhost:5000/api';
+
+  // === دوال سجلات التدريب ===
 
   static Future<List<TrainingRecord>> getTrainingRecords() async {
-    final response = await http.get(Uri.parse('$baseUrl/training'));
-
+    final response = await http.get(Uri.parse('$baseUrl/personnel-training'));
+    
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => TrainingRecord.fromJson(json)).toList();
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        final List<dynamic> data = responseData['data'];
+        return data.map((json) => TrainingRecord.fromJson(json)).toList();
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات التدريب');
+      }
     } else {
-      throw Exception('فشل في تحميل بيانات التدريب');
+      throw Exception('فشل في تحميل بيانات التدريب - رمز الخطأ: ${response.statusCode}');
     }
   }
 
-  static Future<TrainingRecord> createTrainingRecord(
-    TrainingRecord record,
-  ) async {
+  static Future<TrainingRecord> getTrainingRecord(int id) async {
+    final response = await http.get(Uri.parse('$baseUrl/personnel-training/$id'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        return TrainingRecord.fromJson(responseData['data']);
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في تحميل سجل التدريب');
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception('سجل التدريب غير موجود');
+    } else {
+      throw Exception('فشل في تحميل سجل التدريب - رمز الخطأ: ${response.statusCode}');
+    }
+  }
+
+  static Future<TrainingRecord> createTrainingRecord(TrainingRecord record) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/training'),
+      Uri.parse('$baseUrl/personnel-training'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(record.toJson()),
     );
 
     if (response.statusCode == 201) {
-      return TrainingRecord.fromJson(json.decode(response.body));
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        return TrainingRecord.fromJson(responseData['data']);
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في إنشاء سجل التدريب');
+      }
     } else {
-      throw Exception('فشل في إنشاء سجل التدريب');
+      final Map<String, dynamic> errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'فشل في إنشاء سجل التدريب - رمز الخطأ: ${response.statusCode}');
     }
   }
 
-  static Future<TrainingRecord> updateTrainingRecord(
-    TrainingRecord record,
-  ) async {
+  static Future<TrainingRecord> updateTrainingRecord(TrainingRecord record) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/training/${record.id}'),
+      Uri.parse('$baseUrl/personnel-training/${record.id}'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(record.toJson()),
     );
 
     if (response.statusCode == 200) {
-      return TrainingRecord.fromJson(json.decode(response.body));
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        return TrainingRecord.fromJson(responseData['data']);
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في تحديث سجل التدريب');
+      }
     } else {
-      throw Exception('فشل في تحديث سجل التدريب');
+      final Map<String, dynamic> errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'فشل في تحديث سجل التدريب - رمز الخطأ: ${response.statusCode}');
     }
   }
 
   static Future<void> deleteTrainingRecord(int id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/training/$id'));
+    final response = await http.delete(Uri.parse('$baseUrl/personnel-training/$id'));
 
-    if (response.statusCode != 200) {
-      throw Exception('فشل في حذف سجل التدريب');
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] != true) {
+        throw Exception(responseData['message'] ?? 'فشل في حذف سجل التدريب');
+      }
+    } else {
+      final Map<String, dynamic> errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'فشل في حذف سجل التدريب - رمز الخطأ: ${response.statusCode}');
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getPersonnelList() async {
-    // محاكاة لجلب قائمة المستنفرين - في التطبيق الفعلي سيتم استدعاء API المستنفرين
-    await Future.delayed(Duration(milliseconds: 500));
+  // === دوال المستنفرين ===
 
-    return [
-      {'id': 1, 'name': 'أحمد محمد', 'military_number': 'MIL001'},
-      {'id': 2, 'name': 'محمد علي', 'military_number': 'MIL002'},
-      {'id': 3, 'name': 'عمر خالد', 'military_number': 'MIL003'},
-      {'id': 4, 'name': 'خالد إبراهيم', 'military_number': 'MIL004'},
-      {'id': 5, 'name': 'محمود حسن', 'military_number': 'MIL005'},
-    ];
+  static Future<List<Map<String, dynamic>>> getPersonnelList() async {
+    final response = await http.get(Uri.parse('$baseUrl/personnel'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        final List<dynamic> data = responseData['data'];
+        return data.map((person) => {
+          'id': person['id'],
+          'name': '${person['first_name']} ${person['second_name']} ${person['third_name']} ${person['fourth_name']}',
+          'military_number': person['military_id'].toString(),
+          'rank': person['rank'],
+          'unit': person['unit'],
+        }).toList();
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في تحميل قائمة المستنفرين');
+      }
+    } else {
+      throw Exception('فشل في تحميل قائمة المستنفرين - رمز الخطأ: ${response.statusCode}');
+    }
   }
+
+  static Future<Map<String, dynamic>> getPersonnelById(int id) async {
+    final response = await http.get(Uri.parse('$baseUrl/personnel/$id'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        return responseData['data'];
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات المستنفر');
+      }
+    } else {
+      throw Exception('فشل في تحميل بيانات المستنفر - رمز الخطأ: ${response.statusCode}');
+    }
+  }
+
+  // === دوال إضافية للتدريب ===
+
+  static Future<List<TrainingRecord>> getTrainingByPersonnelId(int personnelId) async {
+    final response = await http.get(Uri.parse('$baseUrl/personnel-training/personnel/$personnelId'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        final List<dynamic> data = responseData['data'];
+        return data.map((json) => TrainingRecord.fromJson(json)).toList();
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في تحميل سجلات التدريب للمستنفر');
+      }
+    } else {
+      throw Exception('فشل في تحميل سجلات التدريب للمستنفر - رمز الخطأ: ${response.statusCode}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getTrainingStats() async {
+    final response = await http.get(Uri.parse('$baseUrl/personnel-training/stats/summary'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        return responseData['data'];
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في تحميل إحصائيات التدريب');
+      }
+    } else {
+      throw Exception('فشل في تحميل إحصائيات التدريب - رمز الخطأ: ${response.statusCode}');
+    }
+  }
+
+  static Future<List<TrainingRecord>> searchTraining(String term) async {
+    final response = await http.get(Uri.parse('$baseUrl/personnel-training/search/$term'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        final List<dynamic> data = responseData['data'];
+        return data.map((json) => TrainingRecord.fromJson(json)).toList();
+      } else {
+        throw Exception(responseData['message'] ?? 'فشل في البحث');
+      }
+    } else {
+      throw Exception('فشل في البحث - رمز الخطأ: ${response.statusCode}');
+    }
+  }
+
+  // === دوال الدورات التدريبية (إذا كانت موجودة في المستقبل) ===
+
+  static Future<List<TrainingCourse>> getTrainingCourses() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/training-courses'));
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'];
+          return data.map((json) => TrainingCourse.fromJson(json)).toList();
+        } else {
+          throw Exception(responseData['message'] ?? 'فشل في تحميل الدورات التدريبية');
+        }
+      } else {
+        throw Exception('فشل في تحميل الدورات التدريبية - رمز الخطأ: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('الدورات التدريبية غير متاحة حالياً');
+    }
+  }
+
+  static Future<TrainingCourse> createTrainingCourse(TrainingCourse course) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/training-courses'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(course.toJson()),
+      );
+
+      if (response.statusCode == 201) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          return TrainingCourse.fromJson(responseData['data']);
+        } else {
+          throw Exception(responseData['message'] ?? 'فشل في إنشاء الدورة التدريبية');
+        }
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'فشل في إنشاء الدورة التدريبية - رمز الخطأ: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('لا يمكن إنشاء الدورة التدريبية حالياً');
+    }
+  }
+  static Future<List<dynamic>> getInstructors() async {
+  final response = await http.get(Uri.parse('$baseUrl/instructors'));
+  
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      return responseData['data'];
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في تحميل المدربين');
+    }
+  } else {
+    throw Exception('فشل في تحميل المدربين - رمز الخطأ: ${response.statusCode}');
+  }
+}
+
+static Future<dynamic> createInstructor(Map<String, dynamic> instructorData) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/instructors'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(instructorData),
+  );
+
+  if (response.statusCode == 201) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      return responseData['data'];
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في إنشاء المدرب');
+    }
+  } else {
+    throw Exception('فشل في إنشاء المدرب - رمز الخطأ: ${response.statusCode}');
+  }
+}
+
+static Future<void> deleteInstructor(int instructorId) async {
+  final response = await http.delete(Uri.parse('$baseUrl/instructors/$instructorId'));
+
+  if (response.statusCode != 200) {
+    final Map<String, dynamic> errorData = json.decode(response.body);
+    throw Exception(errorData['message'] ?? 'فشل في حذف المدرب');
+  }
+}
+
+// دوال الدورات التدريبية
+static Future<List<TrainingCourse>> fetchTrainingCourses() async {
+  final response = await http.get(Uri.parse('$baseUrl/training-courses'));
+  
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      final List<dynamic> data = responseData['data'];
+      return data.map((json) => TrainingCourse.fromJson(json)).toList();
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في تحميل الدورات');
+    }
+  } else {
+    throw Exception('فشل في تحميل الدورات - رمز الخطأ: ${response.statusCode}');
+  }
+}
+
+static Future<TrainingCourse> createNewTrainingCourse(TrainingCourse course) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/training-courses'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(course.toJson()),
+  );
+
+  if (response.statusCode == 201) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      return TrainingCourse.fromJson(responseData['data']);
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في إنشاء الدورة');
+    }
+  } else {
+    throw Exception('فشل في إنشاء الدورة - رمز الخطأ: ${response.statusCode}');
+  }
+}
+
+static Future<void> deleteTrainingCourse(int courseId) async {
+  final response = await http.delete(Uri.parse('$baseUrl/training-courses/$courseId'));
+
+  if (response.statusCode != 200) {
+    final Map<String, dynamic> errorData = json.decode(response.body);
+    throw Exception(errorData['message'] ?? 'فشل في حذف الدورة');
+  }
+}
+
+// دوال تسجيل المتدربين في الدورات
+static Future<TrainingRecord> enrollTraineeInCourse(int courseId, int personnelId, Map<String, dynamic> trainingData) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/training-courses/$courseId/enroll'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({
+      'personnel_id': personnelId,
+      ...trainingData
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      return TrainingRecord.fromJson(responseData['data']);
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في تسجيل المتدرب');
+    }
+  } else {
+    throw Exception('فشل في تسجيل المتدرب - رمز الخطأ: ${response.statusCode}');
+  }
+}
+
+static Future<List<TrainingRecord>> getCourseTrainees(int courseId) async {
+  final response = await http.get(Uri.parse('$baseUrl/training-courses/$courseId/participants'));
+  
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      final List<dynamic> data = responseData['data'];
+      return data.map((json) => TrainingRecord.fromJson(json)).toList();
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في تحميل المتدربين');
+    }
+  } else {
+    throw Exception('فشل في تحميل المتدربين - رمز الخطأ: ${response.statusCode}');
+  }
+}
 }
