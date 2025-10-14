@@ -270,7 +270,44 @@ static Future<void> deleteInstructor(int instructorId) async {
     throw Exception(errorData['message'] ?? 'فشل في حذف المدرب');
   }
 }
+// دوال تحديث المدربين والدورات
+static Future<dynamic> updateInstructor(int id, Map<String, dynamic> instructorData) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/instructors/$id'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(instructorData),
+  );
 
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      return responseData['data'];
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في تحديث المدرب');
+    }
+  } else {
+    throw Exception('فشل في تحديث المدرب - رمز الخطأ: ${response.statusCode}');
+  }
+}
+
+static Future<TrainingCourse> updateTrainingCourse(TrainingCourse course) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/training-courses/${course.id}'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(course.toJson()),
+  );
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    if (responseData['success'] == true) {
+      return TrainingCourse.fromJson(responseData['data']);
+    } else {
+      throw Exception(responseData['message'] ?? 'فشل في تحديث الدورة');
+    }
+  } else {
+    throw Exception('فشل في تحديث الدورة - رمز الخطأ: ${response.statusCode}');
+  }
+}
 // دوال الدورات التدريبية
 static Future<List<TrainingCourse>> fetchTrainingCourses() async {
   final response = await http.get(Uri.parse('$baseUrl/training-courses'));
