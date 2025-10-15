@@ -52,8 +52,8 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
     // تطبيق البحث
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((casualty) {
-        return casualty.militaryNumber.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               casualty.fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        return casualty.militaryNumber!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+               casualty.fullName!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                casualty.incidentLocation.toLowerCase().contains(_searchQuery.toLowerCase());
       }).toList();
     }
@@ -81,7 +81,7 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
           ),
         ),
         title: Text(
-          casualty.fullName,
+          casualty.fullName ?? '',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(

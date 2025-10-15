@@ -2,47 +2,45 @@ import 'package:flutter/material.dart';
 
 class Casualty {
   int? id;
-  String militaryNumber;
+  int? personnelId;
+  String? militaryNumber;
+  String? fullName;
   String formType; // شهيد - جريح
-  String fullName;
   DateTime incidentDate;
   String incidentLocation;
   String caseSignalNumber;
   String injurySeverity; // خطيرة - محدودة - بسيطة - بسيطة جدا
-  String? hospitals; // المستشفيات التي تعالج فيها الجريح
-  String? burialLocation; // مكان دفن الشهيد
-  String? graveCoordinates; // إحداثيات قبر الشهيد
-  String nextOfKinName; // اسم أقرب الأقربين
-  String nextOfKinPhone; // رقم تلفون أقرب الأقربين
-  String? nextOfKinAddress; // عنوان أقرب الأقربين
+  String? treatmentHistory;
+  String? hospitals;
+  String? burialLocation;
+  String? graveCoordinates;
   
-  // خلافة الشهيد
+  // خلافة الشهيد (سيتم نقلها لجدول منفصل)
   DateTime? compensationDate;
   double? compensationAmount;
-  String? paymentMethod; // نقدا - بنك
-  String? compensationRecipient; // الشخص المستلم للمبلغ
-  String? payingEntity; // الجهة الدافعة للمبلغ
-  String? materialItems; // نوع المواد العينية
-  double? materialValue; // تقدير قيمتها
+  String? paymentMethod;
+  String? compensationRecipient;
+  String? payingEntity;
+  String? materialItems;
+  double? materialValue;
   
   DateTime? createdAt;
   DateTime? updatedAt;
 
   Casualty({
     this.id,
-    required this.militaryNumber,
+    this.personnelId,
+    this.militaryNumber,
+    this.fullName,
     required this.formType,
-    required this.fullName,
     required this.incidentDate,
     required this.incidentLocation,
     required this.caseSignalNumber,
     required this.injurySeverity,
+    this.treatmentHistory,
     this.hospitals,
     this.burialLocation,
     this.graveCoordinates,
-    required this.nextOfKinName,
-    required this.nextOfKinPhone,
-    this.nextOfKinAddress,
     this.compensationDate,
     this.compensationAmount,
     this.paymentMethod,
@@ -57,21 +55,20 @@ class Casualty {
   factory Casualty.fromJson(Map<String, dynamic> json) {
     return Casualty(
       id: json['id'],
-      militaryNumber: json['military_number'] ?? '',
+      personnelId: json['personnel_id'],
+      militaryNumber: json['military_number'],
+      fullName: json['full_name'],
       formType: json['form_type'] ?? '',
-      fullName: json['full_name'] ?? '',
       incidentDate: json['incident_date'] != null 
           ? DateTime.parse(json['incident_date']) 
           : DateTime.now(),
       incidentLocation: json['incident_location'] ?? '',
       caseSignalNumber: json['case_signal_number'] ?? '',
       injurySeverity: json['injury_severity'] ?? '',
+      treatmentHistory: json['treatment_history'],
       hospitals: json['hospitals'],
       burialLocation: json['burial_location'],
       graveCoordinates: json['grave_coordinates'],
-      nextOfKinName: json['next_of_kin_name'] ?? '',
-      nextOfKinPhone: json['next_of_kin_phone'] ?? '',
-      nextOfKinAddress: json['next_of_kin_address'],
       compensationDate: json['compensation_date'] != null 
           ? DateTime.parse(json['compensation_date']) 
           : null,
@@ -97,19 +94,16 @@ class Casualty {
   Map<String, dynamic> toJson() {
     return {
       if (id != null) 'id': id,
-      'military_number': militaryNumber,
+      'personnel_id': personnelId,
       'form_type': formType,
-      'full_name': fullName,
       'incident_date': incidentDate.toIso8601String(),
       'incident_location': incidentLocation,
       'case_signal_number': caseSignalNumber,
       'injury_severity': injurySeverity,
+      'treatment_history': treatmentHistory,
       'hospitals': hospitals,
       'burial_location': burialLocation,
       'grave_coordinates': graveCoordinates,
-      'next_of_kin_name': nextOfKinName,
-      'next_of_kin_phone': nextOfKinPhone,
-      'next_of_kin_address': nextOfKinAddress,
       'compensation_date': compensationDate?.toIso8601String(),
       'compensation_amount': compensationAmount,
       'payment_method': paymentMethod,
@@ -117,8 +111,6 @@ class Casualty {
       'paying_entity': payingEntity,
       'material_items': materialItems,
       'material_value': materialValue,
-      'created_at': createdAt?.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 

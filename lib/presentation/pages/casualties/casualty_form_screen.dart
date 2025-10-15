@@ -17,42 +17,117 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
   bool _isLoading = false;
   bool _isEditMode = false;
   bool _showCompensationFields = false;
+  bool _isInitialized = false;
+
+  List<Map<String, dynamic>> _personnelList = [];
+  Map<int, Map<String, dynamic>> _personnelCache = {};
 
   final List<String> _formTypes = ['شهيد', 'جريح'];
-  final List<String> _injurySeverities = [
-    'خطيرة',
-    'محدودة', 
-    'بسيطة',
-    'بسيطة جدا'
-  ];
+  final List<String> _injurySeverities = ['خطيرة', 'محدودة', 'بسيطة', 'بسيطة جدا'];
   final List<String> _paymentMethods = ['نقدا', 'بنك'];
 
   @override
   void initState() {
     super.initState();
     _isEditMode = widget.existingCasualty != null;
-    
-    if (_isEditMode) {
-      _casualty = widget.existingCasualty!;
-      _showCompensationFields = _casualty.isMartyr;
-    } else {
-      _casualty = Casualty(
-        militaryNumber: '',
-        formType: 'جريح',
-        fullName: '',
-        incidentDate: DateTime.now(),
-        incidentLocation: '',
-        caseSignalNumber: '',
-        injurySeverity: 'بسيطة',
-        nextOfKinName: '',
-        nextOfKinPhone: '',
-      );
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      // جلب قائمة المستنفرين
+      final personnel = await CasualtyApi.getPersonnelList();
+      
+      setState(() {
+        _personnelList = personnel;
+        
+        if (_isEditMode) {
+          _casualty = widget.existingCasualty!;
+          _showCompensationFields = _casualty.isMartyr;
+        } else {
+          _casualty = Casualty(
+            personnelId: 0,
+            formType: 'جريح',
+            incidentDate: DateTime.now(),
+            incidentLocation: '',
+            caseSignalNumber: '',
+            injurySeverity: 'بسيطة',
+          
+          );
+        }
+        
+        _isInitialized = true;
+      });
+    } catch (e) {
+      _showErrorSnackBar('خطأ في تحميل البيانات: $e');
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message), 
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _loadPersonnelData(int personnelId) async {
+    if (_personnelCache.containsKey(personnelId)) {
+      final person = _personnelCache[personnelId]!;
+      setState(() {
+        _casualty.militaryNumber = person['military_number'];
+        _casualty.fullName = person['full_name'];
+      });
+      return;
+    }
+
+    try {
+      final person = await CasualtyApi.getPersonnelById(personnelId);
+      setState(() {
+        _casualty.militaryNumber = person['military_id']?.toString() ?? '';
+        _casualty.fullName = '${person['first_name']} ${person['second_name']} ${person['third_name']} ${person['fourth_name']}';
+        _personnelCache[personnelId] = {
+          'military_number': _casualty.militaryNumber,
+          'full_name': _casualty.fullName,
+        };
+      });
+    } catch (e) {
+      _showErrorSnackBar('خطأ في تحميل بيانات المستنفر: $e');
     }
   }
 
   Future<void> _saveCasualty() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      
+      // التحقق من اختيار مستنفر
+      if (_casualty.personnelId == 0) {
+        _showErrorSnackBar('يرجى اختيار مستنفر من القائمة');
+        return;
+      }
+
+      // التحقق من عدم تكرار السجل
+      if (!_isEditMode) {
+        try {
+          final isDuplicate = await CasualtyApi.checkDuplicateRecord(
+            _casualty.personnelId ?? 0, 
+            _casualty.formType
+          );
+          if (isDuplicate) {
+            _showErrorSnackBar('يوجد سجل ${_casualty.formType} مسبقاً لهذا المستنفر');
+            return;
+          }
+        } catch (e) {
+          _showErrorSnackBar('خطأ في التحقق من التكرار: $e');
+          return;
+        }
+      }
+
       setState(() {
         _isLoading = true;
       });
@@ -77,12 +152,7 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
         }
         Navigator.pop(context, true);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطأ: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showErrorSnackBar('خطأ: $e');
       } finally {
         setState(() {
           _isLoading = false;
@@ -91,7 +161,7 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
     }
   }
 
-  Widget _buildBasicInfoSection() {
+  Widget _buildPersonnelSelectionSection() {
     return Card(
       elevation: 4,
       child: Padding(
@@ -101,32 +171,101 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.person, color: Colors.blue),
+                Icon(Icons.person_search, color: Colors.blue),
                 SizedBox(width: 8),
                 Text(
-                  'المعلومات الأساسية',
+                  'اختيار المستنفر',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            TextFormField(
+            DropdownButtonFormField<int>(
               decoration: InputDecoration(
-                labelText: 'الرقم العسكري *',
+                labelText: 'اختر المستنفر *',
                 border: OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              initialValue: _casualty.militaryNumber,
+              value: _casualty.personnelId != 0 ? _casualty.personnelId : null,
+              items: _personnelList.map((person) {
+                return DropdownMenuItem<int>(
+                  value: person['id'],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${person['full_name']}'),
+                      Text(
+                        'الرقم العسكري: ${person['military_number']}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (int? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _casualty.personnelId = newValue;
+                  });
+                  _loadPersonnelData(newValue);
+                }
+              },
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال الرقم العسكري';
+                if (value == null || value == 0) {
+                  return 'يرجى اختيار مستنفر من القائمة';
                 }
                 return null;
               },
-              onSaved: (value) => _casualty.militaryNumber = value!,
             ),
-            SizedBox(height: 12),
+            if (_casualty.personnelId != 0) ...[
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'البيانات الأساسية للمستنفر:',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                    SizedBox(height: 8),
+                    Text('الاسم: ${_casualty.fullName ?? "جاري التحميل..."}'),
+                    Text('الرقم العسكري: ${_casualty.militaryNumber ?? "جاري التحميل..."}'),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCasualtyTypeSection() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.assignment, color: Colors.red),
+                SizedBox(width: 8),
+                Text(
+                  'نوع الاستمارة',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'نوع الاستمارة *',
@@ -154,23 +293,6 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
                 return null;
               },
             ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'الإسم الكامل *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _casualty.fullName,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال الإسم الكامل';
-                }
-                return null;
-              },
-              onSaved: (value) => _casualty.fullName = value!,
-            ),
           ],
         ),
       ),
@@ -187,7 +309,7 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.event, color: Colors.red),
+                Icon(Icons.event, color: Colors.orange),
                 SizedBox(width: 8),
                 Text(
                   'معلومات الحادث',
@@ -325,76 +447,7 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
     );
   }
 
-  Widget _buildNextOfKinSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.family_restroom, color: Colors.green),
-                SizedBox(width: 8),
-                Text(
-                  'أقرب الأقربين',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'اسم أقرب الأقربين *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _casualty.nextOfKinName,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال اسم أقرب الأقربين';
-                }
-                return null;
-              },
-              onSaved: (value) => _casualty.nextOfKinName = value!,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'رقم تلفون أقرب الأقربين *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _casualty.nextOfKinPhone,
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال رقم التلفون';
-                }
-                return null;
-              },
-              onSaved: (value) => _casualty.nextOfKinPhone = value!,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'عنوان أقرب الأقربين',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _casualty.nextOfKinAddress,
-              maxLines: 2,
-              onSaved: (value) => _casualty.nextOfKinAddress = value,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+ 
 
   Widget _buildCompensationSection() {
     if (!_showCompensationFields) return SizedBox();
@@ -564,6 +617,26 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('تحميل...'),
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('جاري تحميل قائمة المستنفرين...'),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'تعديل سجل شهيد/جريح' : 'إضافة سجل شهيد/جريح جديد'),
@@ -576,12 +649,14 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
           padding: EdgeInsets.all(16),
           child: ListView(
             children: [
-              _buildBasicInfoSection(),
+              _buildPersonnelSelectionSection(),
+              SizedBox(height: 16),
+              _buildCasualtyTypeSection(),
               SizedBox(height: 16),
               _buildIncidentInfoSection(),
               SizedBox(height: 16),
-              _buildNextOfKinSection(),
-              SizedBox(height: 16),
+             // _buildNextOfKinSection(),
+              //SizedBox(height: 16),
               _buildCompensationSection(),
               SizedBox(height: 20),
               _buildActionButtons(),
