@@ -1,5 +1,6 @@
 // lib/presentation/pages/main_dashboard.dart
 import 'package:flutter/material.dart';
+import 'package:resistance_system_app/presentation/pages/casualties/casualties_screen.dart';
 import 'package:resistance_system_app/presentation/pages/movements/dashboard_movements_screen.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_list_screen.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_training_screen.dart';
@@ -348,6 +349,10 @@ void _navigateToScreen(String title, BuildContext context) {
      case 'التدريب':
       Navigator.push(context, 
         MaterialPageRoute(builder: (_) =>  dashTraining.PersonnelTrainingScreen()));
+      break;
+      case 'الجرحى والشهداء':
+      Navigator.push(context, 
+        MaterialPageRoute(builder: (_) => CasualtiesScreen()));    
       break;
     /*
     case 'المالية':
