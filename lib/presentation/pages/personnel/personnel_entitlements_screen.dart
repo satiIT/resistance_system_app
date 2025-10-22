@@ -1,6 +1,7 @@
 // lib/presentation/pages/personnel/personnel_entitlements_screen.dart
 import 'package:flutter/material.dart';
 import 'package:universal_platform/universal_platform.dart';
+import '../../../core/services/entitlements_api.dart';
 import '../../../core/responsive/responsive_layout.dart';
 
 class PersonnelEntitlementsScreen extends StatefulWidget {
@@ -14,9 +15,13 @@ class PersonnelEntitlementsScreen extends StatefulWidget {
 }
 
 class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScreen> {
-  List<Map<String, dynamic>> _entitlements = [];
+  List<dynamic> _entitlements = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
   double _totalReceived = 0.0;
   double _totalPending = 0.0;
+  double _monthlyEntitlement = 0.0;
+  double _arrears = 0.0;
 
   @override
   void initState() {
@@ -24,62 +29,50 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
     _loadEntitlementsData();
   }
 
-  void _loadEntitlementsData() {
-    // بيانات وهمية للاستحقاقات
-    setState(() {
-      _entitlements = [
-        {
-          'id': 1,
-          'type': 'خلافة أساسية',
-          'amount': 500000.0,
-          'date': '2024-02-01',
-          'status': 'مستلم',
-          'description': 'راتب شهر فبراير',
-        },
-        {
-          'id': 2,
-          'type': ' خلافة',
-          'amount': 150000.0,
-          'date': '2024-02-01',
-          'status': 'مستلم',
-          'description': 'بدل انتقال لشهر فبراير',
-        },
-        {
-          'id': 3,
-          'type': ' سهم حربي',
-          'amount': 200000.0,
-          'date': '2024-02-15',
-          'status': 'مستلم',
-          'description': 'مكافأة أداء متميز',
-        },
-        {
-          'id': 4,
-          'type': 'سهم حربي ',
-          'amount': 300000.0,
-          'date': '2024-03-01',
-          'status': 'معلق',
-          'description': 'بدل سكن لشهر مارس',
-        },
-      ];
+  Future<void> _loadEntitlementsData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
 
-      _calculateTotals();
-    });
+      final entitlements = await EntitlementsApi.getEntitlementsByPersonnelId(widget.personnelId);
+      
+      // حساب الإحصائيات
+      _calculateTotals(entitlements);
+      
+      setState(() {
+        _entitlements = entitlements;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'فشل في تحميل بيانات الاستحقاقات: $e';
+      });
+      _showErrorMessage('فشل في تحميل بيانات الاستحقاقات: $e');
+    }
   }
 
-  void _calculateTotals() {
-    _totalReceived = _entitlements
-        .where((ent) => ent['status'] == 'مستلم')
-        .fold(0.0, (sum, ent) => sum + (ent['amount'] as double));
+  void _calculateTotals(List<dynamic> entitlements) {
+    _totalReceived = entitlements
+        .where((ent) => EntitlementsApi.getPaymentStatusDisplay(ent['payment_status']) == 'مستلم')
+        .fold(0.0, (sum, ent) => sum + (double.tryParse(ent['amount']?.toString() ?? '0') ?? 0));
 
-    _totalPending = _entitlements
-        .where((ent) => ent['status'] == 'معلق')
-        .fold(0.0, (sum, ent) => sum + (ent['amount'] as double));
+    _totalPending = entitlements
+        .where((ent) => EntitlementsApi.getPaymentStatusDisplay(ent['payment_status']) == 'معلق')
+        .fold(0.0, (sum, ent) => sum + (double.tryParse(ent['amount']?.toString() ?? '0') ?? 0));
+
+    // حساب المستحق الشهري (يمكن تحسين هذا المنطق بناءً على بياناتك)
+    _monthlyEntitlement = 650000.0; // قيمة افتراضية - يمكن حسابها من البيانات
+    
+    // حساب المتأخرات
+    _arrears = _totalPending;
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isWeb = UniversalPlatform.isWeb;
-    // ignore: unused_local_variable
     final bool isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
@@ -95,9 +88,52 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
             icon: Icon(Icons.payment),
             onPressed: () => _makePayment(context),
           ),
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _loadEntitlementsData,
+          ),
         ],
       ),
-      body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      body: _isLoading
+          ? _buildLoadingIndicator()
+          : _errorMessage.isNotEmpty
+              ? _buildErrorWidget()
+              : isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('جاري تحميل بيانات الاستحقاقات...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: Colors.red, size: 64),
+          SizedBox(height: 16),
+          Text(
+            _errorMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.red),
+          ),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadEntitlementsData,
+            child: Text('إعادة المحاولة'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -155,8 +191,8 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
             SizedBox(height: 16),
             _buildFinancialStat('إجمالي المستلم', _totalReceived, Icons.check_circle, Colors.green),
             _buildFinancialStat('المبالغ المعلقة', _totalPending, Icons.pending, Colors.orange),
-            _buildFinancialStat('المستحق الشهري', 650000.0, Icons.calendar_today, Colors.blue),
-            _buildFinancialStat('المتأخرات', 300000.0, Icons.warning, Colors.red),
+            _buildFinancialStat('المستحق الشهري', _monthlyEntitlement, Icons.calendar_today, Colors.blue),
+            _buildFinancialStat('المتأخرات', _arrears, Icons.warning, Colors.red),
             SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => _makePayment(context),
@@ -164,6 +200,17 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
               label: Text('دفع مستحقات'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                minimumSize: Size(double.infinity, 50),
+              ),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _calculateAutomaticEntitlements(),
+              icon: Icon(Icons.calculate),
+              label: Text('حساب استحقاقات'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 minimumSize: Size(double.infinity, 50),
               ),
@@ -192,7 +239,7 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_formatCurrency(amount), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(EntitlementsApi.formatCurrency(amount), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
@@ -212,6 +259,10 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
         Expanded(
           child: _buildFinancialCard('المعلق', _totalPending, Colors.orange),
         ),
+        SizedBox(width: 8),
+        Expanded(
+          child: _buildFinancialCard('المستحق', _monthlyEntitlement, Colors.blue),
+        ),
       ],
     );
   }
@@ -225,7 +276,7 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
           children: [
             Text(title, style: TextStyle(fontSize: 14, color: color)),
             SizedBox(height: 4),
-            Text(_formatCurrency(amount), 
+            Text(EntitlementsApi.formatCurrency(amount), 
                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
@@ -246,14 +297,18 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('الاستحقاقات المالية', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text('إجمالي المستلم: ${_formatCurrency(_totalReceived)}'),
-                  Text('المبالغ المعلقة: ${_formatCurrency(_totalPending)}'),
+                  Text('إجمالي المستلم: ${EntitlementsApi.formatCurrency(_totalReceived)}'),
+                  Text('المبالغ المعلقة: ${EntitlementsApi.formatCurrency(_totalPending)}'),
+                  Text('إجمالي الاستحقاقات: ${_entitlements.length} استحقاق'),
                 ],
               ),
             ),
             Chip(
-              label: Text('نشط', style: TextStyle(color: Colors.white)),
-              backgroundColor: Colors.green,
+              label: Text(
+                _entitlements.isNotEmpty ? 'نشط' : 'غير نشط',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: _entitlements.isNotEmpty ? Colors.green : Colors.grey,
             ),
           ],
         ),
@@ -271,10 +326,20 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('سجل الاستحقاقات', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ElevatedButton.icon(
-                  onPressed: () => _addEntitlement(context),
-                  icon: Icon(Icons.add),
-                  label: Text('إضافة استحقاق'),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _calculateAutomaticEntitlements(),
+                      icon: Icon(Icons.calculate),
+                      label: Text('حساب تلقائي'),
+                    ),
+                    SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _addEntitlement(context),
+                      icon: Icon(Icons.add),
+                      label: Text('إضافة استحقاق'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -291,23 +356,26 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
                     DataColumn(label: Text('الإجراءات')),
                   ],
                   rows: _entitlements.map((ent) {
+                    final status = EntitlementsApi.getPaymentStatusDisplay(ent['payment_status']);
+                    final type = EntitlementsApi.getEntitlementTypeDisplay(ent['entitlement_type']);
+                    
                     return DataRow(cells: [
-                      DataCell(Text(ent['type'])),
-                      DataCell(Text(_formatCurrency(ent['amount']))),
-                      DataCell(Text(ent['date'])),
+                      DataCell(Text(type)),
+                      DataCell(Text(EntitlementsApi.formatCurrency(ent['amount']))),
+                      DataCell(Text(EntitlementsApi.formatDate(ent['payment_date'] ?? ent['entitlement_date']))),
                       DataCell(
                         Chip(
                           label: Text(
-                            ent['status'],
+                            status,
                             style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
-                          backgroundColor: ent['status'] == 'مستلم' ? Colors.green : Colors.orange,
+                          backgroundColor: EntitlementsApi.getPaymentStatusColor(ent['payment_status']),
                         ),
                       ),
-                      DataCell(Text(ent['description'])),
+                      DataCell(Text(ent['notes'] ?? '--')),
                       DataCell(Row(
                         children: [
-                          if (ent['status'] == 'معلق')
+                          if (status == 'معلق')
                             IconButton(
                               icon: Icon(Icons.payment, size: 18, color: Colors.green),
                               onPressed: () => _markAsPaid(context, ent['id']),
@@ -338,26 +406,29 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
       itemCount: _entitlements.length,
       itemBuilder: (context, index) {
         final ent = _entitlements[index];
+        final status = EntitlementsApi.getPaymentStatusDisplay(ent['payment_status']);
+        final type = EntitlementsApi.getEntitlementTypeDisplay(ent['entitlement_type']);
+        
         return Card(
           margin: EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: Icon(Icons.attach_money, color: ent['status'] == 'مستلم' ? Colors.green : Colors.orange),
-            title: Text(ent['type'], style: TextStyle(fontWeight: FontWeight.bold)),
+            leading: Icon(Icons.attach_money, color: EntitlementsApi.getPaymentStatusColor(ent['payment_status'])),
+            title: Text(type, style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${_formatCurrency(ent['amount'])} - ${ent['date']}'),
-                Text(ent['description']),
+                Text('${EntitlementsApi.formatCurrency(ent['amount'])} - ${EntitlementsApi.formatDate(ent['payment_date'] ?? ent['entitlement_date'])}'),
+                Text(ent['notes'] ?? '--'),
                 SizedBox(height: 4),
                 Chip(
-                  label: Text(ent['status'], style: TextStyle(color: Colors.white, fontSize: 10)),
-                  backgroundColor: ent['status'] == 'مستلم' ? Colors.green : Colors.orange,
+                  label: Text(status, style: TextStyle(color: Colors.white, fontSize: 10)),
+                  backgroundColor: EntitlementsApi.getPaymentStatusColor(ent['payment_status']),
                 ),
               ],
             ),
             trailing: PopupMenuButton(
               itemBuilder: (context) => [
-                if (ent['status'] == 'معلق')
+                if (status == 'معلق')
                   PopupMenuItem(child: Text('تسديد'), value: 'pay'),
                 PopupMenuItem(child: Text('تعديل'), value: 'edit'),
                 PopupMenuItem(child: Text('حذف'), value: 'delete'),
@@ -378,10 +449,6 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
     );
   }
 
-  String _formatCurrency(double amount) {
-    return '${amount.toStringAsFixed(0)} جنيه';
-  }
-
   void _addEntitlement(BuildContext context) {
     _showEntitlementFormDialog(context, null);
   }
@@ -390,19 +457,30 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
     _showEntitlementFormDialog(context, ent);
   }
 
-  void _markAsPaid(BuildContext context, int entId) {
-    setState(() {
-      final index = _entitlements.indexWhere((ent) => ent['id'] == entId);
-      if (index != -1) {
-        _entitlements[index]['status'] = 'مستلم';
-        _entitlements[index]['date'] = DateTime.now().toString().split(' ')[0];
-        _calculateTotals();
-      }
-    });
-    _showSuccessMessage('تم تسديد الاستحقاق بنجاح');
+  Future<void> _markAsPaid(BuildContext context, int entId) async {
+    try {
+      final entitlement = _entitlements.firstWhere((ent) => ent['id'] == entId);
+      final updatedData = Map<String, dynamic>.from(entitlement);
+      updatedData['payment_status'] = 'paid';
+      updatedData['payment_date'] = DateTime.now().toIso8601String().split('T')[0];
+
+      await EntitlementsApi.updateEntitlement(entId, updatedData);
+      
+      setState(() {
+        final index = _entitlements.indexWhere((ent) => ent['id'] == entId);
+        if (index != -1) {
+          _entitlements[index]['payment_status'] = 'paid';
+          _entitlements[index]['payment_date'] = updatedData['payment_date'];
+          _calculateTotals(_entitlements);
+        }
+      });
+      _showSuccessMessage('تم تسديد الاستحقاق بنجاح');
+    } catch (e) {
+      _showErrorMessage('فشل في تسديد الاستحقاق: $e');
+    }
   }
 
-  void _deleteEntitlement(BuildContext context, int entId) {
+  Future<void> _deleteEntitlement(BuildContext context, int entId) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -414,13 +492,18 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
             child: Text('إلغاء'),
           ),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _entitlements.removeWhere((ent) => ent['id'] == entId);
-                _calculateTotals();
-              });
-              Navigator.pop(context);
-              _showSuccessMessage('تم حذف الاستحقاق بنجاح');
+            onPressed: () async {
+              try {
+                Navigator.pop(context);
+                await EntitlementsApi.deleteEntitlement(entId);
+                setState(() {
+                  _entitlements.removeWhere((ent) => ent['id'] == entId);
+                  _calculateTotals(_entitlements);
+                });
+                _showSuccessMessage('تم حذف الاستحقاق بنجاح');
+              } catch (e) {
+                _showErrorMessage('فشل في حذف الاستحقاق: $e');
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('حذف'),
@@ -428,6 +511,20 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
         ],
       ),
     );
+  }
+
+  Future<void> _calculateAutomaticEntitlements() async {
+    try {
+      final calculatedEntitlements = await EntitlementsApi.calculateAutomaticEntitlements(widget.personnelId);
+      
+      setState(() {
+        _entitlements.addAll(calculatedEntitlements);
+        _calculateTotals(_entitlements);
+      });
+      _showSuccessMessage('تم حساب الاستحقاقات التلقائية بنجاح');
+    } catch (e) {
+      _showErrorMessage('فشل في حساب الاستحقاقات التلقائية: $e');
+    }
   }
 
   void _makePayment(BuildContext context) {
@@ -438,7 +535,7 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('المبلغ المعلق: ${_formatCurrency(_totalPending)}'),
+            Text('المبلغ المعلق: ${EntitlementsApi.formatCurrency(_totalPending)}'),
             SizedBox(height: 16),
             TextFormField(
               decoration: InputDecoration(
@@ -448,8 +545,12 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
               keyboardType: TextInputType.number,
             ),
             SizedBox(height: 16),
-            TextFormField(
+            DropdownButtonFormField<String>(
               decoration: InputDecoration(labelText: 'طريقة الدفع'),
+              items: ['نقدي', 'تحويل بنكي', 'شيك', 'حوالة']
+                  .map((method) => DropdownMenuItem(value: method, child: Text(method)))
+                  .toList(),
+              onChanged: (value) {},
             ),
           ],
         ),
@@ -483,11 +584,16 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
-                  value: ent?['type'] ?? ' سهم حربي',
+                  value: ent?['entitlement_type'] ?? 'war_share',
                   decoration: InputDecoration(labelText: 'نوع الاستحقاق'),
-                  items: [' سهم حربي', ' خلافة اساسية', 'أخرى']
-                      .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                      .toList(),
+                  items: [
+                    {'value': 'war_share', 'display': 'سهم حربي'},
+                    {'value': 'basic_salary', 'display': 'خلافة أساسية'},
+                    {'value': 'transportation', 'display': 'بدل انتقال'},
+                    {'value': 'housing', 'display': 'بدل سكن'},
+                    {'value': 'performance', 'display': 'مكافأة أداء'},
+                    {'value': 'mujahid_basket', 'display': 'سلة مجاهد'},
+                  ].map((item) => DropdownMenuItem(value: item['value'], child: Text(item['display']!))).toList(),
                   onChanged: (value) {},
                 ),
                 SizedBox(height: 16),
@@ -501,9 +607,20 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
                 ),
                 SizedBox(height: 16),
                 TextFormField(
-                  initialValue: ent?['description'] ?? '',
+                  initialValue: ent?['notes'] ?? '',
                   decoration: InputDecoration(labelText: 'الوصف'),
                   maxLines: 3,
+                ),
+                SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: ent?['payment_status'] ?? 'pending',
+                  decoration: InputDecoration(labelText: 'حالة الدفع'),
+                  items: [
+                    {'value': 'pending', 'display': 'معلق'},
+                    {'value': 'paid', 'display': 'مستلم'},
+                    {'value': 'processing', 'display': 'قيد المعالجة'},
+                  ].map((item) => DropdownMenuItem(value: item['value'], child: Text(item['display']!))).toList(),
+                  onChanged: (value) {},
                 ),
               ],
             ),
@@ -516,9 +633,8 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
           ),
           ElevatedButton(
             onPressed: () {
-              // حفظ البيانات
+              _saveEntitlement(ent);
               Navigator.pop(context);
-              _showSuccessMessage(ent == null ? 'تم إضافة الاستحقاق بنجاح' : 'تم تعديل الاستحقاق بنجاح');
             },
             child: Text('حفظ'),
           ),
@@ -527,11 +643,45 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
     );
   }
 
+  Future<void> _saveEntitlement(Map<String, dynamic>? ent) async {
+    try {
+      final entitlementData = {
+        'personnel_id': widget.personnelId,
+        'entitlement_type': 'war_share', // سيتم تحديثه من النموذج
+        'amount': 0.0, // سيتم تحديثه من النموذج
+        'currency': 'SDG',
+        'payment_status': 'pending', // سيتم تحديثه من النموذج
+        'notes': '', // سيتم تحديثه من النموذج
+        'entitlement_date': DateTime.now().toIso8601String().split('T')[0],
+      };
+
+      if (ent == null) {
+        await EntitlementsApi.createEntitlement(entitlementData);
+        _showSuccessMessage('تم إضافة الاستحقاق بنجاح');
+      } else {
+        await EntitlementsApi.updateEntitlement(ent['id'], entitlementData);
+        _showSuccessMessage('تم تعديل الاستحقاق بنجاح');
+      }
+      _loadEntitlementsData(); // إعادة تحميل البيانات
+    } catch (e) {
+      _showErrorMessage('فشل في حفظ الاستحقاق: $e');
+    }
+  }
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
       ),
     );
   }

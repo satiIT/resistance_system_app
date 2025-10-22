@@ -1,6 +1,7 @@
 // lib/presentation/pages/personnel/personnel_equipment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:universal_platform/universal_platform.dart';
+import '../../../core/services/armament_api.dart';
 import '../../../core/responsive/responsive_layout.dart';
 
 class PersonnelEquipmentScreen extends StatefulWidget {
@@ -14,7 +15,9 @@ class PersonnelEquipmentScreen extends StatefulWidget {
 }
 
 class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
-  List<Map<String, dynamic>> _equipmentList = [];
+  List<dynamic> _equipmentList = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -22,56 +25,31 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
     _loadEquipmentData();
   }
 
-  void _loadEquipmentData() {
-    // بيانات وهمية للمعدات
-    setState(() {
-      _equipmentList = [
-        {
-          'id': 1,
-          'name': 'بندقية AK-47',
-          'type': 'سلاح ناري',
-          'serial_number': 'AK47-001',
-          'condition': 'جيدة',
-          'issue_date': '2024-01-15',
-          'return_date': '',
-          'status': 'مستلم',
-        },
-        {
-          'id': 2,
-          'name': 'سترة واقية',
-          'type': 'معدات وقائية',
-          'serial_number': 'VEST-045',
-          'condition': 'جيدة',
-          'issue_date': '2024-01-15',
-          'return_date': '',
-          'status': 'مستلم',
-        },
-        {
-          'id': 3,
-          'name': 'خوذة',
-          'type': 'معدات وقائية',
-          'serial_number': 'HELMET-123',
-          'condition': 'متوسطة',
-          'issue_date': '2024-01-15',
-          'return_date': '',
-          'status': 'مستلم',
-        },
-        {
-          'id': 4,
-          'name': 'ذخيرة 7.62 ملم',
-          'type': 'ذخيرة',
-          'quantity': 120,
-          'issue_date': '2024-02-01',
-          'status': 'مستلم',
-        },
-      ];
-    });
+  Future<void> _loadEquipmentData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
+      final equipment = await ArmamentApi.getArmamentByPersonnelId(widget.personnelId);
+      
+      setState(() {
+        _equipmentList = equipment;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'فشل في تحميل بيانات المعدات: $e';
+      });
+      _showErrorMessage('فشل في تحميل بيانات المعدات: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isWeb = UniversalPlatform.isWeb;
-    // ignore: unused_local_variable
     final bool isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
@@ -83,9 +61,52 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
             icon: Icon(Icons.add),
             onPressed: () => _addEquipment(context),
           ),
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _loadEquipmentData,
+          ),
         ],
       ),
-      body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      body: _isLoading
+          ? _buildLoadingIndicator()
+          : _errorMessage.isNotEmpty
+              ? _buildErrorWidget()
+              : isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('جاري تحميل بيانات المعدات...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: Colors.red, size: 64),
+          SizedBox(height: 16),
+          Text(
+            _errorMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.red),
+          ),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadEquipmentData,
+            child: Text('إعادة المحاولة'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -130,9 +151,12 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
 
   Widget _buildStatsPanel() {
     final int totalItems = _equipmentList.length;
-    final int goodCondition = _equipmentList.where((item) => item['condition'] == 'جيدة').length;
-    final int weapons = _equipmentList.where((item) => item['type'] == 'سلاح ناري').length;
-    final int protective = _equipmentList.where((item) => item['type'] == 'معدات وقائية').length;
+    final int weapons = _equipmentList.where((item) => 
+        _isWeapon(item['weapon_type'])).length;
+    final int protective = _equipmentList.where((item) => 
+        _isProtective(item['weapon_type'])).length;
+    final int serialized = _equipmentList.where((item) => 
+        item['weapon_serial_number'] != null && item['weapon_serial_number'].isNotEmpty).length;
 
     return Container(
       width: 200,
@@ -145,13 +169,26 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
             Text('إحصائيات المعدات', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             SizedBox(height: 16),
             _buildEquipmentStat('إجمالي القطع', totalItems.toString(), Icons.inventory, Colors.blue),
-            _buildEquipmentStat('بحالة جيدة', goodCondition.toString(), Icons.check_circle, Colors.green),
             _buildEquipmentStat('أسلحة', weapons.toString(), Icons.security, Colors.red),
             _buildEquipmentStat('وقائية', protective.toString(), Icons.shield, Colors.orange),
+            _buildEquipmentStat('مسلسلة', serialized.toString(), Icons.confirmation_number, Colors.green),
           ],
         ),
       ),
     );
+  }
+
+  bool _isWeapon(String? type) {
+    if (type == null) return false;
+    final weaponTypes = ['assault_rifle', 'pistol', 'sniper_rifle', 'machine_gun', 'grenade',
+                        'بندقية هجومية', 'مسدس', 'بندقية قنص', 'رشاش', 'قنبلة'];
+    return weaponTypes.any((weapon) => type.toLowerCase().contains(weapon));
+  }
+
+  bool _isProtective(String? type) {
+    if (type == null) return false;
+    final protectiveTypes = ['protective_vest', 'helmet', 'سترة واقية', 'خوذة'];
+    return protectiveTypes.any((protective) => type.toLowerCase().contains(protective));
   }
 
   Widget _buildEquipmentStat(String title, String value, IconData icon, Color color) {
@@ -194,18 +231,29 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
                 children: [
                   Text('المعدات والأسلحة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   Text('إجمالي القطع: ${_equipmentList.length} قطعة'),
-                  Text('آخر تحديث: ${DateTime.now().toString().split(' ')[0]}'),
+                  Text('آخر تحديث: ${_getLastUpdateDate()}'),
                 ],
               ),
             ),
             Chip(
-              label: Text('مكتمل', style: TextStyle(color: Colors.white)),
-              backgroundColor: Colors.green,
+              label: Text(
+                _equipmentList.isNotEmpty ? 'مكتمل' : 'فارغ',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: _equipmentList.isNotEmpty ? Colors.green : Colors.grey,
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _getLastUpdateDate() {
+    if (_equipmentList.isEmpty) return '--';
+    final dates = _equipmentList.map((item) => item['issue_date']).where((date) => date != null).toList();
+    if (dates.isEmpty) return '--';
+    dates.sort((a, b) => b.compareTo(a));
+    return dates.first;
   }
 
   Widget _buildEquipmentTable(BuildContext context) {
@@ -230,28 +278,20 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
               child: SingleChildScrollView(
                 child: DataTable(
                   columns: [
-                    DataColumn(label: Text('اسم القطعة')),
-                    DataColumn(label: Text('النوع')),
+                    DataColumn(label: Text('نوع السلاح')),
                     DataColumn(label: Text('الرقم التسلسلي')),
-                    DataColumn(label: Text('الحالة')),
+                    DataColumn(label: Text('ملحقات')),
                     DataColumn(label: Text('تاريخ الإصدار')),
+                    DataColumn(label: Text('صادر من')),
                     DataColumn(label: Text('الإجراءات')),
                   ],
                   rows: _equipmentList.map((item) {
                     return DataRow(cells: [
-                      DataCell(Text(item['name'])),
-                      DataCell(Text(item['type'])),
-                      DataCell(Text(item['serial_number'] ?? '--')),
-                      DataCell(
-                        Chip(
-                          label: Text(
-                            item['condition'] ?? item['status'],
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                          backgroundColor: _getConditionColor(item['condition'] ?? item['status']),
-                        ),
-                      ),
-                      DataCell(Text(item['issue_date'])),
+                      DataCell(Text(ArmamentApi.getWeaponTypeDisplay(item['weapon_type']))),
+                      DataCell(Text(item['weapon_serial_number'] ?? '--')),
+                      DataCell(Text(item['weapon_accessories'] ?? '--')),
+                      DataCell(Text(_formatDate(item['issue_date']))),
+                      DataCell(Text(item['issued_by'] ?? '--')),
                       DataCell(Row(
                         children: [
                           IconButton(
@@ -262,9 +302,9 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
                             icon: Icon(Icons.delete, size: 18, color: Colors.red),
                             onPressed: () => _deleteEquipment(context, item['id']),
                           ),
-                          if (item['type'] == 'سلاح ناري') 
+                          if (_isWeapon(item['weapon_type'])) 
                             IconButton(
-                              icon: Icon(Icons.bolt, size: 18, color: Colors.orange),
+                              icon: Icon(Icons.build, size: 18, color: Colors.orange),
                               onPressed: () => _maintainWeapon(context, item),
                             ),
                         ],
@@ -288,36 +328,24 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
         return Card(
           margin: EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: _getEquipmentIcon(item['type']),
-            title: Text(item['name'], style: TextStyle(fontWeight: FontWeight.bold)),
+            leading: ArmamentApi.getEquipmentIcon(item['weapon_type']),
+            title: Text(ArmamentApi.getWeaponTypeDisplay(item['weapon_type']), 
+                       style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${item['type']} - ${item['serial_number'] ?? ''}'),
-                Text('الإصدار: ${item['issue_date']}'),
-                Row(
-                  children: [
-                    Chip(
-                      label: Text(item['condition'] ?? item['status'], 
-                              style: TextStyle(color: Colors.white, fontSize: 10)),
-                      backgroundColor: _getConditionColor(item['condition'] ?? item['status']),
-                    ),
-                    if (item['quantity'] != null) ...[
-                      SizedBox(width: 8),
-                      Chip(
-                        label: Text('${item['quantity']} قطعة', style: TextStyle(fontSize: 10)),
-                        backgroundColor: Colors.blue[100],
-                      ),
-                    ],
-                  ],
-                ),
+                Text('الرقم التسلسلي: ${item['weapon_serial_number'] ?? '--'}'),
+                Text('التاريخ: ${_formatDate(item['issue_date'])}'),
+                Text('صادر من: ${item['issued_by'] ?? '--'}'),
+                if (item['weapon_accessories'] != null && item['weapon_accessories'].isNotEmpty)
+                  Text('ملحقات: ${item['weapon_accessories']}'),
               ],
             ),
             trailing: PopupMenuButton(
               itemBuilder: (context) => [
                 PopupMenuItem(child: Text('تعديل'), value: 'edit'),
-                PopupMenuItem(child: Text('صيانة'), value: 'maintain'),
-                PopupMenuItem(child: Text('إرجاع'), value: 'return'),
+                if (_isWeapon(item['weapon_type']))
+                  PopupMenuItem(child: Text('صيانة'), value: 'maintain'),
                 PopupMenuItem(child: Text('حذف'), value: 'delete'),
               ],
               onSelected: (value) {
@@ -325,8 +353,6 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
                   _editEquipment(context, item);
                 } else if (value == 'maintain') {
                   _maintainWeapon(context, item);
-                } else if (value == 'return') {
-                  _returnEquipment(context, item);
                 } else if (value == 'delete') {
                   _deleteEquipment(context, item['id']);
                 }
@@ -338,32 +364,9 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
     );
   }
 
-  Icon _getEquipmentIcon(String type) {
-    switch (type) {
-      case 'سلاح ناري':
-        return Icon(Icons.security, color: Colors.red);
-      case 'معدات وقائية':
-        return Icon(Icons.shield, color: Colors.orange);
-      case 'ذخيرة':
-        return Icon(Icons.bolt, color: Colors.yellow[700]);
-      default:
-        return Icon(Icons.inventory, color: Colors.blue);
-    }
-  }
-
-  Color _getConditionColor(String condition) {
-    switch (condition) {
-      case 'جيدة':
-      case 'مستلم':
-        return Colors.green;
-      case 'متوسطة':
-        return Colors.orange;
-      case 'سيئة':
-      case 'تحت الصيانة':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
+  String _formatDate(String? date) {
+    if (date == null) return '--';
+    return date;
   }
 
   void _addEquipment(BuildContext context) {
@@ -379,7 +382,7 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('طلب صيانة'),
-        content: Text('هل تريد طلب صيانة لـ ${item['name']}؟'),
+        content: Text('هل تريد طلب صيانة لـ ${ArmamentApi.getWeaponTypeDisplay(item['weapon_type'])}؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -387,9 +390,8 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // طلب الصيانة
               Navigator.pop(context);
-              _showSuccessMessage('تم طلب صيانة ${item['name']} بنجاح');
+              _showSuccessMessage('تم طلب صيانة ${ArmamentApi.getWeaponTypeDisplay(item['weapon_type'])} بنجاح');
             },
             child: Text('طلب الصيانة'),
           ),
@@ -398,35 +400,7 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
     );
   }
 
-  void _returnEquipment(BuildContext context, Map<String, dynamic> item) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('إرجاع المعدات'),
-        content: Text('هل تريد إرجاع ${item['name']} إلى المخزن؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // إرجاع المعدات
-              setState(() {
-                _equipmentList.removeWhere((equip) => equip['id'] == item['id']);
-              });
-              Navigator.pop(context);
-              _showSuccessMessage('تم إرجاع ${item['name']} بنجاح');
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text('إرجاع'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _deleteEquipment(BuildContext context, int itemId) {
+  Future<void> _deleteEquipment(BuildContext context, int itemId) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -438,12 +412,17 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
             child: Text('إلغاء'),
           ),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _equipmentList.removeWhere((item) => item['id'] == itemId);
-              });
-              Navigator.pop(context);
-              _showSuccessMessage('تم حذف القطعة بنجاح');
+            onPressed: () async {
+              try {
+                Navigator.pop(context);
+                await ArmamentApi.deleteArmament(itemId);
+                setState(() {
+                  _equipmentList.removeWhere((item) => item['id'] == itemId);
+                });
+                _showSuccessMessage('تم حذف القطعة بنجاح');
+              } catch (e) {
+                _showErrorMessage('فشل في حذف القطعة: $e');
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('حذف'),
@@ -464,23 +443,35 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextFormField(
-                  initialValue: item?['name'] ?? '',
-                  decoration: InputDecoration(labelText: 'اسم القطعة'),
-                ),
-                SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: item?['type'] ?? 'سلاح ناري',
-                  decoration: InputDecoration(labelText: 'نوع المعدات'),
-                  items: ['سلاح ناري', 'معدات وقائية', 'ذخيرة', 'معدات اتصال', 'أخرى']
-                      .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                      .toList(),
+                  value: item?['weapon_type'] ?? 'assault_rifle',
+                  decoration: InputDecoration(labelText: 'نوع السلاح'),
+                  items: [
+                    {'value': 'assault_rifle', 'display': 'بندقية هجومية'},
+                    {'value': 'pistol', 'display': 'مسدس'},
+                    {'value': 'sniper_rifle', 'display': 'بندقية قنص'},
+                    {'value': 'machine_gun', 'display': 'رشاش'},
+                    {'value': 'protective_vest', 'display': 'سترة واقية'},
+                    {'value': 'helmet', 'display': 'خوذة'},
+                    {'value': 'grenade', 'display': 'قنبلة'},
+                    {'value': 'ammunition', 'display': 'ذخيرة'},
+                  ].map((type) => DropdownMenuItem(value: type['value'], child: Text(type['display']!))).toList(),
                   onChanged: (value) {},
                 ),
                 SizedBox(height: 16),
                 TextFormField(
-                  initialValue: item?['serial_number'] ?? '',
+                  initialValue: item?['weapon_serial_number'] ?? '',
                   decoration: InputDecoration(labelText: 'الرقم التسلسلي'),
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  initialValue: item?['weapon_accessories'] ?? '',
+                  decoration: InputDecoration(labelText: 'الملحقات'),
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  initialValue: item?['issued_by'] ?? '',
+                  decoration: InputDecoration(labelText: 'صادر من'),
                 ),
               ],
             ),
@@ -493,9 +484,8 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // حفظ البيانات
+              _saveEquipment(item);
               Navigator.pop(context);
-              _showSuccessMessage(item == null ? 'تم إضافة المعدات بنجاح' : 'تم تعديل المعدات بنجاح');
             },
             child: Text('حفظ'),
           ),
@@ -504,11 +494,45 @@ class _PersonnelEquipmentScreenState extends State<PersonnelEquipmentScreen> {
     );
   }
 
+  Future<void> _saveEquipment(Map<String, dynamic>? item) async {
+    try {
+      final equipmentData = {
+        'personnel_id': widget.personnelId,
+        'weapon_type': 'assault_rifle', // سيتم تحديثه من النموذج
+        'weapon_serial_number': '', // سيتم تحديثه من النموذج
+        'weapon_accessories': '', // سيتم تحديثه من النموذج
+        'issue_date': DateTime.now().toIso8601String().split('T')[0],
+        'issued_by': '', // سيتم تحديثه من النموذج
+        'notes': 'تم الإضافة عبر النظام',
+      };
+
+      if (item == null) {
+        await ArmamentApi.createArmament(equipmentData);
+        _showSuccessMessage('تم إضافة المعدات بنجاح');
+      } else {
+        await ArmamentApi.updateArmament(item['id'], equipmentData);
+        _showSuccessMessage('تم تعديل المعدات بنجاح');
+      }
+      _loadEquipmentData(); // إعادة تحميل البيانات
+    } catch (e) {
+      _showErrorMessage('فشل في حفظ المعدات: $e');
+    }
+  }
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
       ),
     );
   }

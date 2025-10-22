@@ -8,12 +8,9 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../../core/responsive/responsive_layout.dart';
-import '../../../core/services/personnel_service.dart';
-
-// simple loading state
-// we will fetch the personnel record and try to map common report keys
-// to the UI sections (performance, training, attendance, equipment, financial)
+import '../../../core/services/reports_api.dart';
 
 class PersonnelReportsScreen extends StatefulWidget {
   final int personnelId;
@@ -32,6 +29,81 @@ class PersonnelReportsScreen extends StatefulWidget {
 class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   Map<String, dynamic> _reportData = {};
   bool _isLoading = true;
+  String _errorMessage = '';
+
+  // Default empty data structure to prevent null errors
+  final Map<String, dynamic> _defaultData = {
+    'summary': {
+      'overall_status': 'جيد',
+      'report_period': 'الشهر الحالي'
+    },
+    'performance': {
+      'monthly_scores': [],
+      'average_score': 0,
+      'stats': {
+        'average_score': 0,
+        'highest_score': 0,
+        'lowest_score': 0,
+      },
+      'trends': {
+        'direction': 'stable'
+      }
+    },
+    'attendance': {
+      'breakdown': {
+        'present': 0,
+        'absent': 0,
+        'late': 0,
+        'leave': 0,
+      },
+      'stats': {
+        'present_days': 0,
+        'absent_days': 0,
+        'late_days': 0,
+        'attendance_rate': 0,
+        'percentage': 0,
+      },
+      'summary': {
+        'attendance_rate': 0,
+        'present_days': 0,
+        'absent_days': 0,
+        'late_days': 0,
+      },
+      'daily_records': []
+    },
+    'training': {
+      'courses': [],
+      'stats': {
+        'total_courses': 0,
+        'completed': 0,
+        'in_progress': 0,
+        'completion_rate': 0,
+      }
+    },
+    'financial': {
+      'stats': {
+        'total_received': 0,
+        'pending': 0,
+        'monthly_average': 0,
+      },
+      'summary': {
+        'total_received': 0,
+        'pending': 0,
+        'expenses': 0,
+        'net_income': 0,
+      },
+      'transactions': []
+    },
+    'equipment': {
+      'assigned': [],
+      'stats': {
+        'total_equipment': 0,
+        'borrowed': 0,
+        'in_stock': 0,
+        'under_maintenance': 0,
+      }
+    }
+  };
 
   @override
   void initState() {
@@ -40,71 +112,86 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   }
 
   Future<void> _loadReportData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      final Map personnel = await PersonnelService.getPersonnelById(
-        widget.personnelId.toString(),
-      );
-
-      // map common keys with safe fallbacks
-      final performance =
-          personnel['performance'] ??
-          personnel['performance_scores'] ??
-          personnel['scores'] ??
-          [];
-      final training =
-          personnel['training'] ??
-          personnel['trainings'] ??
-          personnel['personnel_training'] ??
-          [];
-
-      final attendance =
-          personnel['attendance'] ??
-          {
-            'present':
-                personnel['present'] ?? personnel['attendance_present'] ?? 0,
-            'absent':
-                personnel['absent'] ?? personnel['attendance_absent'] ?? 0,
-            'late': personnel['late'] ?? personnel['attendance_late'] ?? 0,
-            'percentage': personnel['attendance_percentage'] ?? 0.0,
-          };
-
-      final equipment =
-          personnel['equipment'] ??
-          personnel['equipment_assigned'] ??
-          personnel['assigned_equipment'] ??
-          {};
-      final financial =
-          personnel['financial'] ??
-          personnel['financials'] ??
-          personnel['payments'] ??
-          {};
-
       setState(() {
-        _reportData = {
-          'performance': performance,
-          'training': training,
-          'attendance': attendance,
-          'equipment': equipment,
-          'financial': financial,
-        };
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
+      final reportData = await ReportsApi.getPersonnelReport(widget.personnelId);
+      
+      setState(() {
+        // Merge API data with default structure to ensure all keys exist
+        _reportData = _mergeWithDefaults(reportData);
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _errorMessage = 'فشل في جلب بيانات التقرير: $e';
+        // Use default data when API fails
+        _reportData = _defaultData;
       });
-      _showSuccessMessage('فشل في جلب بيانات التقرير: $e');
+      _showErrorMessage('فشل في جلب بيانات التقرير: $e');
     }
+  }
+
+  // Merge API data with default structure to prevent null errors
+  Map<String, dynamic> _mergeWithDefaults(Map<String, dynamic> apiData) {
+    final mergedData = Map<String, dynamic>.from(_defaultData);
+    
+    // Recursively merge the data
+    void mergeRecursive(Map<String, dynamic> target, Map<String, dynamic> source) {
+      source.forEach((key, value) {
+        if (value is Map<String, dynamic> && target[key] is Map<String, dynamic>) {
+          mergeRecursive(target[key] as Map<String, dynamic>, value);
+        } else {
+          target[key] = value;
+        }
+      });
+    }
+    
+    mergeRecursive(mergedData, apiData);
+    return mergedData;
+  }
+
+  // Safe data access methods
+  Map<String, dynamic> _getMap(String key) {
+    final data = _reportData[key];
+    return data is Map<String, dynamic> ? data : {};
+  }
+
+  List<dynamic> _getList(String key) {
+    final data = _reportData[key];
+    return data is List ? data : [];
+  }
+
+  dynamic _getNested(Map<String, dynamic> map, List<String> keys) {
+    dynamic current = map;
+    for (final key in keys) {
+      if (current is Map<String, dynamic>) {
+        current = current[key];
+      } else {
+        return null;
+      }
+    }
+    return current;
+  }
+
+  double _getNumber(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  String _getString(dynamic value) {
+    if (value is String) return value;
+    return value?.toString() ?? '--';
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isWeb = UniversalPlatform.isWeb;
-    // ignore: unused_local_variable
     final bool isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
@@ -113,30 +200,113 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.print),
-            onPressed: () => _printReport(context),
+            icon: Icon(Icons.refresh),
+            onPressed: _loadReportData,
           ),
-          IconButton(
-            icon: Icon(Icons.picture_as_pdf),
-            tooltip: 'مشاركة PDF',
-            onPressed: () => _sharePdf(context),
-          ),
-          IconButton(
-            icon: Icon(Icons.share),
-            tooltip: 'تصدير CSV (نسخ إلى الحافظة)',
-            onPressed: () => _exportCsv(context),
-          ),
+          if (!_isLoading) _buildExportMenu(),
         ],
       ),
-      body: SafeArea(
-        child: _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : (isWeb ? _buildWebLayout(context) : _buildMobileLayout(context)),
+      body: _isLoading
+          ? _buildLoadingIndicator()
+          : _errorMessage.isNotEmpty
+              ? _buildErrorWidget()
+              : _buildContent(isWeb, isMobile),
+    );
+  }
+
+  Widget _buildExportMenu() {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert),
+      onSelected: (value) {
+        switch (value) {
+          case 'print':
+            _printReport();
+            break;
+          case 'pdf':
+            _sharePdf();
+            break;
+          case 'csv':
+            _exportCsv();
+            break;
+        }
+      },
+      itemBuilder: (BuildContext context) => [
+        PopupMenuItem(
+          value: 'print',
+          child: Row(
+            children: [
+              Icon(Icons.print, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('طباعة التقرير'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'pdf',
+          child: Row(
+            children: [
+              Icon(Icons.picture_as_pdf, color: Colors.red),
+              SizedBox(width: 8),
+              Text('تصدير PDF'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'csv',
+          child: Row(
+            children: [
+              Icon(Icons.table_chart, color: Colors.green),
+              SizedBox(width: 8),
+              Text('تصدير CSV'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContent(bool isWeb, bool isMobile) {
+    return SafeArea(
+      child: isWeb ? _buildWebLayout() : _buildMobileLayout(),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('جاري تحميل بيانات التقرير...'),
+        ],
       ),
     );
   }
 
-  Widget _buildWebLayout(BuildContext context) {
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: Colors.red, size: 64),
+          SizedBox(height: 16),
+          Text(
+            _errorMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.red),
+          ),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadReportData,
+            child: Text('إعادة المحاولة'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebLayout() {
     return SingleChildScrollView(
       padding: EdgeInsets.all(24),
       child: Column(
@@ -145,13 +315,15 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           SizedBox(height: 24),
           _buildChartsRow(),
           SizedBox(height: 24),
+          _buildStatsGrid(),
+          SizedBox(height: 24),
           _buildDetailedReports(),
         ],
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
+  Widget _buildMobileLayout() {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -160,40 +332,76 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
           SizedBox(height: 16),
           _buildPerformanceChart(),
           SizedBox(height: 16),
-          _buildAttendanceStats(),
+          _buildAttendanceChart(),
           SizedBox(height: 16),
-          _buildTrainingProgress(),
+          _buildStatsGrid(),
           SizedBox(height: 16),
-          _buildFinancialSummary(),
+          _buildDetailedReportsMobile(),
         ],
       ),
     );
   }
 
   Widget _buildReportSummary() {
+    final summary = _getMap('summary');
+    final performance = _getMap('performance');
+
     return Card(
+      elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         child: Row(
           children: [
-            Icon(Icons.assessment, color: Colors.blue, size: 40),
-            SizedBox(width: 16),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.assessment, color: Colors.blue, size: 40),
+            ),
+            SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'التقارير والإحصائيات',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    'التقارير والإحصائيات الشاملة',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[800],
+                    ),
                   ),
-                  Text('آخر تحديث: ${DateTime.now().toString().split(' ')[0]}'),
-                  Text('فترة التقرير: من 2024-01-01 إلى 2024-04-30'),
+                  SizedBox(height: 8),
+                  Wrap(
+                    spacing: 20,
+                    runSpacing: 8,
+                    children: [
+                      _buildSummaryItem('آخر تحديث', _getCurrentDateFormatted()),
+                      _buildSummaryItem('متوسط الأداء', 
+                          ReportsApi.formatPercentage(_getNumber(performance['average_score']))),
+                      _buildSummaryItem('فترة التقرير', _getString(summary['report_period'])),
+                      _buildSummaryItem('حالة النظام', 'نشط'),
+                    ],
+                  ),
                 ],
               ),
             ),
-            Chip(
-              label: Text('متميز', style: TextStyle(color: Colors.white)),
-              backgroundColor: Colors.green,
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: ReportsApi.getStatusColor(summary['overall_status']),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                _getString(summary['overall_status']),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
             ),
           ],
         ),
@@ -201,43 +409,101 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     );
   }
 
+  Widget _buildSummaryItem(String label, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.circle, size: 8, color: Colors.grey),
+        SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+        Text(
+          value,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  String _getCurrentDateFormatted() {
+    return DateFormat('yyyy/MM/dd - HH:mm').format(DateTime.now());
+  }
+
   Widget _buildChartsRow() {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _buildPerformanceChart()),
+        Expanded(
+          flex: 2,
+          child: _buildPerformanceChart(),
+        ),
         SizedBox(width: 16),
-        Expanded(child: _buildAttendanceChart()),
+        Expanded(
+          flex: 1,
+          child: _buildAttendanceChart(),
+        ),
       ],
     );
   }
 
   Widget _buildPerformanceChart() {
+    final performance = _getMap('performance');
+    final monthlyData = _getList('monthly_scores');
+
+    final List<ChartData> chartData = monthlyData.map((item) {
+      if (item is Map<String, dynamic>) {
+        return ChartData(
+          _getString(item['month']),
+          _getNumber(item['score']),
+        );
+      }
+      return ChartData('--', 0);
+    }).toList();
+
     return Card(
+      elevation: 3,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'أداء المستنفر',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Icon(Icons.trending_up, color: Colors.blue),
+                SizedBox(width: 8),
+                Text(
+                  'تطور الأداء الشهري',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             SizedBox(height: 16),
-            SizedBox(
-              height: math.min(300, MediaQuery.of(context).size.height * 0.45),
-              child: SfCartesianChart(
-                primaryXAxis: CategoryAxis(),
-                series: <CartesianSeries>[
-                  LineSeries<Map<String, dynamic>, String>(
-                    dataSource: _reportData['performance'],
-                    xValueMapper: (Map<String, dynamic> data, _) =>
-                        data['month'],
-                    yValueMapper: (Map<String, dynamic> data, _) =>
-                        data['score'],
-                    name: 'التقييم',
-                    dataLabelSettings: DataLabelSettings(isVisible: true),
-                  ),
-                ],
-              ),
+            Container(
+              height: 300,
+              child: chartData.isNotEmpty
+                  ? SfCartesianChart(
+                      primaryXAxis: CategoryAxis(
+                        labelRotation: -45,
+                      ),
+                      primaryYAxis: NumericAxis(
+                        numberFormat: NumberFormat.compact(),
+                      ),
+                      tooltipBehavior: TooltipBehavior(enable: true),
+                      series: <CartesianSeries<ChartData, String>>[
+                        LineSeries<ChartData, String>(
+                          dataSource: chartData,
+                          xValueMapper: (ChartData data, _) => data.month,
+                          yValueMapper: (ChartData data, _) => data.score,
+                          name: 'التقييم',
+                          markerSettings: MarkerSettings(isVisible: true),
+                          dataLabelSettings: DataLabelSettings(isVisible: true),
+                          color: Colors.blue,
+                        ),
+                      ],
+                    )
+                  : _buildEmptyChart('لا توجد بيانات للأداء'),
             ),
           ],
         ),
@@ -246,177 +512,56 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   }
 
   Widget _buildAttendanceChart() {
-    final attendance = _reportData['attendance'];
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'الحضور والغياب',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            SizedBox(
-              height: math.min(300, MediaQuery.of(context).size.height * 0.45),
-              child: SfCircularChart(
-                series: <CircularSeries>[
-                  DoughnutSeries<Map<String, dynamic>, String>(
-                    dataSource: [
-                      {
-                        'type': 'حضور',
-                        'value': attendance['present'],
-                        'color': Colors.green,
-                      },
-                      {
-                        'type': 'غياب',
-                        'value': attendance['absent'],
-                        'color': Colors.red,
-                      },
-                      {
-                        'type': 'تأخير',
-                        'value': attendance['late'],
-                        'color': Colors.orange,
-                      },
-                    ],
-                    xValueMapper: (Map<String, dynamic> data, _) =>
-                        data['type'],
-                    yValueMapper: (Map<String, dynamic> data, _) =>
-                        data['value'],
-                    pointColorMapper: (Map<String, dynamic> data, _) =>
-                        data['color'],
-                    dataLabelSettings: DataLabelSettings(isVisible: true),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    final attendance = _getMap('attendance');
+    final breakdown = _getNested(attendance, ['breakdown']) ?? {};
 
-  Widget _buildAttendanceStats() {
-    final attendance = _reportData['attendance'];
+    final List<PieData> pieData = [
+      PieData('حضور', _getNumber(breakdown['present']), Colors.green),
+      PieData('غياب', _getNumber(breakdown['absent']), Colors.red),
+      PieData('تأخير', _getNumber(breakdown['late']), Colors.orange),
+      PieData('إجازة', _getNumber(breakdown['leave']), Colors.blue),
+    ].where((data) => data.value > 0).toList();
+
     return Card(
+      elevation: 3,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'إحصائيات الحضور',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatCircle(
-                  'الحضور',
-                  attendance['present'],
-                  Colors.green,
-                  Icons.check_circle,
-                ),
-                _buildStatCircle(
-                  'الغياب',
-                  attendance['absent'],
-                  Colors.red,
-                  Icons.cancel,
-                ),
-                _buildStatCircle(
-                  'التأخير',
-                  attendance['late'],
-                  Colors.orange,
-                  Icons.schedule,
-                ),
-                _buildStatCircle(
-                  'النسبة %',
-                  attendance['percentage'],
-                  Colors.blue,
-                  Icons.percent,
+                Icon(Icons.pie_chart, color: Colors.green),
+                SizedBox(width: 8),
+                Text(
+                  'توزيع الحضور',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCircle(
-    String title,
-    dynamic value,
-    Color color,
-    IconData icon,
-  ) {
-    return Column(
-      children: [
-        Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            shape: BoxShape.circle,
-            border: Border.all(color: color, width: 2),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 20),
-              SizedBox(height: 4),
-              Text(
-                value.toString(),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(title, style: TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildTrainingProgress() {
-    final training = _reportData['training'];
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'التقدم في التدريب',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
             SizedBox(height: 16),
-            Column(
-              children: training.map<Widget>((course) {
-                return ListTile(
-                  leading: Icon(
-                    course['status'] == 'مكتمل'
-                        ? Icons.check_circle
-                        : Icons.schedule,
-                    color: course['status'] == 'مكتمل'
-                        ? Colors.green
-                        : Colors.orange,
-                  ),
-                  title: Text(course['course']),
-                  subtitle: Text(course['status']),
-                  trailing: course['score'] != null
-                      ? Chip(
-                          label: Text(
-                            '${course['score']}%',
-                            style: TextStyle(color: Colors.white),
+            Container(
+              height: 300,
+              child: pieData.isNotEmpty
+                  ? SfCircularChart(
+                      legend: Legend(
+                        isVisible: true,
+                        position: LegendPosition.bottom,
+                      ),
+                      series: <CircularSeries<PieData, String>>[
+                        DoughnutSeries<PieData, String>(
+                          dataSource: pieData,
+                          xValueMapper: (PieData data, _) => data.type,
+                          yValueMapper: (PieData data, _) => data.value,
+                          pointColorMapper: (PieData data, _) => data.color,
+                          dataLabelSettings: DataLabelSettings(
+                            isVisible: true,
+                            labelPosition: ChartDataLabelPosition.outside,
                           ),
-                          backgroundColor: Colors.blue,
-                        )
-                      : null,
-                );
-              }).toList(),
+                        ),
+                      ],
+                    )
+                  : _buildEmptyChart('لا توجد بيانات للحضور'),
             ),
           ],
         ),
@@ -424,71 +569,152 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     );
   }
 
-  Widget _buildFinancialSummary() {
-    final financial = _reportData['financial'];
+  Widget _buildEmptyChart(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bar_chart, size: 48, color: Colors.grey),
+          SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsGrid() {
+    final performance = _getMap('performance');
+    final attendance = _getMap('attendance');
+    final training = _getMap('training');
+    final financial = _getMap('financial');
+
+    final stats = [
+      StatItem(
+        'متوسط الأداء', 
+        ReportsApi.formatPercentage(_getNumber(performance['average_score'])), 
+        Icons.assessment, 
+        Colors.blue
+      ),
+      StatItem(
+        'نسبة الحضور', 
+        ReportsApi.formatPercentage(_getNumber(attendance['stats']?['attendance_rate'])), 
+        Icons.percent, 
+        Colors.green
+      ),
+      StatItem(
+        'الدورات المكتملة', 
+        '${_getList('courses').where((c) => _getString(c['status']).toLowerCase().contains('مكتمل')).length}', 
+        Icons.check_circle, 
+        Colors.orange
+      ),
+      StatItem(
+        'المستحقات', 
+        ReportsApi.formatCurrency(_getNumber(financial['stats']?['pending'])), 
+        Icons.pending, 
+        Colors.red
+      ),
+    ];
+
     return Card(
+      elevation: 3,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'ملخص مالي',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildFinancialItem(
-                  'إجمالي المستلم',
-                  financial['totalReceived'],
-                  Colors.green,
-                ),
-                _buildFinancialItem(
-                  'المعلقة',
-                  financial['pending'],
-                  Colors.orange,
-                ),
-                _buildFinancialItem(
-                  'المتوسط الشهري',
-                  financial['monthlyAverage'],
-                  Colors.blue,
+                Icon(Icons.dashboard, color: Colors.purple),
+                SizedBox(width: 8),
+                Text(
+                  'إحصائيات سريعة',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
+            SizedBox(height: 16),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: ResponsiveLayout.isMobile(context) ? 2 : 4,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: stats.length,
+              itemBuilder: (context, index) {
+                final stat = stats[index];
+                return _buildStatCard(stat);
+              },
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFinancialItem(String title, double amount, Color color) {
-    return Column(
-      children: [
-        Text(
-          _formatCurrency(amount),
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+  Widget _buildStatCard(StatItem stat) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(stat.icon, color: stat.color, size: 24),
+            SizedBox(height: 8),
+            Text(
+              stat.value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: stat.color,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 4),
+            Text(
+              stat.label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
         ),
-        Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
+      ),
     );
   }
 
   Widget _buildDetailedReports() {
     return Card(
+      elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'التقارير التفصيلية',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Icon(Icons.summarize, color: Colors.teal),
+                SizedBox(width: 8),
+                Text(
+                  'التقارير التفصيلية',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             SizedBox(height: 16),
+            Text(
+              'اختر نوع التقرير لعرض البيانات التفصيلية والتحليلات المتقدمة',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            SizedBox(height: 20),
             Wrap(
               spacing: 16,
               runSpacing: 16,
@@ -497,36 +723,42 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
                   'تقرير الأداء',
                   Icons.assessment,
                   Colors.blue,
+                  'تحليل مفصل لأداء المستنفر',
                   () => _generatePerformanceReport(),
                 ),
                 _buildReportCard(
                   'تقرير التدريب',
                   Icons.school,
                   Colors.green,
+                  'متابعة التقدم في البرامج التدريبية',
                   () => _generateTrainingReport(),
                 ),
                 _buildReportCard(
                   'تقرير مالي',
                   Icons.attach_money,
                   Colors.orange,
+                  'تحليل شامل للبيانات المالية',
                   () => _generateFinancialReport(),
                 ),
                 _buildReportCard(
                   'تقرير المعدات',
                   Icons.inventory,
                   Colors.purple,
+                  'سجل المعدات والصيانة',
                   () => _generateEquipmentReport(),
                 ),
                 _buildReportCard(
                   'تقرير الحضور',
                   Icons.calendar_today,
                   Colors.red,
+                  'تحليل أنماط الحضور والغياب',
                   () => _generateAttendanceReport(),
                 ),
                 _buildReportCard(
                   'تقرير شامل',
-                  Icons.summarize,
+                  Icons.dashboard,
                   Colors.teal,
+                  'تقرير متكامل بجميع البيانات',
                   () => _generateComprehensiveReport(),
                 ),
               ],
@@ -537,90 +769,295 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     );
   }
 
-  Widget _buildReportCard(
-    String title,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 150,
-        height: 120,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
+  Widget _buildDetailedReportsMobile() {
+    return Card(
+      elevation: 3,
+      child: Padding(
+        padding: EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: color),
-            SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Icon(Icons.summarize, color: Colors.teal),
+                SizedBox(width: 8),
+                Text(
+                  'التقارير التفصيلية',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
+            SizedBox(height: 12),
+            ..._buildReportListTiles(),
           ],
         ),
       ),
     );
   }
 
-  String _formatCurrency(double amount) {
-    return '${amount.toStringAsFixed(0)} ج.س';
+  List<Widget> _buildReportListTiles() {
+    final reports = [
+      ReportItem('تقرير الأداء', Icons.assessment, Colors.blue, _generatePerformanceReport),
+      ReportItem('تقرير التدريب', Icons.school, Colors.green, _generateTrainingReport),
+      ReportItem('تقرير مالي', Icons.attach_money, Colors.orange, _generateFinancialReport),
+      ReportItem('تقرير المعدات', Icons.inventory, Colors.purple, _generateEquipmentReport),
+      ReportItem('تقرير الحضور', Icons.calendar_today, Colors.red, _generateAttendanceReport),
+      ReportItem('تقرير شامل', Icons.dashboard, Colors.teal, _generateComprehensiveReport),
+    ];
+
+    return reports.map((report) => _buildReportListTile(report)).toList();
   }
 
-  void _generatePerformanceReport() {
-    _showReportDialog('تقرير الأداء', 'تم إنشاء تقرير الأداء بنجاح');
+  Widget _buildReportListTile(ReportItem report) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: report.color.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(report.icon, color: report.color),
+        ),
+        title: Text(report.title),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: report.onTap,
+      ),
+    );
   }
 
-  void _generateTrainingReport() {
-    _showReportDialog('تقرير التدريب', 'تم إنشاء تقرير التدريب بنجاح');
+  Widget _buildReportCard(
+    String title,
+    IconData icon,
+    Color color,
+    String description,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 180,
+        height: 160,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 24, color: color),
+              ),
+              SizedBox(height: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  void _generateFinancialReport() {
-    _showReportDialog('تقرير مالي', 'تم إنشاء التقرير المالي بنجاح');
+  // ========== Detailed Report Methods ==========
+
+  Future<void> _generatePerformanceReport() async {
+    try {
+      final report = await ReportsApi.getPerformanceReport(widget.personnelId);
+      _showDetailedReportDialog('تقرير الأداء', report);
+    } catch (e) {
+      _showErrorMessage('فشل في إنشاء تقرير الأداء: $e');
+    }
   }
 
-  void _generateEquipmentReport() {
-    _showReportDialog('تقرير المعدات', 'تم إنشاء تقرير المعدات بنجاح');
+  Future<void> _generateTrainingReport() async {
+    try {
+      final report = await ReportsApi.getTrainingReport(widget.personnelId);
+      _showDetailedReportDialog('تقرير التدريب', report);
+    } catch (e) {
+      _showErrorMessage('فشل في إنشاء تقرير التدريب: $e');
+    }
   }
 
-  void _generateAttendanceReport() {
-    _showReportDialog('تقرير الحضور', 'تم إنشاء تقرير الحضور بنجاح');
+  Future<void> _generateFinancialReport() async {
+    try {
+      final report = await ReportsApi.getFinancialReport(widget.personnelId);
+      _showDetailedReportDialog('تقرير مالي', report);
+    } catch (e) {
+      _showErrorMessage('فشل في إنشاء التقرير المالي: $e');
+    }
   }
 
-  void _generateComprehensiveReport() {
-    _showReportDialog('تقرير شامل', 'تم إنشاء التقرير الشامل بنجاح');
+  Future<void> _generateEquipmentReport() async {
+    try {
+      final report = await ReportsApi.getEquipmentReport(widget.personnelId);
+      _showDetailedReportDialog('تقرير المعدات', report);
+    } catch (e) {
+      _showErrorMessage('فشل في إنشاء تقرير المعدات: $e');
+    }
   }
 
-  void _printReport(BuildContext context) {
-    // Generate a simple printable PDF and send to the system printer
+  Future<void> _generateAttendanceReport() async {
+    try {
+      final report = await ReportsApi.getAttendanceReport(widget.personnelId);
+      _showDetailedReportDialog('تقرير الحضور', report);
+    } catch (e) {
+      _showErrorMessage('فشل في إنشاء تقرير الحضور: $e');
+    }
+  }
+
+  Future<void> _generateComprehensiveReport() async {
+    try {
+      _showDetailedReportDialog('تقرير شامل', _reportData);
+    } catch (e) {
+      _showErrorMessage('فشل في إنشاء التقرير الشامل: $e');
+    }
+  }
+
+  void _showDetailedReportDialog(String title, Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(_getReportIcon(title)),
+            SizedBox(width: 12),
+            Expanded(child: Text(title)),
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+        content: Container(
+          width: math.min(MediaQuery.of(context).size.width * 0.9, 800),
+          height: math.min(MediaQuery.of(context).size.height * 0.8, 600),
+          child: _buildReportContent(title, report),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إغلاق'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportContent(String title, Map<String, dynamic> report) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('بيانات التقرير'),
+          SizedBox(height: 16),
+          ..._buildReportDataList(report),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.blue[700],
+      ),
+    );
+  }
+
+  List<Widget> _buildReportDataList(Map<String, dynamic> report) {
+    return report.entries.map((entry) {
+      return Card(
+        margin: EdgeInsets.symmetric(vertical: 4),
+        child: ListTile(
+          title: Text(
+            entry.key,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: _buildValueWidget(entry.value),
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildValueWidget(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: value.entries.map((entry) {
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 2),
+            child: Text('${entry.key}: ${_formatValue(entry.value)}'),
+          );
+        }).toList(),
+      );
+    } else if (value is List) {
+      return Text('عدد العناصر: ${value.length}');
+    } else {
+      return Text(_formatValue(value));
+    }
+  }
+
+  String _formatValue(dynamic value) {
+    if (value == null) return '--';
+    if (value is num) {
+      // Check if it's a percentage or currency
+      if (value.toString().contains('.') || value < 1) {
+        return ReportsApi.formatPercentage(value);
+      }
+      return value.toString();
+    }
+    return value.toString();
+  }
+
+  IconData _getReportIcon(String title) {
+    switch (title) {
+      case 'تقرير الأداء': return Icons.assessment;
+      case 'تقرير التدريب': return Icons.school;
+      case 'تقرير مالي': return Icons.attach_money;
+      case 'تقرير المعدات': return Icons.inventory;
+      case 'تقرير الحضور': return Icons.calendar_today;
+      case 'تقرير شامل': return Icons.dashboard;
+      default: return Icons.description;
+    }
+  }
+
+  // ========== Export Methods ==========
+
+  void _printReport() {
     _showSuccessMessage('جاري إعداد التقرير للطباعة...');
     final doc = pw.Document();
     doc.addPage(
       pw.Page(
-        build: (pw.Context pwContext) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                'تقرير المستنفر - ${widget.personnelName}',
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 8),
-              pw.Text('تاريخ: ${DateTime.now().toString()}'),
-              pw.SizedBox(height: 12),
-              pw.Text('ملخص الأداء'),
-              pw.SizedBox(height: 8),
-              pw.Text('هذا تقرير تجريبي للنظام.'),
-            ],
+        build: (pw.Context context) {
+          return pw.Center(
+            child: pw.Text('تقرير ${widget.personnelName}'),
           );
         },
       ),
@@ -629,89 +1066,91 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     Printing.layoutPdf(onLayout: (PdfPageFormat format) async => doc.save());
   }
 
-  // legacy share handler removed; PDF and CSV specific handlers used instead
-
-  Future<void> _sharePdf(BuildContext context) async {
-    final doc = pw.Document();
-    doc.addPage(
-      pw.Page(
-        build: (pw.Context pwContext) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                'تقرير المستنفر - ${widget.personnelName}',
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 8),
-              pw.Text('تاريخ: ${DateTime.now().toString()}'),
-              pw.SizedBox(height: 12),
-              pw.Text('تفاصيل:'),
-              pw.Bullet(
-                text: 'أداء: ${_reportData['performance']?.length ?? 0} نقاط',
-              ),
-              pw.Bullet(
-                text: 'تدريبات: ${_reportData['training']?.length ?? 0} دورة',
-              ),
-            ],
-          );
-        },
-      ),
-    );
-
-    final bytes = await doc.save();
-
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: 'report_${widget.personnelId}.pdf',
-    );
-  }
-
-  Future<void> _exportCsv(BuildContext context) async {
-    // For demo, export performance rows as CSV and copy to clipboard
-    final List<List<dynamic>> rows = [];
-    rows.add(['month', 'score']);
-    final performance = _reportData['performance'] as List<dynamic>? ?? [];
-    for (var row in performance) {
-      rows.add([row['month'], row['score']?.toString() ?? '']);
+  Future<void> _sharePdf() async {
+    try {
+      final fileUrl = await ReportsApi.generatePdfReport(widget.personnelId, 'comprehensive');
+      _showSuccessMessage('تم إنشاء ملف PDF بنجاح');
+    } catch (e) {
+      _showErrorMessage('فشل في إنشاء ملف PDF: $e');
     }
-
-    String csv = const ListToCsvConverter().convert(rows);
-
-    await Clipboard.setData(ClipboardData(text: csv));
-
-    _showSuccessMessage('تم نسخ CSV إلى الحافظة. يمكنك حفظه في ملف خارجي');
   }
 
-  void _showReportDialog(String title, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showSuccessMessage('تم حفظ التقرير بنجاح');
-            },
-            child: Text('حفظ التقرير'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _exportCsv() async {
+    try {
+      final performance = _getMap('performance');
+      final monthlyData = _getList('monthly_scores');
+
+      final List<List<dynamic>> rows = [];
+      rows.add(['الشهر', 'التقييم']);
+      
+      for (var row in monthlyData) {
+        if (row is Map<String, dynamic>) {
+          rows.add([
+            _getString(row['month']),
+            _getNumber(row['score']).toString()
+          ]);
+        }
+      }
+
+      String csv = const ListToCsvConverter().convert(rows);
+      await Clipboard.setData(ClipboardData(text: csv));
+
+      _showSuccessMessage('تم نسخ البيانات إلى الحافظة');
+    } catch (e) {
+      _showErrorMessage('فشل في تصدير البيانات: $e');
+    }
   }
 
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+      ),
     );
   }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+
+// ========== Data Models ==========
+
+class ChartData {
+  final String month;
+  final double score;
+
+  ChartData(this.month, this.score);
+}
+
+class PieData {
+  final String type;
+  final double value;
+  final Color color;
+
+  PieData(this.type, this.value, this.color);
+}
+
+class StatItem {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  StatItem(this.label, this.value, this.icon, this.color);
+}
+
+class ReportItem {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  ReportItem(this.title, this.icon, this.color, this.onTap);
 }

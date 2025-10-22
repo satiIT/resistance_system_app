@@ -1,6 +1,8 @@
 // lib/presentation/pages/personnel/personnel_training_screen.dart
 import 'package:flutter/material.dart';
 import 'package:universal_platform/universal_platform.dart';
+import '../../../core/services/training_api.dart';
+import '../../../core/models/training_record.dart';
 import '../../../core/responsive/responsive_layout.dart';
 
 class PersonnelTrainingScreen extends StatefulWidget {
@@ -14,7 +16,9 @@ class PersonnelTrainingScreen extends StatefulWidget {
 }
 
 class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
-  List<Map<String, dynamic>> _trainingRecords = [];
+  List<TrainingRecord> _trainingRecords = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -22,42 +26,31 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
     _loadTrainingData();
   }
 
-  void _loadTrainingData() {
-    // بيانات وهمية للتدريب
-    setState(() {
-      _trainingRecords = [
-        {
-          'id': 1,
-          'course_name': 'التدريب الأساسي',
-          'course_type': 'أولي',
-          'weapon_type': 'AK-47',
-          'training_camp': 'عهد الرجال 1',
-          'start_date': '2024-01-01',
-          'end_date': '2024-01-30',
-          'status': 'مكتمل',
-          'score': 85,
-          'certificate': true,
-        },
-        {
-          'id': 2,
-          'course_name': 'تدريب متقدم',
-          'course_type': 'متقدم',
-          'weapon_type': 'قناصة',
-          'training_camp': 'عهد الرجال 2',
-          'start_date': '2024-02-01',
-          'end_date': '2024-02-20',
-          'status': 'قيد التنفيذ',
-          'score': null,
-          'certificate': false,
-        },
-      ];
-    });
+  Future<void> _loadTrainingData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
+      final records = await TrainingApi.getTrainingByPersonnelId(widget.personnelId);
+      
+      setState(() {
+        _trainingRecords = records;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'فشل في تحميل بيانات التدريب: $e';
+      });
+      _showErrorMessage('فشل في تحميل بيانات التدريب: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isWeb = UniversalPlatform.isWeb;
-    // ignore: unused_local_variable
     final bool isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
@@ -69,9 +62,52 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
             icon: Icon(Icons.add),
             onPressed: () => _addTrainingRecord(context),
           ),
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _loadTrainingData,
+          ),
         ],
       ),
-      body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      body: _isLoading
+          ? _buildLoadingIndicator()
+          : _errorMessage.isNotEmpty
+              ? _buildErrorWidget()
+              : isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('جاري تحميل بيانات التدريب...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: Colors.red, size: 64),
+          SizedBox(height: 16),
+          Text(
+            _errorMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.red),
+          ),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadTrainingData,
+            child: Text('إعادة المحاولة'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -115,13 +151,19 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
   }
 
   Widget _buildStatsPanel(BuildContext context) {
-    final int completed = _trainingRecords.where((record) => record['status'] == 'مكتمل').length;
-    final int inProgress = _trainingRecords.where((record) => record['status'] == 'قيد التنفيذ').length;
+    final int completed = _trainingRecords.where((record) => 
+        _getStatusFromRecord(record) == 'مكتمل' || 
+        _getStatusFromRecord(record) == 'completed').length;
+    
+    final int inProgress = _trainingRecords.where((record) => 
+        _getStatusFromRecord(record) == 'قيد التنفيذ' || 
+        _getStatusFromRecord(record) == 'in_progress').length;
+    
     final double avgScore = _trainingRecords
-        .where((record) => record['score'] != null)
-        .map((record) => record['score'] as int)
+        .where((record) => record.evaluationScore != null)
+        .map((record) => record.evaluationScore!)
         .fold(0, (a, b) => a + b) / 
-        (_trainingRecords.where((record) => record['score'] != null).length);
+        (_trainingRecords.where((record) => record.evaluationScore != null).length);
 
     return Container(
       width: 200,
@@ -136,7 +178,7 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
             _buildStatItem('الدورات المكتملة', completed.toString(), Icons.check_circle, Colors.green),
             _buildStatItem('قيد التنفيذ', inProgress.toString(), Icons.schedule, Colors.orange),
             _buildStatItem('متوسط النقاط', avgScore.isNaN ? '0' : avgScore.toStringAsFixed(1), Icons.assessment, Colors.blue),
-            _buildStatItem('الشهادات', '${_trainingRecords.where((record) => record['certificate'] == true).length}', Icons.school, Colors.purple),
+            _buildStatItem('الشهادات', '${_trainingRecords.where((record) => record.certificateReceived == true).length}', Icons.school, Colors.purple),
           ],
         ),
       ),
@@ -178,13 +220,16 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
                 children: [
                   Text('السجل التدريبي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   Text('إجمالي الدورات: ${_trainingRecords.length} دورة'),
-                  Text('آخر تدريب: ${_trainingRecords.isNotEmpty ? _trainingRecords.last['course_name'] : 'لا يوجد'}'),
+                  Text('آخر تدريب: ${_trainingRecords.isNotEmpty ? (_trainingRecords.last.courseName ?? 'غير معروف') : 'لا يوجد'}'),
                 ],
               ),
             ),
             Chip(
-              label: Text('نشط', style: TextStyle(color: Colors.white)),
-              backgroundColor: Colors.green,
+              label: Text(
+                _trainingRecords.isNotEmpty ? 'نشط' : 'غير نشط',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: _trainingRecords.isNotEmpty ? Colors.green : Colors.grey,
             ),
           ],
         ),
@@ -225,21 +270,21 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
                   ],
                   rows: _trainingRecords.map((record) {
                     return DataRow(cells: [
-                      DataCell(Text(record['course_name'])),
-                      DataCell(Text(record['course_type'])),
-                      DataCell(Text(record['weapon_type'])),
-                      DataCell(Text(record['training_camp'])),
-                      DataCell(Text('${record['start_date']} إلى ${record['end_date']}')),
+                      DataCell(Text(record.courseName ?? '--')),
+                      DataCell(Text(_getCourseType(record) ?? '--')),
+                      DataCell(Text(_getWeaponType(record) ?? '--')),
+                      DataCell(Text(record.trainingCampName ?? '--')),
+                      DataCell(Text('${_formatDate(record.courseStartDate)} إلى ${_formatDate(record.courseEndDate)}')),
                       DataCell(
                         Chip(
                           label: Text(
-                            record['status'],
+                            _getStatusTextFromRecord(record),
                             style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
-                          backgroundColor: record['status'] == 'مكتمل' ? Colors.green : Colors.orange,
+                          backgroundColor: _getStatusColorFromRecord(record),
                         ),
                       ),
-                      DataCell(Text(record['score']?.toString() ?? '--')),
+                      DataCell(Text(record.evaluationScore?.toString() ?? '--')),
                       DataCell(Row(
                         children: [
                           IconButton(
@@ -248,7 +293,7 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
                           ),
                           IconButton(
                             icon: Icon(Icons.delete, size: 18, color: Colors.red),
-                            onPressed: () => _deleteTrainingRecord(context, record['id']),
+                            onPressed: () => _deleteTrainingRecord(context, record.id!),
                           ),
                         ],
                       )),
@@ -272,22 +317,22 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
           margin: EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: Icon(Icons.school, color: Colors.blue),
-            title: Text(record['course_name'], style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(record.courseName ?? '--', style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${record['course_type']} - ${record['weapon_type']}'),
-                Text('${record['start_date']} إلى ${record['end_date']}'),
+                Text('${_getCourseType(record) ?? '--'} - ${_getWeaponType(record) ?? '--'}'),
+                Text('${_formatDate(record.courseStartDate)} إلى ${_formatDate(record.courseEndDate)}'),
                 Row(
                   children: [
                     Chip(
-                      label: Text(record['status'], style: TextStyle(color: Colors.white, fontSize: 10)),
-                      backgroundColor: record['status'] == 'مكتمل' ? Colors.green : Colors.orange,
+                      label: Text(_getStatusTextFromRecord(record), style: TextStyle(color: Colors.white, fontSize: 10)),
+                      backgroundColor: _getStatusColorFromRecord(record),
                     ),
-                    if (record['score'] != null) ...[
+                    if (record.evaluationScore != null) ...[
                       SizedBox(width: 8),
                       Chip(
-                        label: Text('${record['score']}%', style: TextStyle(fontSize: 10)),
+                        label: Text('${record.evaluationScore}%', style: TextStyle(fontSize: 10)),
                         backgroundColor: Colors.blue[100],
                       ),
                     ],
@@ -304,7 +349,7 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
                 if (value == 'edit') {
                   _editTrainingRecord(context, record);
                 } else if (value == 'delete') {
-                  _deleteTrainingRecord(context, record['id']);
+                  _deleteTrainingRecord(context, record.id!);
                 }
               },
             ),
@@ -314,15 +359,79 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
     );
   }
 
+  // Helper methods to get data from TrainingRecord
+  String _getStatusFromRecord(TrainingRecord record) {
+    return record.attendanceStatus ?? 'unknown';
+  }
+
+  String _getCourseType(TrainingRecord record) {
+    return record.courseType ?? record.specializedCourseType ?? record.priorTrainingType ?? '--';
+  }
+
+  String _getWeaponType(TrainingRecord record) {
+    return record.weaponType ?? record.weaponTrainingType ?? '--';
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '--';
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _getStatusTextFromRecord(TrainingRecord record) {
+    final status = _getStatusFromRecord(record);
+    return _getStatusText(status);
+  }
+
+  Color _getStatusColorFromRecord(TrainingRecord record) {
+    final status = _getStatusFromRecord(record);
+    return _getStatusColor(status);
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'مكتمل':
+      case 'finished':
+        return 'مكتمل';
+      case 'in_progress':
+      case 'قيد التنفيذ':
+      case 'ongoing':
+        return 'قيد التنفيذ';
+      case 'pending':
+      case 'معلق':
+        return 'معلق';
+      default:
+        return status;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'مكتمل':
+      case 'finished':
+        return Colors.green;
+      case 'in_progress':
+      case 'قيد التنفيذ':
+      case 'ongoing':
+        return Colors.orange;
+      case 'pending':
+      case 'معلق':
+        return Colors.grey;
+      default:
+        return Colors.blue;
+    }
+  }
+
   void _addTrainingRecord(BuildContext context) {
     _showTrainingFormDialog(context, null);
   }
 
-  void _editTrainingRecord(BuildContext context, Map<String, dynamic> record) {
+  void _editTrainingRecord(BuildContext context, TrainingRecord record) {
     _showTrainingFormDialog(context, record);
   }
 
-  void _deleteTrainingRecord(BuildContext context, int recordId) {
+  Future<void> _deleteTrainingRecord(BuildContext context, int recordId) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -334,12 +443,17 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
             child: Text('إلغاء'),
           ),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _trainingRecords.removeWhere((record) => record['id'] == recordId);
-              });
-              Navigator.pop(context);
-              _showSuccessMessage('تم حذف السجل التدريبي بنجاح');
+            onPressed: () async {
+              try {
+                Navigator.pop(context);
+                await TrainingApi.deleteTrainingRecord(recordId);
+                setState(() {
+                  _trainingRecords.removeWhere((record) => record.id == recordId);
+                });
+                _showSuccessMessage('تم حذف السجل التدريبي بنجاح');
+              } catch (e) {
+                _showErrorMessage('فشل في حذف السجل التدريبي: $e');
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('حذف'),
@@ -349,7 +463,8 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
     );
   }
 
-  void _showTrainingFormDialog(BuildContext context, Map<String, dynamic>? record) {
+  void _showTrainingFormDialog(BuildContext context, TrainingRecord? record) {
+    // Implement your form dialog here
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -360,11 +475,8 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextFormField(
-                  initialValue: record?['course_name'] ?? '',
-                  decoration: InputDecoration(labelText: 'اسم الدورة'),
-                ),
-                // يمكن إضافة المزيد من الحقول هنا
+                Text('هنا يمكنك إضافة نموذج لإدخال بيانات التدريب'),
+                // Add your form fields here based on TrainingRecord model
               ],
             ),
           ),
@@ -376,9 +488,8 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // حفظ البيانات
+              _saveTrainingRecord(record);
               Navigator.pop(context);
-              _showSuccessMessage(record == null ? 'تم إضافة السجل التدريبي بنجاح' : 'تم تعديل السجل التدريبي بنجاح');
             },
             child: Text('حفظ'),
           ),
@@ -387,11 +498,50 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
     );
   }
 
+  Future<void> _saveTrainingRecord(TrainingRecord? record) async {
+    try {
+      if (record == null) {
+        // Create new record - you'll need to provide courseId
+        final newRecord = TrainingRecord(
+          personnelId: widget.personnelId,
+          courseId: 1, // You need to get this from somewhere - maybe from a course selection
+          courseName: 'دورة جديدة',
+          courseType: 'نوع الدورة',
+          weaponType: 'نوع السلاح',
+          trainingCampName: 'المعسكر',
+          courseStartDate: DateTime(2024, 1, 1),
+          courseEndDate: DateTime(2024, 1, 30),
+          attendanceStatus: 'مكتمل',
+          evaluationScore: 85,
+          certificateReceived: true,
+        );
+        await TrainingApi.createTrainingRecord(newRecord);
+        _showSuccessMessage('تم إضافة السجل التدريبي بنجاح');
+      } else {
+        // Update existing record
+        await TrainingApi.updateTrainingRecord(record);
+        _showSuccessMessage('تم تعديل السجل التدريبي بنجاح');
+      }
+      _loadTrainingData(); // Reload data
+    } catch (e) {
+      _showErrorMessage('فشل في حفظ السجل التدريبي: $e');
+    }
+  }
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
       ),
     );
   }
