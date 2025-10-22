@@ -1,6 +1,9 @@
 // lib/presentation/pages/main_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:resistance_system_app/presentation/pages/casualties/casualties_screen.dart';
+import 'package:resistance_system_app/presentation/pages/finance/finance_screen.dart';
+import 'package:resistance_system_app/presentation/pages/inventory/inventory_screen.dart';
+import 'package:resistance_system_app/presentation/pages/medicine/medicine_screen.dart';
 import 'package:resistance_system_app/presentation/pages/movements/dashboard_movements_screen.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_list_screen.dart';
 import 'package:resistance_system_app/presentation/pages/personnel/personnel_training_screen.dart';
@@ -354,11 +357,20 @@ void _navigateToScreen(String title, BuildContext context) {
       Navigator.push(context, 
         MaterialPageRoute(builder: (_) => CasualtiesScreen()));    
       break;
-    /*
+    case 'المخازن':
+      Navigator.push(context, 
+        MaterialPageRoute(builder: (_) => InventoryScreen()));    
+      break;
+      case 'الصيدلية':
+      Navigator.push(context, 
+        MaterialPageRoute(builder: (_) => MedicineScreen()));  
+      break;
+    
     case 'المالية':
       Navigator.push(context, 
         MaterialPageRoute(builder: (_) => FinanceScreen()));
       break;
+      /*
     case 'التقارير':
       Navigator.push(context, 
         MaterialPageRoute(builder: (_) => ReportsScreen()));

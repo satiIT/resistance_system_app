@@ -3,7 +3,17 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:universal_platform/universal_platform.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+import 'package:csv/csv.dart';
+import 'package:flutter/services.dart';
 import '../../../core/responsive/responsive_layout.dart';
+import '../../../core/services/personnel_service.dart';
+
+// simple loading state
+// we will fetch the personnel record and try to map common report keys
+// to the UI sections (performance, training, attendance, equipment, financial)
 
 class PersonnelReportsScreen extends StatefulWidget {
   final int personnelId;
@@ -21,6 +31,7 @@ class PersonnelReportsScreen extends StatefulWidget {
 
 class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   Map<String, dynamic> _reportData = {};
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -28,35 +39,66 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     _loadReportData();
   }
 
-  void _loadReportData() {
-    // بيانات وهمية للتقارير
+  Future<void> _loadReportData() async {
     setState(() {
-      _reportData = {
-        'performance': [
-          {'month': 'يناير', 'score': 85},
-          {'month': 'فبراير', 'score': 92},
-          {'month': 'مارس', 'score': 78},
-          {'month': 'أبريل', 'score': 88},
-        ],
-        'training': [
-          {'course': 'التدريب الأساسي', 'status': 'مكتمل', 'score': 85},
-          {'course': 'تدريب متقدم', 'status': 'مكتمل', 'score': 90},
-          {'course': 'تدريب القناصة', 'status': 'قيد التنفيذ', 'score': null},
-        ],
-        'attendance': {
-          'present': 45,
-          'absent': 3,
-          'late': 2,
-          'percentage': 90.0,
-        },
-        'equipment': {'assigned': 8, 'maintenance': 2, 'returned': 1},
-        'financial': {
-          'totalReceived': 1850000.0,
-          'pending': 300000.0,
-          'monthlyAverage': 650000.0,
-        },
-      };
+      _isLoading = true;
     });
+
+    try {
+      final Map personnel = await PersonnelService.getPersonnelById(
+        widget.personnelId.toString(),
+      );
+
+      // map common keys with safe fallbacks
+      final performance =
+          personnel['performance'] ??
+          personnel['performance_scores'] ??
+          personnel['scores'] ??
+          [];
+      final training =
+          personnel['training'] ??
+          personnel['trainings'] ??
+          personnel['personnel_training'] ??
+          [];
+
+      final attendance =
+          personnel['attendance'] ??
+          {
+            'present':
+                personnel['present'] ?? personnel['attendance_present'] ?? 0,
+            'absent':
+                personnel['absent'] ?? personnel['attendance_absent'] ?? 0,
+            'late': personnel['late'] ?? personnel['attendance_late'] ?? 0,
+            'percentage': personnel['attendance_percentage'] ?? 0.0,
+          };
+
+      final equipment =
+          personnel['equipment'] ??
+          personnel['equipment_assigned'] ??
+          personnel['assigned_equipment'] ??
+          {};
+      final financial =
+          personnel['financial'] ??
+          personnel['financials'] ??
+          personnel['payments'] ??
+          {};
+
+      setState(() {
+        _reportData = {
+          'performance': performance,
+          'training': training,
+          'attendance': attendance,
+          'equipment': equipment,
+          'financial': financial,
+        };
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showSuccessMessage('فشل في جلب بيانات التقرير: $e');
+    }
   }
 
   @override
@@ -75,13 +117,21 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
             onPressed: () => _printReport(context),
           ),
           IconButton(
+            icon: Icon(Icons.picture_as_pdf),
+            tooltip: 'مشاركة PDF',
+            onPressed: () => _sharePdf(context),
+          ),
+          IconButton(
             icon: Icon(Icons.share),
-            onPressed: () => _shareReport(context),
+            tooltip: 'تصدير CSV (نسخ إلى الحافظة)',
+            onPressed: () => _exportCsv(context),
           ),
         ],
       ),
       body: SafeArea(
-        child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator())
+            : (isWeb ? _buildWebLayout(context) : _buildMobileLayout(context)),
       ),
     );
   }
@@ -548,11 +598,92 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   }
 
   void _printReport(BuildContext context) {
+    // Generate a simple printable PDF and send to the system printer
     _showSuccessMessage('جاري إعداد التقرير للطباعة...');
+    final doc = pw.Document();
+    doc.addPage(
+      pw.Page(
+        build: (pw.Context pwContext) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'تقرير المستنفر - ${widget.personnelName}',
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 8),
+              pw.Text('تاريخ: ${DateTime.now().toString()}'),
+              pw.SizedBox(height: 12),
+              pw.Text('ملخص الأداء'),
+              pw.SizedBox(height: 8),
+              pw.Text('هذا تقرير تجريبي للنظام.'),
+            ],
+          );
+        },
+      ),
+    );
+
+    Printing.layoutPdf(onLayout: (PdfPageFormat format) async => doc.save());
   }
 
-  void _shareReport(BuildContext context) {
-    _showSuccessMessage('جاري مشاركة التقرير...');
+  // legacy share handler removed; PDF and CSV specific handlers used instead
+
+  Future<void> _sharePdf(BuildContext context) async {
+    final doc = pw.Document();
+    doc.addPage(
+      pw.Page(
+        build: (pw.Context pwContext) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'تقرير المستنفر - ${widget.personnelName}',
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 8),
+              pw.Text('تاريخ: ${DateTime.now().toString()}'),
+              pw.SizedBox(height: 12),
+              pw.Text('تفاصيل:'),
+              pw.Bullet(
+                text: 'أداء: ${_reportData['performance']?.length ?? 0} نقاط',
+              ),
+              pw.Bullet(
+                text: 'تدريبات: ${_reportData['training']?.length ?? 0} دورة',
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final bytes = await doc.save();
+
+    await Printing.sharePdf(
+      bytes: bytes,
+      filename: 'report_${widget.personnelId}.pdf',
+    );
+  }
+
+  Future<void> _exportCsv(BuildContext context) async {
+    // For demo, export performance rows as CSV and copy to clipboard
+    final List<List<dynamic>> rows = [];
+    rows.add(['month', 'score']);
+    final performance = _reportData['performance'] as List<dynamic>? ?? [];
+    for (var row in performance) {
+      rows.add([row['month'], row['score']?.toString() ?? '']);
+    }
+
+    String csv = const ListToCsvConverter().convert(rows);
+
+    await Clipboard.setData(ClipboardData(text: csv));
+
+    _showSuccessMessage('تم نسخ CSV إلى الحافظة. يمكنك حفظه في ملف خارجي');
   }
 
   void _showReportDialog(String title, String message) {

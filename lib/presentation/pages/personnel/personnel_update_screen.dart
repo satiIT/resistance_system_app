@@ -2,12 +2,17 @@
 import 'package:flutter/material.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../../../core/responsive/responsive_layout.dart';
+import '../../../core/services/personnel_service.dart';
 
 class PersonnelUpdateScreen extends StatefulWidget {
   final int personnelId;
   final String personnelName;
 
-  const PersonnelUpdateScreen({Key? key, required this.personnelId, required this.personnelName}) : super(key: key);
+  const PersonnelUpdateScreen({
+    Key? key,
+    required this.personnelId,
+    required this.personnelName,
+  }) : super(key: key);
 
   @override
   _PersonnelUpdateScreenState createState() => _PersonnelUpdateScreenState();
@@ -16,6 +21,9 @@ class PersonnelUpdateScreen extends StatefulWidget {
 class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> _personnelData = {};
+  bool _isLoading = true;
+  bool _isSaving = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -24,25 +32,27 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
   }
 
   void _loadPersonnelData() {
-    // بيانات وهمية - سيتم استبدالها بالبيانات الحقيقية من API
+    // جلب البيانات الحقيقية من API
     setState(() {
-      _personnelData = {
-        'id': widget.personnelId,
-        'name': widget.personnelName,
-        'military_id': '1001',
-        'national_id': '12345678901234',
-        'rank': 'جندي',
-        'unit': 'عهد الرجال 1',
-        'state': 'ولاية الخرطوم',
-        'locality': 'محلية شرق النيل',
-        'status': 'نشط',
-        'phone': '0912345678',
-        'emergency_contact': '0918765432',
-        'health_status': 'جيدة',
-        'weapon_type': 'AK-47',
-        'ammunition_count': 120,
-      };
+      _isLoading = true;
+      _errorMessage = '';
     });
+
+    PersonnelService.getPersonnelById(widget.personnelId.toString())
+        .then((data) {
+          setState(() {
+            // PersonnelService.getPersonnelById returns a Map on success, so `data` is non-null.
+            // Remove redundant null-coalescing to satisfy the static analyzer.
+            _personnelData = Map<String, dynamic>.from(data);
+            _isLoading = false;
+          });
+        })
+        .catchError((e) {
+          setState(() {
+            _errorMessage = e.toString();
+            _isLoading = false;
+          });
+        });
   }
 
   @override
@@ -57,12 +67,57 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _saveUpdates,
+            icon: _isSaving
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Icon(Icons.save),
+            onPressed: _isSaving ? null : _saveUpdates,
           ),
         ],
       ),
-      body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
+      body: _isLoading
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 12),
+                  Text('جاري جلب بيانات المستنفر...'),
+                ],
+              ),
+            )
+          : _errorMessage.isNotEmpty
+          ? Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'خطأ في تحميل البيانات',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(_errorMessage, textAlign: TextAlign.center),
+                    SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: _loadPersonnelData,
+                      child: Text('إعادة المحاولة'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : (isWeb ? _buildWebLayout(context) : _buildMobileLayout(context)),
     );
   }
 
@@ -119,23 +174,51 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildStatItem('الحالة', _personnelData['status'] ?? 'غير محدد', Icons.person, Colors.blue),
-            _buildStatItem('الرتبة', _personnelData['rank'] ?? 'غير محدد', Icons.security, Colors.green),
-            _buildStatItem('الوحدة', _personnelData['unit'] ?? 'غير محدد', Icons.group, Colors.orange),
-            _buildStatItem('السلاح', _personnelData['weapon_type'] ?? 'غير محدد', Icons.settings, Colors.red),
+            _buildStatItem(
+              'الحالة',
+              _personnelData['status'] ?? 'غير محدد',
+              Icons.person,
+              Colors.blue,
+            ),
+            _buildStatItem(
+              'الرتبة',
+              _personnelData['rank'] ?? 'غير محدد',
+              Icons.security,
+              Colors.green,
+            ),
+            _buildStatItem(
+              'الوحدة',
+              _personnelData['unit'] ?? 'غير محدد',
+              Icons.group,
+              Colors.orange,
+            ),
+            _buildStatItem(
+              'السلاح',
+              _personnelData['weapon_type'] ?? 'غير محدد',
+              Icons.settings,
+              Colors.red,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatItem(String title, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Icon(icon, size: 30, color: color),
         SizedBox(height: 8),
         Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
@@ -146,20 +229,56 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('تحديث المعلومات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'تحديث المعلومات',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             Form(
               key: _formKey,
               child: Column(
                 children: [
-                  _buildFormField('الحالة', 'status', ['نشط', 'غير نشط', 'مريض', 'إجازة']),
-                  _buildFormField('الرتبة', 'rank', ['جندي', 'عريف', 'رقيب', 'مساعد', 'ملازم']),
-                  _buildFormField('الوحدة', 'unit', ['عهد الرجال 1', 'عهد الرجال 2', 'عهد الرجال 3']),
-                  _buildFormField('نوع السلاح', 'weapon_type', ['AK-47', 'قناصة', 'رشاش', 'مسدس']),
+                  _buildFormField('الحالة', 'status', [
+                    'نشط',
+                    'غير نشط',
+                    'مريض',
+                    'إجازة',
+                  ]),
+                  _buildFormField('الرتبة', 'rank', [
+                    'جندي',
+                    'عريف',
+                    'رقيب',
+                    'مساعد',
+                    'ملازم',
+                  ]),
+                  _buildFormField('الوحدة', 'unit', [
+                    'عهد الرجال 1',
+                    'عهد الرجال 2',
+                    'عهد الرجال 3',
+                  ]),
+                  _buildFormField('نوع السلاح', 'weapon_type', [
+                    'AK-47',
+                    'قناصة',
+                    'رشاش',
+                    'مسدس',
+                  ]),
                   _buildNumberField('كمية الذخيرة', 'ammunition_count'),
-                  _buildTextFormField('رقم الهاتف', 'phone', TextInputType.phone),
-                  _buildTextFormField('رقم الطوارئ', 'emergency_contact', TextInputType.phone),
-                  _buildFormField('الحالة الصحية', 'health_status', ['جيدة', 'متوسطة', 'سيئة', 'بحاجة رعاية']),
+                  _buildTextFormField(
+                    'رقم الهاتف',
+                    'phone',
+                    TextInputType.phone,
+                  ),
+                  _buildTextFormField(
+                    'رقم الطوارئ',
+                    'emergency_contact',
+                    TextInputType.phone,
+                  ),
+                  _buildFormField('الحالة الصحية', 'health_status', [
+                    'جيدة',
+                    'متوسطة',
+                    'سيئة',
+                    'بحاجة رعاية',
+                  ]),
                 ],
               ),
             ),
@@ -177,8 +296,17 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
         child: Column(
           children: [
             _buildTextFormField('رقم الهاتف', 'phone', TextInputType.phone),
-            _buildTextFormField('رقم الطوارئ', 'emergency_contact', TextInputType.phone),
-            _buildFormField('الحالة الاجتماعية', 'marital_status', ['أعزب', 'متزوج', 'مطلق', 'أرمل']),
+            _buildTextFormField(
+              'رقم الطوارئ',
+              'emergency_contact',
+              TextInputType.phone,
+            ),
+            _buildFormField('الحالة الاجتماعية', 'marital_status', [
+              'أعزب',
+              'متزوج',
+              'مطلق',
+              'أرمل',
+            ]),
           ],
         ),
       ),
@@ -190,10 +318,30 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
       padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildFormField('الحالة', 'status', ['نشط', 'غير نشط', 'مريض', 'إجازة']),
-          _buildFormField('الرتبة', 'rank', ['جندي', 'عريف', 'رقيب', 'مساعد', 'ملازم']),
-          _buildFormField('الوحدة', 'unit', ['عهد الرجال 1', 'عهد الرجال 2', 'عهد الرجال 3']),
-          _buildFormField('نوع السلاح', 'weapon_type', ['AK-47', 'قناصة', 'رشاش', 'مسدس']),
+          _buildFormField('الحالة', 'status', [
+            'نشط',
+            'غير نشط',
+            'مريض',
+            'إجازة',
+          ]),
+          _buildFormField('الرتبة', 'rank', [
+            'جندي',
+            'عريف',
+            'رقيب',
+            'مساعد',
+            'ملازم',
+          ]),
+          _buildFormField('الوحدة', 'unit', [
+            'عهد الرجال 1',
+            'عهد الرجال 2',
+            'عهد الرجال 3',
+          ]),
+          _buildFormField('نوع السلاح', 'weapon_type', [
+            'AK-47',
+            'قناصة',
+            'رشاش',
+            'مسدس',
+          ]),
           _buildNumberField('كمية الذخيرة', 'ammunition_count'),
         ],
       ),
@@ -205,9 +353,21 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
       padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildFormField('الولاية', 'state', ['ولاية الخرطوم', 'ولاية الجزيرة', 'ولاية كردفان']),
-          _buildFormField('المحلية', 'locality', ['محلية شرق النيل', 'محلية غرب النيل', 'محلية الخرطوم']),
-          _buildTextFormField('الوحدة الإدارية', 'administrative_unit', TextInputType.text),
+          _buildFormField('الولاية', 'state', [
+            'ولاية الخرطوم',
+            'ولاية الجزيرة',
+            'ولاية كردفان',
+          ]),
+          _buildFormField('المحلية', 'locality', [
+            'محلية شرق النيل',
+            'محلية غرب النيل',
+            'محلية الخرطوم',
+          ]),
+          _buildTextFormField(
+            'الوحدة الإدارية',
+            'administrative_unit',
+            TextInputType.text,
+          ),
         ],
       ),
     );
@@ -218,10 +378,23 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
       padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildFormField('الحالة الصحية', 'health_status', ['جيدة', 'متوسطة', 'سيئة', 'بحاجة رعاية']),
-          _buildTextFormField('الأمراض المزمنة', 'chronic_diseases', TextInputType.text),
+          _buildFormField('الحالة الصحية', 'health_status', [
+            'جيدة',
+            'متوسطة',
+            'سيئة',
+            'بحاجة رعاية',
+          ]),
+          _buildTextFormField(
+            'الأمراض المزمنة',
+            'chronic_diseases',
+            TextInputType.text,
+          ),
           _buildTextFormField('الحساسيات', 'allergies', TextInputType.text),
-          _buildTextFormField('ملاحظات طبية', 'medical_notes', TextInputType.multiline),
+          _buildTextFormField(
+            'ملاحظات طبية',
+            'medical_notes',
+            TextInputType.multiline,
+          ),
         ],
       ),
     );
@@ -237,10 +410,7 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
           border: OutlineInputBorder(),
         ),
         items: options.map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
+          return DropdownMenuItem<String>(value: value, child: Text(value));
         }).toList(),
         onChanged: (value) {
           setState(() {
@@ -251,7 +421,12 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
     );
   }
 
-  Widget _buildTextFormField(String label, String field, TextInputType keyboardType, {int maxLines = 1}) {
+  Widget _buildTextFormField(
+    String label,
+    String field,
+    TextInputType keyboardType, {
+    int maxLines = 1,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16),
       child: TextFormField(
@@ -322,10 +497,40 @@ class _PersonnelUpdateScreenState extends State<PersonnelUpdateScreen> {
   }
 
   void _saveUpdates() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // هنا سيتم حفظ البيانات في API
-      _showSuccessDialog();
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    // بناء جسم البيانات الذي سيتم إرساله
+    final body = Map<String, dynamic>.from(_personnelData);
+
+    PersonnelService.updatePersonnel(widget.personnelId.toString(), body)
+        .then((resp) {
+          setState(() {
+            _isSaving = false;
+          });
+          _showSuccessDialog();
+        })
+        .catchError((e) {
+          setState(() {
+            _isSaving = false;
+          });
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: Text('فشل الحفظ'),
+              content: Text(e.toString()),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('موافق'),
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   void _showSuccessDialog() {

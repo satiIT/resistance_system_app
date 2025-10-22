@@ -1,238 +1,148 @@
-// lib/presentation/pages/personnel/personnel_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'package:resistance_system_app/presentation/pages/personnel/personnel_movements_screen.dart';
-import 'package:resistance_system_app/presentation/pages/personnel/personnel_training_screen.dart';
 import 'package:universal_platform/universal_platform.dart';
-import '../../../core/responsive/responsive_layout.dart';
-import 'package:resistance_system_app/presentation/pages/personnel/personnel_update_screen.dart';
-import 'package:resistance_system_app/presentation/pages/personnel/personnel_equipment_screen.dart';
-import 'package:resistance_system_app/presentation/pages/personnel/personnel_entitlements_screen.dart';
-import 'package:resistance_system_app/presentation/pages/personnel/personnel_reports_screen.dart';
 
-class PersonnelDetailScreen extends StatelessWidget {
+import '../../../core/responsive/responsive_layout.dart';
+import '../../../core/services/personnel_service.dart';
+import 'personnel_update_screen.dart';
+import 'personnel_training_screen.dart';
+import 'personnel_movements_screen.dart';
+import 'personnel_equipment_screen.dart';
+import 'personnel_entitlements_screen.dart';
+import 'personnel_reports_screen.dart';
+
+class PersonnelDetailScreen extends StatefulWidget {
   final int personnelId;
 
   const PersonnelDetailScreen({Key? key, required this.personnelId})
     : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final bool isWeb = UniversalPlatform.isWeb;
-    // ignore: unused_local_variable
-    final bool isMobile = ResponsiveLayout.isMobile(context);
+  _PersonnelDetailScreenState createState() => _PersonnelDetailScreenState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('تفاصيل المستنفر'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () => _editPersonnel(context),
-          ),
-          IconButton(
-            icon: Icon(Icons.share),
-            onPressed: () => _sharePersonnel(context),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: isWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
-      ),
-    );
+class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
+  Map<String, dynamic> _personnelDetails = {};
+  bool _isLoading = true;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPersonnelDetails();
   }
 
-  Widget _buildWebLayout(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // لوحة التنقل السريع - Sidebar ثابت
-            _buildQuickActionsPanel(context),
-            // المحتوى الرئيسي مع Scroll
-            Expanded(
-              child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(16),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildPersonnelHeader(context),
-                      SizedBox(height: 20),
-                      _buildInfoTabs(context),
-                      SizedBox(height: 20), // مساحة إضافية في الأسفل
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  Future<void> _loadPersonnelDetails() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // PersonnelService expects an id as String in this project; convert.
+      final result = await PersonnelService.getPersonnelById(
+        widget.personnelId.toString(),
+      );
+      setState(() {
+        _personnelDetails = Map<String, dynamic>.from(result ?? {});
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
-    return SingleChildScrollView(
-      physics: AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.all(12),
-      child: Column(
-        children: [
-          _buildPersonnelHeader(context),
-          SizedBox(height: 16),
-          _buildQuickActionsGrid(context), // شبكة أزرار سريعة للموبايل
-          SizedBox(height: 16),
-          _buildInfoTabs(context),
-          SizedBox(height: 20),
-        ],
-      ),
-    );
+  String _getField(String key) {
+    final v = _personnelDetails[key];
+    if (v == null) return 'غير محدد';
+    return v.toString();
   }
 
-  Widget _buildQuickActionsPanel(BuildContext context) {
-    return Container(
-      width: 220, // عرض ثابت للـ Sidebar
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        border: Border(right: BorderSide(color: Colors.grey[300]!, width: 1)),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 0)),
-        ],
+  String _fullName() {
+    final parts =
+        [
+              _personnelDetails['first_name'],
+              _personnelDetails['second_name'],
+              _personnelDetails['third_name'],
+              _personnelDetails['fourth_name'],
+            ]
+            .where((p) => p != null && p.toString().trim().isNotEmpty)
+            .map((e) => e.toString())
+            .toList();
+    if (parts.isEmpty) return 'غير معروف';
+    return parts.join(' ');
+  }
+
+  void _editPersonnel() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelUpdateScreen(
+          personnelId: widget.personnelId,
+          personnelName: _fullName(),
+        ),
       ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // رأس الـ Sidebar
-              Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Row(
-                  children: [
-                    Icon(Icons.dashboard, color: Colors.blue, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'الإجراءات السريعة',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    ).then((_) => _loadPersonnelDetails());
+  }
 
-              // قائمة الأزرار
-              _buildActionButton(
-                'تحديث البيانات',
-                Icons.update,
-                Colors.blue,
-                () => _editPersonnel(context),
-              ),
-              _buildActionButton(
-                'السجل التدريبي',
-                Icons.school,
-                Colors.green,
-                () => _showTrainingHistory(context),
-              ),
-              _buildActionButton(
-                'التحركات',
-                Icons.directions,
-                Colors.orange,
-                () => _showMovements(context),
-              ),
-              _buildActionButton(
-                'الاستحقاقات',
-                Icons.attach_money,
-                Colors.purple,
-                () => _showEntitlements(context),
-              ),
-              _buildActionButton(
-                'المعدات',
-                Icons.security,
-                Colors.red,
-                () => _showEquipment(context),
-              ),
-              _buildActionButton(
-                'التقارير',
-                Icons.assessment,
-                Colors.teal,
-                () => _showReports(context),
-              ),
-
-              // فاصل
-              Divider(height: 30, thickness: 1),
-
-              // معلومات سريعة
-              _buildQuickInfoSection(),
-            ],
-          ),
+  void _showTrainingHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelTrainingScreen(
+          personnelId: widget.personnelId,
+          personnelName: _fullName(),
         ),
       ),
     );
   }
 
-  Widget _buildQuickActionsGrid(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Text(
-              'الإجراءات السريعة',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildMobileActionButton(
-                  'تحديث البيانات',
-                  Icons.update,
-                  Colors.blue,
-                  () => _editPersonnel(context),
-                ),
-                _buildMobileActionButton(
-                  'التدريب',
-                  Icons.school,
-                  Colors.green,
-                  () => _showTrainingHistory(context),
-                ),
-                _buildMobileActionButton(
-                  'التحركات',
-                  Icons.directions,
-                  Colors.orange,
-                  () => _showMovements(context),
-                ),
-                _buildMobileActionButton(
-                  'الاستحقاقات',
-                  Icons.attach_money,
-                  Colors.purple,
-                  () => _showEntitlements(context),
-                ),
-                _buildMobileActionButton(
-                  'المعدات',
-                  Icons.security,
-                  Colors.red,
-                  () => _showEquipment(context),
-                ),
-                _buildMobileActionButton(
-                  'التقارير',
-                  Icons.assessment,
-                  Colors.teal,
-                  () => _showReports(context),
-                ),
-              ],
-            ),
-          ],
+  void _showMovements() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelMovementsScreen(
+          personnelId: widget.personnelId,
+          personnelName: _fullName(),
+        ),
+      ),
+    );
+  }
+
+  void _showEntitlements() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelEntitlementsScreen(
+          personnelId: widget.personnelId,
+          personnelName: _fullName(),
+        ),
+      ),
+    );
+  }
+
+  void _showEquipment() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelEquipmentScreen(
+          personnelId: widget.personnelId,
+          personnelName: _fullName(),
+        ),
+      ),
+    );
+  }
+
+  void _showReports() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonnelReportsScreen(
+          personnelId: widget.personnelId,
+          personnelName: _fullName(),
         ),
       ),
     );
@@ -302,6 +212,146 @@ class PersonnelDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildQuickActionsPanel() {
+    return Container(
+      width: 220,
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        border: Border(right: BorderSide(color: Colors.grey[300]!, width: 1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 0)),
+        ],
+      ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.dashboard, color: Colors.blue, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'الإجراءات السريعة',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              _buildActionButton(
+                'تحديث البيانات',
+                Icons.update,
+                Colors.blue,
+                _editPersonnel,
+              ),
+              _buildActionButton(
+                'السجل التدريبي',
+                Icons.school,
+                Colors.green,
+                _showTrainingHistory,
+              ),
+              _buildActionButton(
+                'التحركات',
+                Icons.directions,
+                Colors.orange,
+                _showMovements,
+              ),
+              _buildActionButton(
+                'الاستحقاقات',
+                Icons.attach_money,
+                Colors.purple,
+                _showEntitlements,
+              ),
+              _buildActionButton(
+                'المعدات',
+                Icons.security,
+                Colors.red,
+                _showEquipment,
+              ),
+              _buildActionButton(
+                'التقارير',
+                Icons.assessment,
+                Colors.teal,
+                _showReports,
+              ),
+
+              Divider(height: 30, thickness: 1),
+              _buildQuickInfoSection(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsGrid() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Text(
+              'الإجراءات السريعة',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildMobileActionButton(
+                  'تحديث البيانات',
+                  Icons.update,
+                  Colors.blue,
+                  _editPersonnel,
+                ),
+                _buildMobileActionButton(
+                  'التدريب',
+                  Icons.school,
+                  Colors.green,
+                  _showTrainingHistory,
+                ),
+                _buildMobileActionButton(
+                  'التحركات',
+                  Icons.directions,
+                  Colors.orange,
+                  _showMovements,
+                ),
+                _buildMobileActionButton(
+                  'الاستحقاقات',
+                  Icons.attach_money,
+                  Colors.purple,
+                  _showEntitlements,
+                ),
+                _buildMobileActionButton(
+                  'المعدات',
+                  Icons.security,
+                  Colors.red,
+                  _showEquipment,
+                ),
+                _buildMobileActionButton(
+                  'التقارير',
+                  Icons.assessment,
+                  Colors.teal,
+                  _showReports,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickInfoSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,10 +365,10 @@ class PersonnelDetailScreen extends StatelessWidget {
           ),
         ),
         SizedBox(height: 12),
-        _buildQuickInfoItem('الحالة', 'نشط', Colors.green),
-        _buildQuickInfoItem('الرتبة', 'جندي', Colors.blue),
-        _buildQuickInfoItem('الوحدة', 'عهد الرجال 1', Colors.orange),
-        _buildQuickInfoItem('آخر تحديث', '2024-03-20', Colors.grey),
+        _buildQuickInfoItem('الحالة', _getField('status'), Colors.green),
+        _buildQuickInfoItem('الرتبة', _getField('rank'), Colors.blue),
+        _buildQuickInfoItem('الوحدة', _getField('unit'), Colors.orange),
+        _buildQuickInfoItem('آخر تحديث', _getField('updated_at'), Colors.grey),
       ],
     );
   }
@@ -351,7 +401,10 @@ class PersonnelDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPersonnelHeader(BuildContext context) {
+  Widget _buildPersonnelHeader() {
+    final idText = widget.personnelId.toString();
+    final name = _fullName();
+    final status = _getField('status');
     return Card(
       elevation: 2,
       child: Padding(
@@ -362,7 +415,7 @@ class PersonnelDetailScreen extends StatelessWidget {
               radius: 35,
               backgroundColor: Colors.blue,
               child: Text(
-                '1001',
+                idText,
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -376,18 +429,26 @@ class PersonnelDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'أحمد محمد أحمد',
+                    name,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4),
-                  Text('الرقم العسكري: 1001', style: TextStyle(fontSize: 13)),
                   Text(
-                    'الرقم الوطني: 12345678901234',
+                    'الرقم العسكري: ${_getField('military_id')}',
                     style: TextStyle(fontSize: 13),
                   ),
                   Text(
-                    'الحالة: نشط',
-                    style: TextStyle(color: Colors.green, fontSize: 13),
+                    'الرقم الوطني: ${_getField('national_id')}',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  Text(
+                    'الحالة: $status',
+                    style: TextStyle(
+                      color: status.toLowerCase().contains('نشط')
+                          ? Colors.green
+                          : Colors.orange,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -395,12 +456,18 @@ class PersonnelDetailScreen extends StatelessWidget {
             Column(
               children: [
                 Chip(
-                  label: Text('جندي', style: TextStyle(fontSize: 11)),
+                  label: Text(
+                    _getField('rank'),
+                    style: TextStyle(fontSize: 11),
+                  ),
                   backgroundColor: Colors.blue[100],
                 ),
                 SizedBox(height: 4),
                 Chip(
-                  label: Text('عهد الرجال 1', style: TextStyle(fontSize: 11)),
+                  label: Text(
+                    _getField('unit'),
+                    style: TextStyle(fontSize: 11),
+                  ),
                   backgroundColor: Colors.green[100],
                 ),
               ],
@@ -411,7 +478,7 @@ class PersonnelDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTabs(BuildContext context) {
+  Widget _buildInfoTabs() {
     return Card(
       elevation: 2,
       child: Padding(
@@ -451,7 +518,10 @@ class PersonnelDetailScreen extends StatelessWidget {
               ),
               SizedBox(height: 16),
               SizedBox(
-                height: math.min(400, MediaQuery.of(context).size.height * 0.5),
+                height: math.min(
+                  400,
+                  MediaQuery.of(context).size.height * 0.55,
+                ),
                 child: TabBarView(
                   children: [
                     _wrapTabWithScrollbar(_buildBasicInfoTab()),
@@ -477,13 +547,13 @@ class PersonnelDetailScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.all(8),
       children: [
-        _buildInfoRow('الاسم الرباعي', 'أحمد محمد أحمد علي'),
-        _buildInfoRow('تاريخ الميلاد', '1985-05-15'),
-        _buildInfoRow('الجنس', 'ذكر'),
-        _buildInfoRow('الحالة الاجتماعية', 'متزوج'),
-        _buildInfoRow('المستوى التعليمي', 'جامعي'),
-        _buildInfoRow('المهنة', 'مهندس'),
-        _buildInfoRow('المهارات', 'قيادة، اتصالات، إسعافات أولية'),
+        _buildInfoRow('الاسم الرباعي', _fullName()),
+        _buildInfoRow('تاريخ الميلاد', _getField('birth_date')),
+        _buildInfoRow('الجنس', _getField('gender')),
+        _buildInfoRow('الحالة الاجتماعية', _getField('marital_status')),
+        _buildInfoRow('المستوى التعليمي', _getField('education_level')),
+        _buildInfoRow('المهنة', _getField('occupation')),
+        _buildInfoRow('المهارات', _getField('skills')),
       ],
     );
   }
@@ -492,13 +562,13 @@ class PersonnelDetailScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.all(8),
       children: [
-        _buildInfoRow('الولاية', 'ولاية الخرطوم'),
-        _buildInfoRow('المحلية', 'محلية شرق النيل'),
-        _buildInfoRow('الوحدة الإدارية', 'الوحدة الإدارية 1'),
-        _buildInfoRow('المدينة/القرية', 'الخرطوم'),
-        _buildInfoRow('السكن الحالي', 'حي الصحافة'),
-        _buildInfoRow('السكن قبل الحرب', 'حي الرياض'),
-        _buildInfoRow('الموطن الأصلي', 'الخرطوم'),
+        _buildInfoRow('الولاية', _getField('state')),
+        _buildInfoRow('المحلية', _getField('locality')),
+        _buildInfoRow('الوحدة الإدارية', _getField('administrative_unit')),
+        _buildInfoRow('المدينة/القرية', _getField('city_village')),
+        _buildInfoRow('السكن الحالي', _getField('current_residence')),
+        _buildInfoRow('السكن قبل الحرب', _getField('prewar_residence')),
+        _buildInfoRow('الموطن الأصلي', _getField('place_of_origin')),
       ],
     );
   }
@@ -507,13 +577,13 @@ class PersonnelDetailScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.all(8),
       children: [
-        _buildInfoRow('الرتبة', 'جندي'),
-        _buildInfoRow('الوحدة', 'عهد الرجال 1'),
-        _buildInfoRow('تاريخ الالتحاق', '2024-01-01'),
-        _buildInfoRow('الخلفية العسكرية', 'نعم'),
-        _buildInfoRow('التدريب الأساسي', 'مكتمل'),
-        _buildInfoRow('نوع السلاح', 'AK-47'),
-        _buildInfoRow('تاريخ آخر تدريب', '2024-02-15'),
+        _buildInfoRow('الرتبة', _getField('rank')),
+        _buildInfoRow('الوحدة', _getField('unit')),
+        _buildInfoRow('تاريخ الالتحاق', _getField('enlistment_date')),
+        _buildInfoRow('الخلفية العسكرية', _getField('military_background')),
+        _buildInfoRow('التدريب الأساسي', _getField('basic_training')),
+        _buildInfoRow('نوع السلاح', _getField('weapon_type')),
+        _buildInfoRow('تاريخ آخر تدريب', _getField('last_training_date')),
       ],
     );
   }
@@ -522,13 +592,13 @@ class PersonnelDetailScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.all(8),
       children: [
-        _buildInfoRow('عدد الزوجات', '1'),
-        _buildInfoRow('عدد الأبناء', '3'),
-        _buildInfoRow('عدد المعالين', '2'),
-        _buildInfoRow('اسم الوالدة', 'فاطمة أحمد'),
-        _buildInfoRow('رقم هاتف الوالدة', '0912345678'),
-        _buildInfoRow('أقرب الأقربين', 'محمد أحمد - أخ'),
-        _buildInfoRow('رقم هاتف الأقربين', '0918765432'),
+        _buildInfoRow('عدد الزوجات', _getField('wives_count')),
+        _buildInfoRow('عدد الأبناء', _getField('children_count')),
+        _buildInfoRow('عدد المعالين', _getField('dependents_count')),
+        _buildInfoRow('اسم الوالدة', _getField('mother_full_name')),
+        _buildInfoRow('رقم هاتف الوالدة', _getField('mother_phone')),
+        _buildInfoRow('أقرب الأقربين', _getField('next_of_kin')),
+        _buildInfoRow('رقم هاتف الأقربين', _getField('next_of_kin_phone')),
       ],
     );
   }
@@ -537,12 +607,12 @@ class PersonnelDetailScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.all(8),
       children: [
-        _buildInfoRow('الحالة الصحية', 'جيدة'),
-        _buildInfoRow('الأمراض المزمنة', 'لا يوجد'),
-        _buildInfoRow('الحساسيات', 'لا يوجد'),
-        _buildInfoRow('ملاحظات طبية', 'لا يوجد'),
-        _buildInfoRow('فصيلة الدم', 'O+'),
-        _buildInfoRow('رقم هاتف الطوارئ', '0918765432'),
+        _buildInfoRow('الحالة الصحية', _getField('health_status')),
+        _buildInfoRow('الأمراض المزمنة', _getField('chronic_conditions')),
+        _buildInfoRow('الحساسيات', _getField('allergies')),
+        _buildInfoRow('ملاحظات طبية', _getField('medical_notes')),
+        _buildInfoRow('فصيلة الدم', _getField('blood_type')),
+        _buildInfoRow('رقم هاتف الطوارئ', _getField('emergency_contact_phone')),
       ],
     );
   }
@@ -575,85 +645,117 @@ class PersonnelDetailScreen extends StatelessWidget {
     );
   }
 
-  // navigatorKey removed; use local BuildContext passed into methods instead
+  @override
+  Widget build(BuildContext context) {
+    final bool isWeb = UniversalPlatform.isWeb;
+    final bool isMobile = ResponsiveLayout.isMobile(context);
 
-  void _editPersonnel(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PersonnelUpdateScreen(
-          personnelId: personnelId,
-          personnelName: 'أحمد محمد أحمد',
+    Widget bodyContent;
+    if (_isLoading) {
+      bodyContent = Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('جاري تحميل البيانات...'),
+          ],
         ),
+      );
+    } else if (_errorMessage.isNotEmpty) {
+      bodyContent = Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red),
+            SizedBox(height: 16),
+            Text('حدث خطأ'),
+            SizedBox(height: 8),
+            Text(
+              _errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadPersonnelDetails,
+              child: Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Main content
+      bodyContent = isWeb
+          ? _buildWebLayout(context)
+          : _buildMobileLayout(context);
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('تفاصيل المستنفر'),
+        centerTitle: true,
+        actions: [
+          IconButton(icon: Icon(Icons.edit), onPressed: _editPersonnel),
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () => _showComingSoonDialog('مشاركة بيانات المستنفر'),
+          ),
+        ],
+      ),
+      body: SafeArea(child: bodyContent),
+    );
+  }
+
+  Widget _buildWebLayout(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildQuickActionsPanel(),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.all(16),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPersonnelHeader(),
+                      SizedBox(height: 20),
+                      _buildInfoTabs(),
+                      SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return SingleChildScrollView(
+      physics: AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.all(12),
+      child: Column(
+        children: [
+          _buildPersonnelHeader(),
+          SizedBox(height: 16),
+          _buildQuickActionsGrid(),
+          SizedBox(height: 16),
+          _buildInfoTabs(),
+          SizedBox(height: 20),
+        ],
       ),
     );
   }
 
-  void _sharePersonnel(BuildContext context) {
-    _showComingSoonDialog(context, 'مشاركة بيانات المستنفر');
-  }
-
-  void _showTrainingHistory(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PersonnelTrainingScreen(
-          personnelId: personnelId,
-          personnelName: 'أحمد محمد أحمد',
-        ),
-      ),
-    );
-  }
-
-  void _showMovements(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PersonnelMovementsScreen(
-          personnelId: personnelId,
-          personnelName: 'أحمد محمد أحمد',
-        ),
-      ),
-    );
-  }
-
-  void _showEntitlements(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PersonnelEntitlementsScreen(
-          personnelId: personnelId,
-          personnelName: 'أحمد محمد أحمد',
-        ),
-      ),
-    );
-  }
-
-  void _showEquipment(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PersonnelEquipmentScreen(
-          personnelId: personnelId,
-          personnelName: 'أحمد محمد أحمد',
-        ),
-      ),
-    );
-  }
-
-  void _showReports(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PersonnelReportsScreen(
-          personnelId: personnelId,
-          personnelName: 'أحمد محمد أحمد',
-        ),
-      ),
-    );
-  }
-
-  void _showComingSoonDialog(BuildContext context, String feature) {
+  void _showComingSoonDialog(String feature) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

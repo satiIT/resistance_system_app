@@ -46,6 +46,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   syncfusion_flutter_charts: ^31.1.23
   syncfusion_flutter_maps: ^31.1.23
+  pdf: ^3.10.1
+  printing: ^5.10.6
+  csv: ^5.0.2
 
 dev_dependencies:
   flutter_test:
