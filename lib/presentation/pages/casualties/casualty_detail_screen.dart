@@ -16,6 +16,7 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
   MartyrCompensation? _compensation;
   Map<String, dynamic>? _personnelData;
   bool _isLoading = true;
+  bool _compensationLoading = false;
 
   @override
   void initState() {
@@ -26,9 +27,13 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
   Future<void> _loadAdditionalData() async {
     try {
       if (widget.casualty.isMartyr) {
+        setState(() {
+          _compensationLoading = true;
+        });
         final compensation = await CasualtyApi.getCompensationByCasualtyId(widget.casualty.id!);
         setState(() {
           _compensation = compensation;
+          _compensationLoading = false;
         });
       }
       
@@ -40,6 +45,9 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
       }
     } catch (e) {
       print('Error loading additional data: $e');
+      setState(() {
+        _compensationLoading = false;
+      });
     } finally {
       setState(() {
         _isLoading = false;
@@ -71,6 +79,15 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
         ],
       ),
     );
+  }
+
+  Color _getTypeColor(Casualty casualty) {
+    return casualty.isMartyr ? Colors.red : Colors.orange;
+  }
+
+  String _getIncidentDateFormatted(Casualty casualty) {
+    if (casualty.incidentDate == null) return 'غير محدد';
+    return '${casualty.incidentDate!.year}-${casualty.incidentDate!.month.toString().padLeft(2, '0')}-${casualty.incidentDate!.day.toString().padLeft(2, '0')}';
   }
 
   Widget _buildPersonnelInfoSection() {
@@ -156,19 +173,21 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
               ),
             ),
             SizedBox(height: 12),
-            _buildDetailItem('نوع الاستمارة', widget.casualty.formType),
-            _buildDetailItem('تاريخ الحادث', widget.casualty.incidentDateFormatted, isImportant: true),
+            _buildDetailItem('نوع الاستمارة', widget.casualty.caseType),
+            _buildDetailItem('تاريخ الحادث', _getIncidentDateFormatted(widget.casualty), isImportant: true),
             _buildDetailItem('موقع الحادث', widget.casualty.incidentLocation),
-            _buildDetailItem('رقم إشارة الحالة', widget.casualty.caseSignalNumber),
+            _buildDetailItem('رقم إشارة الحالة', widget.casualty.signalNumber),
             if (widget.casualty.isInjured) ...[
               _buildDetailItem('حالة الإصابة', widget.casualty.injurySeverity),
               _buildDetailItem('المستشفيات', widget.casualty.hospitals),
+              _buildDetailItem('وصف الإصابة', widget.casualty.injuryDescription),
               _buildDetailItem('تاريخ العلاج', widget.casualty.treatmentHistory),
             ],
             if (widget.casualty.isMartyr) ...[
               _buildDetailItem('مكان الدفن', widget.casualty.burialLocation),
               _buildDetailItem('إحداثيات القبر', widget.casualty.graveCoordinates),
             ],
+            _buildDetailItem('ملاحظات', widget.casualty.notes),
           ],
         ),
       ),
@@ -176,7 +195,7 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
   }
 
   Widget _buildCompensationSection() {
-    if (!widget.casualty.isMartyr || _compensation == null) return SizedBox();
+    if (!widget.casualty.isMartyr) return SizedBox();
 
     return Card(
       elevation: 4,
@@ -185,36 +204,73 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'تعويضات الشهيد',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.orange,
-              ),
+            Row(
+              children: [
+                Text(
+                  'تعويضات الشهيد',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+                SizedBox(width: 8),
+                if (_compensationLoading)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
             ),
             SizedBox(height: 12),
-            if (_compensation!.compensationDate != null)
-              _buildDetailItem('تاريخ التعويض', 
-                  '${_compensation!.compensationDate!.year}-${_compensation!.compensationDate!.month.toString().padLeft(2, '0')}-${_compensation!.compensationDate!.day.toString().padLeft(2, '0')}'),
-            if (_compensation!.amount != null)
-              _buildDetailItem('المبلغ', '${_compensation!.amount} جنيه'),
-            if (_compensation!.paymentMethod != null)
-              _buildDetailItem('طريقة الدفع', _compensation!.paymentMethod),
-            if (_compensation!.recipientName != null)
-              _buildDetailItem('المستلم', _compensation!.recipientName),
-            if (_compensation!.payingEntity != null)
-              _buildDetailItem('الجهة الدافعة', _compensation!.payingEntity),
-            if (_compensation!.compensationType != null)
-              _buildDetailItem('نوع التعويض', _compensation!.compensationType),
-            if (_compensation!.paymentReceiptNumber != null)
-              _buildDetailItem('رقم إيصال الدفع', _compensation!.paymentReceiptNumber),
-            if (_compensation!.materialItems != null)
-              _buildDetailItem('المواد العينية', _compensation!.materialItems),
-            if (_compensation!.estimatedValue != null)
-              _buildDetailItem('القيمة المقدرة', '${_compensation!.estimatedValue} جنيه'),
-            if (_compensation!.notes != null)
-              _buildDetailItem('ملاحظات', _compensation!.notes),
+            
+            if (_compensationLoading)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_compensation == null)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(Icons.money_off, size: 48, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text(
+                        'لا توجد بيانات تعويض',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else ...[
+              if (_compensation!.compensationDate != null)
+                _buildDetailItem('تاريخ التعويض', 
+                    '${_compensation!.compensationDate!.year}-${_compensation!.compensationDate!.month.toString().padLeft(2, '0')}-${_compensation!.compensationDate!.day.toString().padLeft(2, '0')}'),
+              if (_compensation!.amount != null)
+                _buildDetailItem('المبلغ', '${_compensation!.amount} جنيه'),
+              if (_compensation!.paymentMethod != null)
+                _buildDetailItem('طريقة الدفع', _compensation!.paymentMethod),
+              if (_compensation!.recipientName != null)
+                _buildDetailItem('المستلم', _compensation!.recipientName),
+              if (_compensation!.payingEntity != null)
+                _buildDetailItem('الجهة الدافعة', _compensation!.payingEntity),
+              if (_compensation!.compensationType != null)
+                _buildDetailItem('نوع التعويض', _compensation!.compensationType),
+              if (_compensation!.paymentReceiptNumber != null)
+                _buildDetailItem('رقم إيصال الدفع', _compensation!.paymentReceiptNumber),
+              if (_compensation!.materialItems != null)
+                _buildDetailItem('المواد العينية', _compensation!.materialItems),
+              if (_compensation!.estimatedValue != null)
+                _buildDetailItem('القيمة المقدرة', '${_compensation!.estimatedValue} جنيه'),
+              if (_compensation!.notes != null)
+                _buildDetailItem('ملاحظات', _compensation!.notes),
+            ],
           ],
         ),
       ),
@@ -247,7 +303,7 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
                           Row(
                             children: [
                               CircleAvatar(
-                                backgroundColor: widget.casualty.typeColor,
+                                backgroundColor: _getTypeColor(widget.casualty),
                                 child: Icon(
                                   widget.casualty.isMartyr ? Icons.flag : Icons.medical_services,
                                   color: Colors.white,
@@ -266,10 +322,10 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
                                       ),
                                     ),
                                     Text(
-                                      widget.casualty.formType,
+                                      widget.casualty.caseType ?? 'غير محدد',
                                       style: TextStyle(
                                         fontSize: 16,
-                                        color: widget.casualty.typeColor,
+                                        color: _getTypeColor(widget.casualty),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

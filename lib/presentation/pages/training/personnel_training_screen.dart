@@ -20,6 +20,7 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
   int _selectedFilter = 0; // 0: جميع السجلات, 1: حاضر فقط, 2: غائب فقط
   bool _isSearching = false;
   bool _isGridView = false; // تبديل بين العرض الشبكي والجدولي
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -30,25 +31,112 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
   void _refreshData() {
     setState(() {
       isLoading = true;
+      _errorMessage = null;
     });
     _loadTrainingData();
   }
 
   Future<void> _loadTrainingData() async {
-    try {
-      final response = await TrainingApi.getTrainingRecords();
-      setState(() {
-        trainingRecords = response;
-        isLoading = false;
-      });
-    } catch (e) {
-      _showErrorSnackBar('خطأ في تحميل البيانات: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
+  try {
+    print('🔄 Loading training data with safe API...');
+    setState(() {
+      isLoading = true;
+      _errorMessage = null;
+    });
 
+    final response = await SafeTrainingApi.getTrainingRecordsSafe();
+    
+    print('📊 Loaded ${response.length} records successfully');
+    
+    setState(() {
+      trainingRecords = response;
+      isLoading = false;
+      _errorMessage = null;
+    });
+    
+  } catch (e, stackTrace) {
+    print('💥 Error in _loadTrainingData: $e');
+    print('📝 Stack trace: $stackTrace');
+    
+    setState(() {
+      isLoading = false;
+      _errorMessage = _getUserFriendlyError(e);
+    });
+    
+    _showErrorSnackBar(_getUserFriendlyError(e));
+  }
+}
+
+String _getUserFriendlyError(dynamic error) {
+  final errorString = error.toString();
+  
+  if (errorString.contains('Failed host lookup')) {
+    return 'تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.';
+  } else if (errorString.contains('Connection refused')) {
+    return 'الخادم غير متاح حالياً. يرجى المحاولة لاحقاً.';
+  } else if (errorString.contains('لا توجد سجلات صالحة')) {
+    return 'لا توجد سجلات تدريب صالحة للعرض';
+  } else if (errorString.contains('خطأ في تحميل البيانات')) {
+    return 'حدث خطأ في تحميل البيانات من الخادم';
+  } else {
+    return 'حدث خطأ غير متوقع: $errorString';
+  }
+}
+void _emergencyRecovery() {
+  setState(() {
+    trainingRecords = [];
+    _errorMessage = null;
+    isLoading = false;
+  });
+  
+  _showErrorSnackBar('تم تفريغ السجلات المؤقتة. يرجى إعادة تحميل البيانات.');
+}
+
+// Update your error widget to include emergency recovery
+Widget _buildErrorWidget() {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.error_outline, size: 80, color: Colors.red),
+        SizedBox(height: 16),
+        Text(
+          'حدث خطأ في تحميل البيانات',
+          style: TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 8),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 32),
+          child: Text(
+            _errorMessage!,
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: _refreshData,
+          icon: Icon(Icons.refresh),
+          label: Text('إعادة المحاولة'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+        ),
+        SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: _emergencyRecovery,
+          icon: Icon(Icons.cleaning_services),
+          label: Text('تفريغ السجلات المؤقتة'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.orange,
+          ),
+        ),
+      ],
+    ),
+  );
+}
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -93,125 +181,126 @@ class _PersonnelTrainingScreenState extends State<PersonnelTrainingScreen> {
 
     return filtered;
   }
+
   // دالة لمعالجة القيم الفارغة والغير محددة
-String _handleNullValue(String? value, {String defaultValue = 'غير محدد'}) {
-  if (value == null || value.isEmpty || value == 'null' || value == 'NULL') {
-    return defaultValue;
+  String _handleNullValue(String? value, {String defaultValue = 'غير محدد'}) {
+    if (value == null || value.isEmpty || value == 'null' || value == 'NULL') {
+      return defaultValue;
+    }
+    return value;
   }
-  return value;
-}
 
-// دالة لمعالجة القيم الرقمية الفارغة
-String _handleNullNumber(int? value, {String defaultValue = '--'}) {
-  if (value == null) {
-    return defaultValue;
+  // دالة لمعالجة القيم الرقمية الفارغة
+  String _handleNullNumber(int? value, {String defaultValue = '--'}) {
+    if (value == null) {
+      return defaultValue;
+    }
+    return value.toString();
   }
-  return value.toString();
-}
 
-// دالة لمعالجة التواريخ الفارغة
-String _handleNullDate(String? date, {String defaultValue = 'غير محدد'}) {
-  if (date == null || date.isEmpty || date == 'null') {
-    return defaultValue;
+  // دالة لمعالجة التواريخ الفارغة
+  String _handleNullDate(String? date, {String defaultValue = 'غير محدد'}) {
+    if (date == null || date.isEmpty || date == 'null') {
+      return defaultValue;
+    }
+    try {
+      // محاولة تنسيق التاريخ إذا كان صالحاً
+      return date.substring(0, 10); // عرض أول 10 خانات فقط (YYYY-MM-DD)
+    } catch (e) {
+      return defaultValue;
+    }
   }
-  try {
-    // محاولة تنسيق التاريخ إذا كان صالحاً
-    return date.substring(0, 10); // عرض أول 10 خانات فقط (YYYY-MM-DD)
-  } catch (e) {
-    return defaultValue;
-  }
-}
 
   Widget _buildTrainingCard(TrainingRecord record) {
-  return Card(
-    elevation: 3,
-    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: Container(
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(
-            color: _getStatusColor(record.attendanceStatus),
-            width: 6,
+    return Card(
+      elevation: 3,
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: _getStatusColor(record.attendanceStatus),
+              width: 6,
+            ),
           ),
         ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _handleNullValue(record.personnelName, defaultValue: 'لا يوجد اسم'),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[800],
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _handleNullValue(record.personnelName, defaultValue: 'لا يوجد اسم'),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[800],
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        _handleNullValue(record.militaryNumber, defaultValue: 'لا يوجد رقم'),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          fontFamily: 'monospace',
+                        SizedBox(height: 4),
+                        Text(
+                          _handleNullValue(record.militaryNumber, defaultValue: 'لا يوجد رقم'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            fontFamily: 'monospace',
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                _buildStatusBadge(record.attendanceStatus),
-              ],
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Course Info
-            _buildInfoRow(
-              Icons.school,
-              'الدورة التدريبية',
-              _handleNullValue(record.courseName, defaultValue: 'لا توجد دورة'),
-            ),
-            
-            SizedBox(height: 8),
-            
-            // Training Type
-            _buildInfoRow(
-              Icons.category,
-              'نوع التدريب',
-              _handleNullValue(record.priorTrainingType, defaultValue: 'غير محدد'),
-            ),
-            
-            SizedBox(height: 8),
-            
-            // Evaluation
-            Row(
-              children: [
-                Icon(Icons.star, size: 18, color: Colors.orange),
-                SizedBox(width: 8),
-                Text(
-                  'التقييم: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SizedBox(width: 4),
-                _buildEvaluationWidget(record.evaluationScore),
-              ],
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Actions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  _buildStatusBadge(record.attendanceStatus),
+                ],
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Course Info
+              _buildInfoRow(
+                Icons.school,
+                'الدورة التدريبية',
+                _handleNullValue(record.courseName, defaultValue: 'لا توجد دورة'),
+              ),
+              
+              SizedBox(height: 8),
+              
+              // Training Type
+              _buildInfoRow(
+                Icons.category,
+                'نوع التدريب',
+                _handleNullValue(record.priorTrainingType, defaultValue: 'غير محدد'),
+              ),
+              
+              SizedBox(height: 8),
+              
+              // Evaluation
+              Row(
+                children: [
+                  Icon(Icons.star, size: 18, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text(
+                    'التقييم: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 4),
+                  _buildEvaluationWidget(record.evaluationScore),
+                ],
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'سجل التدريب',
@@ -250,124 +339,126 @@ String _handleNullDate(String? date, {String defaultValue = 'غير محدد'}) 
       ),
     );
   }
+
   Widget _buildGridItem(TrainingRecord record) {
-  return Card(
-    elevation: 4,
-    margin: EdgeInsets.all(8),
-    child: InkWell(
-      onTap: () => _viewTrainingDetails(record),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _getStatusColor(record.attendanceStatus).withOpacity(0.1),
-              Colors.white,
-            ],
+    return Card(
+      elevation: 4,
+      margin: EdgeInsets.all(8),
+      child: InkWell(
+        onTap: () => _viewTrainingDetails(record),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                _getStatusColor(record.attendanceStatus).withOpacity(0.1),
+                Colors.white,
+              ],
+            ),
           ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Status Badge
-              Align(
-                alignment: Alignment.topLeft,
-                child: _buildStatusChip(record.attendanceStatus),
-              ),
-              
-              SizedBox(height: 12),
-              
-              // Name and Military Number
-              Center(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      radius: 24,
-                      child: Text(
-                        _handleNullValue(record.personnelName)?.substring(0, 1) ?? '?',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Status Badge
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: _buildStatusChip(record.attendanceStatus),
+                ),
+                
+                SizedBox(height: 12),
+                
+                // Name and Military Number
+                Center(
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.blue,
+                        radius: 24,
+                        child: Text(
+                          _handleNullValue(record.personnelName)?.substring(0, 1) ?? '?',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      _handleNullValue(record.personnelName, defaultValue: 'لا يوجد اسم'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                      SizedBox(height: 8),
+                      Text(
+                        _handleNullValue(record.personnelName, defaultValue: 'لا يوجد اسم'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      _handleNullValue(record.militaryNumber, defaultValue: 'لا يوجد رقم'),
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                        fontFamily: 'monospace',
+                      SizedBox(height: 4),
+                      Text(
+                        _handleNullValue(record.militaryNumber, defaultValue: 'لا يوجد رقم'),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+                
+                SizedBox(height: 16),
+                
+                // Course Info
+                _buildGridInfoRow(
+                  Icons.school, 
+                  _handleNullValue(record.courseName, defaultValue: 'لا توجد دورة')
+                ),
+                
+                SizedBox(height: 8),
+                
+                // Training Type
+                _buildGridInfoRow(
+                  Icons.category, 
+                  _handleNullValue(record.priorTrainingType, defaultValue: 'غير محدد')
+                ),
+                
+                SizedBox(height: 8),
+                
+                // Evaluation
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildEvaluationWidget(record.evaluationScore),
                   ],
                 ),
-              ),
-              
-              SizedBox(height: 16),
-              
-              // Course Info
-              _buildGridInfoRow(
-                Icons.school, 
-                _handleNullValue(record.courseName, defaultValue: 'لا توجد دورة')
-              ),
-              
-              SizedBox(height: 8),
-              
-              // Training Type
-              _buildGridInfoRow(
-                Icons.category, 
-                _handleNullValue(record.priorTrainingType, defaultValue: 'غير محدد')
-              ),
-              
-              SizedBox(height: 8),
-              
-              // Evaluation
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildEvaluationWidget(record.evaluationScore),
-                ],
-              ),
-              
-              SizedBox(height: 12),
-              
-              // Quick Actions
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildActionButton(Icons.visibility, Colors.blue, 
-                      () => _viewTrainingDetails(record)),
-                  _buildActionButton(Icons.edit, Colors.orange, 
-                      () => _editTrainingRecord(record)),
-                  _buildActionButton(Icons.delete, Colors.red, 
-                      () => _showDeleteDialog(record)),
-                ],
-              ),
-            ],
+                
+                SizedBox(height: 12),
+                
+                // Quick Actions
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildActionButton(Icons.visibility, Colors.blue, 
+                        () => _viewTrainingDetails(record)),
+                    _buildActionButton(Icons.edit, Colors.orange, 
+                        () => _editTrainingRecord(record)),
+                    _buildActionButton(Icons.delete, Colors.red, 
+                        () => _showDeleteDialog(record)),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _buildActionButton(IconData icon, Color color, VoidCallback onPressed) {
     return CircleAvatar(
       backgroundColor: color.withOpacity(0.1),
@@ -418,134 +509,136 @@ String _handleNullDate(String? date, {String defaultValue = 'غير محدد'}) 
   }
 
   Widget _buildStatusBadge(String? status) {
-  // استخدام الدالة المساعدة للتعامل مع الحالة الفارغة
-  final statusValue = _handleNullValue(status, defaultValue: 'غير محدد');
-  final statusInfo = _getStatusInfo(statusValue);
-  
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: statusInfo['color'],
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: statusInfo['color'].withOpacity(0.3),
-          blurRadius: 4,
-          offset: Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          _getStatusIcon(statusValue),
-          color: Colors.white,
-          size: 14,
-        ),
-        SizedBox(width: 4),
-        Text(
-          statusInfo['text'],
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildStatusChip(String? status) {
-  final statusValue = _handleNullValue(status, defaultValue: 'غير محدد');
-  final statusInfo = _getStatusInfo(statusValue);
-  
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: statusInfo['color'],
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Text(
-      statusInfo['text'],
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 10,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  );
-}
- Widget _buildEvaluationWidget(int? score) {
-  // استخدام الدالة المساعدة للتعامل مع القيم الفارغة
-  final scoreValue = _handleNullNumber(score, defaultValue: '--');
-
-  if (scoreValue == '--') {
+    // استخدام الدالة المساعدة للتعامل مع الحالة الفارغة
+    final statusValue = _handleNullValue(status, defaultValue: 'غير محدد');
+    final statusInfo = _getStatusInfo(statusValue);
+    
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        scoreValue,
-        style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  // تحويل النص إلى رقم للتقييم
-  final numericScore = int.tryParse(scoreValue) ?? 0;
-  
-  Color scoreColor = Colors.red;
-  String evaluationText = 'ضعيف';
-  
-  if (numericScore >= 90) {
-    scoreColor = Colors.green;
-    evaluationText = 'ممتاز';
-  } else if (numericScore >= 80) {
-    scoreColor = Colors.green;
-    evaluationText = 'جيد جداً';
-  } else if (numericScore >= 70) {
-    scoreColor = Colors.blue;
-    evaluationText = 'جيد';
-  } else if (numericScore >= 60) {
-    scoreColor = Colors.orange;
-    evaluationText = 'مقبول';
-  }
-
-  return Tooltip(
-    message: '$evaluationText ($numericScore)',
-    child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: scoreColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scoreColor, width: 1.5),
+        color: statusInfo['color'],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: statusInfo['color'].withOpacity(0.3),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.star,
-            color: scoreColor,
+            _getStatusIcon(statusValue),
+            color: Colors.white,
             size: 14,
           ),
           SizedBox(width: 4),
           Text(
-            numericScore.toString(),
+            statusInfo['text'],
             style: TextStyle(
-              color: scoreColor, 
-              fontWeight: FontWeight.bold,
+              color: Colors.white,
               fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildStatusChip(String? status) {
+    final statusValue = _handleNullValue(status, defaultValue: 'غير محدد');
+    final statusInfo = _getStatusInfo(statusValue);
+    
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: statusInfo['color'],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        statusInfo['text'],
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEvaluationWidget(int? score) {
+    // استخدام الدالة المساعدة للتعامل مع القيم الفارغة
+    final scoreValue = _handleNullNumber(score, defaultValue: '--');
+
+    if (scoreValue == '--') {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          scoreValue,
+          style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    // تحويل النص إلى رقم للتقييم
+    final numericScore = int.tryParse(scoreValue) ?? 0;
+    
+    Color scoreColor = Colors.red;
+    String evaluationText = 'ضعيف';
+    
+    if (numericScore >= 90) {
+      scoreColor = Colors.green;
+      evaluationText = 'ممتاز';
+    } else if (numericScore >= 80) {
+      scoreColor = Colors.green;
+      evaluationText = 'جيد جداً';
+    } else if (numericScore >= 70) {
+      scoreColor = Colors.blue;
+      evaluationText = 'جيد';
+    } else if (numericScore >= 60) {
+      scoreColor = Colors.orange;
+      evaluationText = 'مقبول';
+    }
+
+    return Tooltip(
+      message: '$evaluationText ($numericScore)',
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: scoreColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: scoreColor, width: 1.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.star,
+              color: scoreColor,
+              size: 14,
+            ),
+            SizedBox(width: 4),
+            Text(
+              numericScore.toString(),
+              style: TextStyle(
+                color: scoreColor, 
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'حاضر':
@@ -591,86 +684,84 @@ Widget _buildStatusChip(String? status) {
     }
   }
 
-  String _formatDate(TrainingRecord record) {
-    // يمكنك تعديل هذا حسب وجود حقل تاريخ في نموذجك
-    return 'تم الإضافة: ${DateTime.now().toString().substring(0, 10)}';
-  }
-
   Widget _buildContent() {
-    if (isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: Colors.blue),
-            SizedBox(height: 16),
-            Text(
-              'جاري تحميل البيانات...',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (filteredRecords.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.school, size: 80, color: Colors.grey[400]!),
-            SizedBox(height: 16),
-            Text(
-              searchQuery.isEmpty && _selectedFilter == 0
-                  ? 'لا توجد سجلات تدريب'
-                  : 'لا توجد نتائج للبحث',
-              style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              searchQuery.isEmpty && _selectedFilter == 0
-                  ? 'انقر على زر (+) لإضافة سجل تدريب جديد'
-                  : 'حاول البحث بكلمات أخرى',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            SizedBox(height: 20),
-            if (searchQuery.isEmpty && _selectedFilter == 0)
-              ElevatedButton.icon(
-                onPressed: _addNewTrainingRecord,
-                icon: Icon(Icons.add),
-                label: Text('إضافة سجل تدريب جديد'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-              ),
-          ],
-        ),
-      );
-    }
-
-    if (_isGridView) {
-      return GridView.builder(
-        padding: EdgeInsets.all(16),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.8,
-        ),
-        itemCount: filteredRecords.length,
-        itemBuilder: (context, index) => _buildGridItem(filteredRecords[index]),
-      );
-    } else {
-      return ListView.builder(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        itemCount: filteredRecords.length,
-        itemBuilder: (context, index) => _buildTrainingCard(filteredRecords[index]),
-      );
-    }
+  if (isLoading) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: Colors.blue),
+          SizedBox(height: 16),
+          Text(
+            'جاري تحميل البيانات...',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
+        ],
+      ),
+    );
   }
 
+  if (_errorMessage != null) {
+    return _buildErrorWidget();
+  }
+
+  if (filteredRecords.isEmpty) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.school, size: 80, color: Colors.grey[400]!),
+          SizedBox(height: 16),
+          Text(
+            searchQuery.isEmpty && _selectedFilter == 0
+                ? 'لا توجد سجلات تدريب'
+                : 'لا توجد نتائج للبحث',
+            style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            searchQuery.isEmpty && _selectedFilter == 0
+                ? 'انقر على زر (+) لإضافة سجل تدريب جديد'
+                : 'حاول البحث بكلمات أخرى',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          SizedBox(height: 20),
+          if (searchQuery.isEmpty && _selectedFilter == 0)
+            ElevatedButton.icon(
+              onPressed: _addNewTrainingRecord,
+              icon: Icon(Icons.add),
+              label: Text('إضافة سجل تدريب جديد'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  if (_isGridView) {
+    return GridView.builder(
+      padding: EdgeInsets.all(16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.8,
+      ),
+      itemCount: filteredRecords.length,
+      itemBuilder: (context, index) => _buildGridItem(filteredRecords[index]),
+    );
+  } else {
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      itemCount: filteredRecords.length,
+      itemBuilder: (context, index) => _buildTrainingCard(filteredRecords[index]),
+    );
+  }
+}
   void _showDeleteDialog(TrainingRecord record) {
     showDialog(
       context: context,
@@ -1006,7 +1097,7 @@ Widget _buildStatusChip(String? status) {
           ),
 
           // Header Info
-          if (!isLoading)
+          if (!isLoading && _errorMessage == null)
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1042,20 +1133,23 @@ Widget _buildStatusChip(String? status) {
             ),
 
           // Filter Chips
-          _buildFilterChips(),
+          if (!isLoading && _errorMessage == null)
+            _buildFilterChips(),
 
           // Content
           Expanded(child: _buildContent()),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addNewTrainingRecord,
-        child: Icon(Icons.add),
-        tooltip: 'إضافة سجل تدريب جديد',
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        elevation: 4,
-      ),
+      floatingActionButton: _errorMessage == null 
+          ? FloatingActionButton(
+              onPressed: _addNewTrainingRecord,
+              child: Icon(Icons.add),
+              tooltip: 'إضافة سجل تدريب جديد',
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              elevation: 4,
+            )
+          : null,
     );
   }
 }

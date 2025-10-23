@@ -23,9 +23,9 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
 
   Future<void> _loadCasualties() async {
     try {
-      final response = await CasualtyApi.getCasualties();
+      final casualties = await CasualtyApi.getCasualties();
       setState(() {
-        _casualties = response;
+        _casualties = casualties;
         _isLoading = false;
       });
     } catch (e) {
@@ -52,9 +52,9 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
     // تطبيق البحث
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((casualty) {
-        return casualty.militaryNumber!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               casualty.fullName!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               casualty.incidentLocation.toLowerCase().contains(_searchQuery.toLowerCase());
+        return (casualty.militaryNumber ?? '').toLowerCase().contains(_searchQuery.toLowerCase()) ||
+               (casualty.fullName ?? '').toLowerCase().contains(_searchQuery.toLowerCase()) ||
+               (casualty.incidentLocation ?? '').toLowerCase().contains(_searchQuery.toLowerCase());
       }).toList();
     }
 
@@ -68,36 +68,60 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
     return filtered;
   }
 
+  Color _getTypeColor(Casualty casualty) {
+    return casualty.isMartyr ? Colors.red : Colors.orange;
+  }
+
+  Color _getSeverityColor(Casualty casualty) {
+    switch (casualty.injurySeverity) {
+      case 'خطيرة':
+        return Colors.red;
+      case 'محدودة':
+        return Colors.orange;
+      case 'بسيطة':
+        return Colors.yellow;
+      case 'بسيطة جدا':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getIncidentDateFormatted(Casualty casualty) {
+    if (casualty.incidentDate == null) return 'غير محدد';
+    return '${casualty.incidentDate!.year}-${casualty.incidentDate!.month.toString().padLeft(2, '0')}-${casualty.incidentDate!.day.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildCasualtyCard(Casualty casualty) {
     return Card(
       elevation: 3,
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: casualty.typeColor,
+          backgroundColor: _getTypeColor(casualty),
           child: Icon(
             casualty.isMartyr ? Icons.flag : Icons.medical_services,
             color: Colors.white,
           ),
         ),
         title: Text(
-          casualty.fullName ?? '',
+          casualty.fullName ?? 'غير محدد',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('الرقم العسكري: ${casualty.militaryNumber}'),
-            Text('النوع: ${casualty.formType}'),
-            Text('التاريخ: ${casualty.incidentDateFormatted}'),
-            Text('المكان: ${casualty.incidentLocation}'),
+            Text('الرقم العسكري: ${casualty.militaryNumber ?? "غير محدد"}'),
+            Text('النوع: ${casualty.caseType}'),
+            Text('التاريخ: ${_getIncidentDateFormatted(casualty)}'),
+            Text('المكان: ${casualty.incidentLocation ?? "غير محدد"}'),
             if (casualty.isInjured)
               Chip(
                 label: Text(
-                  casualty.injurySeverity,
+                  casualty.injurySeverity ?? 'غير محدد',
                   style: TextStyle(fontSize: 12, color: Colors.white),
                 ),
-                backgroundColor: casualty.severityColor,
+                backgroundColor: _getSeverityColor(casualty),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
           ],
@@ -184,7 +208,7 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
             Text('تأكيد الحذف'),
           ],
         ),
-        content: Text('هل تريد حذف سجل ${casualty.formType} ${casualty.fullName}؟'),
+        content: Text('هل تريد حذف سجل ${casualty.caseType} ${casualty.fullName}؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

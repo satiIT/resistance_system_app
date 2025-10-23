@@ -164,22 +164,24 @@ class CasualtyApi {
     }
   }
 
+  // === الدوال الجديدة والمعدلة ===
+
   static Future<MartyrCompensation?> getCompensationByCasualtyId(int casualtyId) async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/martyr-compensation/casualty/$casualtyId'));
+      
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
-        if (responseData['success'] == true) {
+        if (responseData['success'] == true && responseData['data'] != null) {
           return MartyrCompensation.fromJson(responseData['data']);
         }
       }
       return null;
     } catch (e) {
+      print('Error getting compensation by casualty ID: $e');
       return null;
     }
   }
-
-  // === دوال إضافية ===
 
   static Future<List<Map<String, dynamic>>> getPersonnelList() async {
     final response = await http.get(Uri.parse('$baseUrl/personnel'));
@@ -236,8 +238,10 @@ class CasualtyApi {
     }
   }
 
-  static Future<List<Casualty>> searchCasualties(String term) async {
-    final response = await http.get(Uri.parse('$baseUrl/personnel-casualties/search/$term'));
+  static Future<List<Casualty>> getByPersonnelId(int personnelId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/personnel-casualties/personnel/$personnelId')
+    );
     
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -245,23 +249,44 @@ class CasualtyApi {
         final List<dynamic> data = responseData['data'];
         return data.map((json) => Casualty.fromJson(json)).toList();
       } else {
-        throw Exception(responseData['message'] ?? 'فشل في البحث');
+        throw Exception(responseData['message'] ?? 'فشل في تحميل سجلات المستنفر');
       }
     } else {
-      throw Exception('فشل في البحث - رمز الخطأ: ${response.statusCode}');
+      throw Exception('فشل في تحميل سجلات المستنفر - رمز الخطأ: ${response.statusCode}');
     }
   }
 
-  static Future<bool> checkDuplicateRecord(int personnelId, String formType) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/personnel-casualties/check-duplicate/$personnelId/$formType')
-    );
-    
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      return responseData['exists'] ?? false;
-    } else {
-      throw Exception('فشل في التحقق من التكرار - رمز الخطأ: ${response.statusCode}');
+  static Future<bool> checkDuplicateRecord(int personnelId, String caseType) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/personnel-casualties/check-duplicate/$personnelId/$caseType')
+      );
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return responseData['exists'] ?? false;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<List<Casualty>> searchCasualties(String term) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/personnel-casualties/search/$term'));
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'];
+          return data.map((json) => Casualty.fromJson(json)).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
     }
   }
 }

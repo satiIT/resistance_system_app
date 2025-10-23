@@ -1,21 +1,26 @@
-import 'package:flutter/material.dart';
-
 class Casualty {
   int? id;
   int? personnelId;
-  String? militaryNumber;
-  String? fullName;
-  String formType; // شهيد - جريح
-  DateTime incidentDate;
-  String incidentLocation;
-  String caseSignalNumber;
-  String injurySeverity; // خطيرة - محدودة - بسيطة - بسيطة جدا
-  String? treatmentHistory;
+  String? caseType; // matches 'case_type' in database
+  DateTime? incidentDate;
+  String? incidentLocation;
+  String? signalNumber; // matches 'signal_number' in database
+  String? injurySeverity;
   String? hospitals;
   String? burialLocation;
   String? graveCoordinates;
+  String? nextOfKinName;
+  String? nextOfKinPhone;
+  String? nextOfKinAddress;
+  String? notes;
+  DateTime? recoveryReturnDate;
+  DateTime? martyrProtocolDate;
+  String? injuryDescription;
+  String? treatmentHistory;
+  bool? continuesAfterMartyrdom;
+  bool? permanentDisability;
   
-  // خلافة الشهيد (سيتم نقلها لجدول منفصل)
+  // Fields for compensation (only for martyr) - for form use only
   DateTime? compensationDate;
   double? compensationAmount;
   String? paymentMethod;
@@ -23,24 +28,36 @@ class Casualty {
   String? payingEntity;
   String? materialItems;
   double? materialValue;
-  
-  DateTime? createdAt;
-  DateTime? updatedAt;
+
+  // Computed properties
+  bool get isMartyr => caseType == 'شهيد';
+  bool get isInjured => caseType == 'جريح';
+
+  // For display in the form (not in database)
+  String? militaryNumber;
+  String? fullName;
 
   Casualty({
     this.id,
     this.personnelId,
-    this.militaryNumber,
-    this.fullName,
-    required this.formType,
-    required this.incidentDate,
-    required this.incidentLocation,
-    required this.caseSignalNumber,
-    required this.injurySeverity,
-    this.treatmentHistory,
+    this.caseType = 'جريح',
+    this.incidentDate,
+    this.incidentLocation = '',
+    this.signalNumber = '',
+    this.injurySeverity = 'بسيطة',
     this.hospitals,
     this.burialLocation,
     this.graveCoordinates,
+    this.nextOfKinName,
+    this.nextOfKinPhone,
+    this.nextOfKinAddress,
+    this.notes,
+    this.recoveryReturnDate,
+    this.martyrProtocolDate,
+    this.injuryDescription,
+    this.treatmentHistory,
+    this.continuesAfterMartyrdom = true,
+    this.permanentDisability = false,
     this.compensationDate,
     this.compensationAmount,
     this.paymentMethod,
@@ -48,96 +65,65 @@ class Casualty {
     this.payingEntity,
     this.materialItems,
     this.materialValue,
-    this.createdAt,
-    this.updatedAt,
+    this.militaryNumber,
+    this.fullName,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'personnel_id': personnelId,
+      'case_type': caseType,
+      'incident_date': incidentDate?.toIso8601String().split('T')[0],
+      'incident_location': incidentLocation,
+      'signal_number': signalNumber,
+      'injury_severity': injurySeverity,
+      'hospitals': hospitals,
+      'burial_location': burialLocation,
+      'grave_coordinates': graveCoordinates,
+      'next_of_kin_name': nextOfKinName,
+      'next_of_kin_phone': nextOfKinPhone,
+      'next_of_kin_address': nextOfKinAddress,
+      'notes': notes,
+      'recovery_return_date': recoveryReturnDate?.toIso8601String().split('T')[0],
+      'martyr_protocol_date': martyrProtocolDate?.toIso8601String().split('T')[0],
+      'injury_description': injuryDescription,
+      'treatment_history': treatmentHistory,
+      'continues_after_martyrdom': continuesAfterMartyrdom,
+      'permanent_disability': permanentDisability,
+    };
+  }
 
   factory Casualty.fromJson(Map<String, dynamic> json) {
     return Casualty(
       id: json['id'],
       personnelId: json['personnel_id'],
-      militaryNumber: json['military_number'],
-      fullName: json['full_name'],
-      formType: json['form_type'] ?? '',
-      incidentDate: json['incident_date'] != null 
-          ? DateTime.parse(json['incident_date']) 
-          : DateTime.now(),
-      incidentLocation: json['incident_location'] ?? '',
-      caseSignalNumber: json['case_signal_number'] ?? '',
-      injurySeverity: json['injury_severity'] ?? '',
-      treatmentHistory: json['treatment_history'],
+      caseType: json['case_type'],
+      incidentDate: DateTime.parse(json['incident_date']),
+      incidentLocation: json['incident_location'],
+      signalNumber: json['signal_number'],
+      injurySeverity: json['injury_severity'],
       hospitals: json['hospitals'],
       burialLocation: json['burial_location'],
       graveCoordinates: json['grave_coordinates'],
-      compensationDate: json['compensation_date'] != null 
-          ? DateTime.parse(json['compensation_date']) 
+      nextOfKinName: json['next_of_kin_name'],
+      nextOfKinPhone: json['next_of_kin_phone'],
+      nextOfKinAddress: json['next_of_kin_address'],
+      notes: json['notes'],
+      recoveryReturnDate: json['recovery_return_date'] != null 
+          ? DateTime.parse(json['recovery_return_date']) 
           : null,
-      compensationAmount: json['compensation_amount'] != null 
-          ? double.parse(json['compensation_amount'].toString()) 
+      martyrProtocolDate: json['martyr_protocol_date'] != null 
+          ? DateTime.parse(json['martyr_protocol_date']) 
           : null,
-      paymentMethod: json['payment_method'],
-      compensationRecipient: json['compensation_recipient'],
-      payingEntity: json['paying_entity'],
-      materialItems: json['material_items'],
-      materialValue: json['material_value'] != null 
-          ? double.parse(json['material_value'].toString()) 
-          : null,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
-          : null,
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
-          : null,
+      injuryDescription: json['injury_description'],
+      treatmentHistory: json['treatment_history'],
+      continuesAfterMartyrdom: json['continues_after_martyrdom'] ?? true,
+      permanentDisability: json['permanent_disability'] ?? false,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      if (id != null) 'id': id,
-      'personnel_id': personnelId,
-      'form_type': formType,
-      'incident_date': incidentDate.toIso8601String(),
-      'incident_location': incidentLocation,
-      'case_signal_number': caseSignalNumber,
-      'injury_severity': injurySeverity,
-      'treatment_history': treatmentHistory,
-      'hospitals': hospitals,
-      'burial_location': burialLocation,
-      'grave_coordinates': graveCoordinates,
-      'compensation_date': compensationDate?.toIso8601String(),
-      'compensation_amount': compensationAmount,
-      'payment_method': paymentMethod,
-      'compensation_recipient': compensationRecipient,
-      'paying_entity': payingEntity,
-      'material_items': materialItems,
-      'material_value': materialValue,
-    };
+  @override
+  String toString() {
+    return 'Casualty(id: $id, personnelId: $personnelId, caseType: $caseType, incidentDate: $incidentDate)';
   }
-
-  // دوال مساعدة
-  Color get typeColor {
-    return formType == 'شهيد' ? Colors.red : Colors.orange;
-  }
-
-  Color get severityColor {
-    switch (injurySeverity) {
-      case 'خطيرة':
-        return Colors.red;
-      case 'محدودة':
-        return Colors.orange;
-      case 'بسيطة':
-        return Colors.yellow;
-      case 'بسيطة جدا':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String get incidentDateFormatted {
-    return '${incidentDate.year}-${incidentDate.month.toString().padLeft(2, '0')}-${incidentDate.day.toString().padLeft(2, '0')}';
-  }
-
-  bool get isMartyr => formType == 'شهيد';
-  bool get isInjured => formType == 'جريح';
 }

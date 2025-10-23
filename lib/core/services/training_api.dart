@@ -17,9 +17,28 @@ static Future<List<TrainingRecord>> getTrainingRecords() async {
       if (responseData['success'] == true) {
         final List<dynamic> data = responseData['data'];
         
-        // تنظيف البيانات قبل تحويلها
-        final cleanedData = data.map((json) => _cleanTrainingRecordData(json)).toList();
+        // Debug: Print raw data structure
+        print('=== DEBUG: Raw API Response ===');
+        if (data.isNotEmpty) {
+          print('First record keys: ${data.first.keys}');
+          print('First record values: $data');
+        }
         
+        // تنظيف البيانات قبل تحويلها
+        final List<Map<String, dynamic>> cleanedData = [];
+        
+        for (var item in data) {
+          try {
+            final cleanedItem = _cleanTrainingRecordData(item);
+            cleanedData.add(cleanedItem);
+          } catch (e) {
+            print('Error cleaning record $item: $e');
+            // Skip invalid records
+            continue;
+          }
+        }
+        
+        print('Successfully cleaned ${cleanedData.length} out of ${data.length} records');
         return cleanedData.map((json) => TrainingRecord.fromJson(json)).toList();
       } else {
         throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات التدريب');
@@ -33,35 +52,78 @@ static Future<List<TrainingRecord>> getTrainingRecords() async {
   }
 }
 
-// دالة لتنظيف بيانات سجل التدريب
+// دالة محسنة لتنظيف بيانات سجل التدريب
 static Map<String, dynamic> _cleanTrainingRecordData(Map<String, dynamic> data) {
-  return {
-    'id': data['id'],
+  // Handle all possible integer fields
+  final cleanedData = {
+    'id': _cleanInt(data['id']),
+    'personnel_id': _cleanInt(data['personnel_id']),
+    'course_id': _cleanInt(data['course_id']),
+    'evaluation_score': _cleanInt(data['evaluation_score']),
+    
+    // Handle string fields
     'personnel_name': _cleanString(data['personnel_name']),
     'military_number': _cleanString(data['military_number']),
     'course_name': _cleanString(data['course_name']),
     'prior_training_type': _cleanString(data['prior_training_type']),
-    'evaluation_score': data['evaluation_score'],
     'attendance_status': _cleanString(data['attendance_status']),
-    // أضف باقي الحقول حسب نموذج TrainingRecord الخاص بك
+    'training_camp_name': _cleanString(data['training_camp_name']),
+    'firing_location': _cleanString(data['firing_location']),
+    'weapon_type': _cleanString(data['weapon_type']),
+    'specialized_course_type': _cleanString(data['specialized_course_type']),
+    'weapon_training_type': _cleanString(data['weapon_training_type']),
+    'notes': _cleanString(data['notes']),
+    
+    // Handle boolean fields
+    'certificate_received': _cleanBool(data['certificate_received']),
   };
+  
+  // Remove null values to avoid conflicts
+  cleanedData.removeWhere((key, value) => value == null);
+  
+  return cleanedData;
 }
 
-// دالة لتنظيف النصوص
-static String _cleanString(dynamic value) {
-  if (value == null) return 'غير محدد';
+// دالة محسنة لتنظيف الأرقام
+static int? _cleanInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
   if (value is String) {
     if (value.isEmpty || 
         value.toLowerCase() == 'null' || 
         value.toLowerCase() == 'undefined') {
-      return 'غير محدد';
+      return null;
+    }
+    return int.tryParse(value);
+  }
+  if (value is double) return value.toInt();
+  return null;
+}
+
+// دالة محسنة لتنظيف النصوص
+static String? _cleanString(dynamic value) {
+  if (value == null) return null;
+  if (value is String) {
+    if (value.isEmpty || 
+        value.toLowerCase() == 'null' || 
+        value.toLowerCase() == 'undefined') {
+      return null;
     }
     return value;
   }
   return value.toString();
 }
 
-  static Future<TrainingRecord> getTrainingRecord(int id) async {
+// دالة لتنظيف القيم المنطقية
+static bool? _cleanBool(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  if (value is int) return value == 1;
+  if (value is String) {
+    return value.toLowerCase() == 'true' || value == '1';
+  }
+  return null;
+}  static Future<TrainingRecord> getTrainingRecord(int id) async {
     final response = await http.get(Uri.parse('$baseUrl/personnel-training/$id'));
     
     if (response.statusCode == 200) {
@@ -466,4 +528,53 @@ static Future<void> debugTrainingRecords() async {
     print('Debug Error: $e');
   }
 }
+
+}
+// Safe API wrapper with enhanced error handling
+class SafeTrainingApi {
+  static Future<List<TrainingRecord>> getTrainingRecordsSafe() async {
+    try {
+      print('🔍 Starting safe training records load...');
+      
+      final response = await TrainingApi.getTrainingRecords();
+      
+      // Validate each record
+      final validRecords = <TrainingRecord>[];
+      int errorCount = 0;
+      
+      for (var record in response) {
+        try {
+          // Validate critical fields
+          if (record.id == null) {
+            print('⚠️ Warning: Record with null ID found, skipping');
+            errorCount++;
+            continue;
+          }
+          
+          if (record.personnelId == null) {
+            print('⚠️ Warning: Record ${record.id} has null personnelId');
+            // We'll still include it but log the issue
+          }
+          
+          validRecords.add(record);
+          
+        } catch (e) {
+          print('❌ Error validating record: $e');
+          errorCount++;
+        }
+      }
+      
+      print('✅ Safe load completed: ${validRecords.length} valid, $errorCount errors');
+      
+      if (validRecords.isEmpty && response.isNotEmpty) {
+        throw Exception('لا توجد سجلات صالحة للعرض');
+      }
+      
+      return validRecords;
+      
+    } catch (e) {
+      print('💥 Critical error in safe API: $e');
+      rethrow;
+    }
+  }
 }

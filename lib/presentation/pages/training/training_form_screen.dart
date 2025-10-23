@@ -31,6 +31,9 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
     'دورة إسعافات أولية'
   ];
 
+  // List to store selected personnel
+  List<Map<String, dynamic>> _selectedPersonnel = [];
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +41,12 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
       personnelId: 0,
       courseId: 0,
     );
+    
+    // If editing existing record, add the existing personnel to selected list
+    if (widget.existingRecord != null && widget.existingRecord!.personnelId != 0) {
+      // We'll populate this after loading personnel data
+    }
+    
     _initializeData();
   }
 
@@ -51,6 +60,18 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
       setState(() {
         _personnelList = personnel.cast<Map<String, dynamic>>();
         _coursesList = courses.cast<TrainingCourse>();
+        
+        // If editing existing record, find and add the existing personnel
+        if (widget.existingRecord != null && widget.existingRecord!.personnelId != 0) {
+          var existingPerson = _personnelList.firstWhere(
+            (person) => person['id'] == widget.existingRecord!.personnelId,
+            orElse: () => {},
+          );
+          if (existingPerson.isNotEmpty) {
+            _selectedPersonnel.add(existingPerson);
+          }
+        }
+        
         isInitialized = true;
       });
     } catch (e) {
@@ -70,32 +91,103 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
     );
   }
 
-  Widget _buildPersonnelSelector() {
-    return DropdownButtonFormField<int>(
-      decoration: InputDecoration(
-        labelText: 'اختر المستنفر',
-        border: OutlineInputBorder(),
-        filled: true,
-        fillColor: Colors.grey[50],
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
       ),
-      value: _trainingRecord.personnelId != 0 ? _trainingRecord.personnelId : null,
-      onChanged: (int? newValue) {
-        setState(() {
-          _trainingRecord.personnelId = newValue!;
-        });
-      },
-      items: _personnelList.map<DropdownMenuItem<int>>((person) {
-        return DropdownMenuItem<int>(
-          value: person['id'],
-          child: Text('${person['name']} - ${person['military_number']}'),
-        );
-      }).toList(),
-      validator: (value) {
-        if (value == null || value == 0) {
-          return 'يرجى اختيار المستنفر';
-        }
-        return null;
-      },
+    );
+  }
+
+  Widget _buildPersonnelSelector() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.people, color: Colors.blue),
+                SizedBox(width: 8),
+                Text('إضافة المستنفرين',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            
+            // Selected personnel list
+            if (_selectedPersonnel.isNotEmpty) ...[
+              Text('المستنفرين المضافين:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 8),
+              ..._selectedPersonnel.map((person) => Card(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                color: Colors.grey[50],
+                child: ListTile(
+                  leading: Icon(Icons.person, color: Colors.blue),
+                  title: Text('${person['name']}'),
+                  subtitle: Text('الرقم العسكري: ${person['military_number']}'),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        _selectedPersonnel.remove(person);
+                      });
+                    },
+                  ),
+                ),
+              )).toList(),
+              SizedBox(height: 16),
+            ],
+            
+            // Add personnel dropdown
+            DropdownButtonFormField<Map<String, dynamic>>(
+              decoration: InputDecoration(
+                labelText: 'اختر مستنفر لإضافته',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              value: null,
+              onChanged: (Map<String, dynamic>? newValue) {
+                if (newValue != null) {
+                  // Check if already selected
+                  bool alreadyExists = _selectedPersonnel.any(
+                    (person) => person['id'] == newValue['id']
+                  );
+                  
+                  if (!alreadyExists) {
+                    setState(() {
+                      _selectedPersonnel.add(newValue);
+                    });
+                    _showSuccessSnackBar('تم إضافة ${newValue['name']}');
+                  } else {
+                    _showErrorSnackBar('${newValue['name']} مضاف مسبقاً');
+                  }
+                }
+              },
+              items: _personnelList.map<DropdownMenuItem<Map<String, dynamic>>>((person) {
+                return DropdownMenuItem<Map<String, dynamic>>(
+                  value: person,
+                  child: Text('${person['name']} - ${person['military_number']}'),
+                );
+              }).toList(),
+            ),
+            
+            SizedBox(height: 8),
+            if (_selectedPersonnel.isNotEmpty)
+              Text(
+                'عدد المستنفرين المضافين: ${_selectedPersonnel.length}',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -127,6 +219,7 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
       },
     );
   }
+
   Widget _buildTrainingTypeSection() {
     return Card(
       elevation: 4,
@@ -413,6 +506,12 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
 
   Future<void> _saveTrainingRecord() async {
     if (_formKey.currentState!.validate()) {
+      // Validate that at least one personnel is selected
+      if (_selectedPersonnel.isEmpty) {
+        _showErrorSnackBar('يرجى إضافة مستنفر واحد على الأقل');
+        return;
+      }
+
       _formKey.currentState!.save();
       
       setState(() {
@@ -421,11 +520,34 @@ class _TrainingFormScreenState extends State<TrainingFormScreen> {
 
       try {
         if (widget.existingRecord == null) {
-          await TrainingApi.createTrainingRecord(_trainingRecord);
+          // Create multiple records for each selected personnel
+          for (var person in _selectedPersonnel) {
+            var record = TrainingRecord(
+              personnelId: person['id'],
+              courseId: _trainingRecord.courseId,
+              priorTrainingType: _trainingRecord.priorTrainingType,
+              trainingCampName: _trainingRecord.trainingCampName,
+              firingLocation: _trainingRecord.firingLocation,
+              weaponType: _trainingRecord.weaponType,
+              specializedCourseType: _trainingRecord.specializedCourseType,
+              weaponTrainingType: _trainingRecord.weaponTrainingType,
+              attendanceStatus: _trainingRecord.attendanceStatus,
+              evaluationScore: _trainingRecord.evaluationScore,
+              certificateReceived: _trainingRecord.certificateReceived,
+              notes: _trainingRecord.notes,
+            );
+            await TrainingApi.createTrainingRecord(record);
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('تم حفظ سجل التدريب بنجاح')),
+            SnackBar(
+              content: Text('تم حفظ ${_selectedPersonnel.length} سجل تدريب بنجاح'),
+              backgroundColor: Colors.green,
+            ),
           );
         } else {
+          // For existing records, we'll update the single record
+          // You might want to modify this based on your requirements
           await TrainingApi.updateTrainingRecord(_trainingRecord);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('تم تحديث سجل التدريب بنجاح')),

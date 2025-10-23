@@ -22,7 +22,7 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
   List<Map<String, dynamic>> _personnelList = [];
   Map<int, Map<String, dynamic>> _personnelCache = {};
 
-  final List<String> _formTypes = ['شهيد', 'جريح'];
+  final List<String> _caseTypes = ['شهيد', 'جريح'];
   final List<String> _injurySeverities = ['خطيرة', 'محدودة', 'بسيطة', 'بسيطة جدا'];
   final List<String> _paymentMethods = ['نقدا', 'بنك'];
 
@@ -47,12 +47,11 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
         } else {
           _casualty = Casualty(
             personnelId: 0,
-            formType: 'جريح',
+            caseType: 'جريح',
             incidentDate: DateTime.now(),
             incidentLocation: '',
-            caseSignalNumber: '',
+            signalNumber: '',
             injurySeverity: 'بسيطة',
-          
           );
         }
         
@@ -116,10 +115,10 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
         try {
           final isDuplicate = await CasualtyApi.checkDuplicateRecord(
             _casualty.personnelId ?? 0, 
-            _casualty.formType
+            _casualty.caseType!
           );
           if (isDuplicate) {
-            _showErrorSnackBar('يوجد سجل ${_casualty.formType} مسبقاً لهذا المستنفر');
+            _showErrorSnackBar('يوجد سجل ${_casualty.caseType} مسبقاً لهذا المستنفر');
             return;
           }
         } catch (e) {
@@ -273,8 +272,8 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              value: _casualty.formType,
-              items: _formTypes.map((type) {
+              value: _casualty.caseType,
+              items: _caseTypes.map((type) {
                 return DropdownMenuItem(
                   value: type,
                   child: Text(type),
@@ -282,7 +281,7 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
               }).toList(),
               onChanged: (value) {
                 setState(() {
-                  _casualty.formType = value!;
+                  _casualty.caseType = value!;
                   _showCompensationFields = value == 'شهيد';
                 });
               },
@@ -327,12 +326,12 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
               ),
               readOnly: true,
               controller: TextEditingController(
-                text: '${_casualty.incidentDate.year}-${_casualty.incidentDate.month.toString().padLeft(2, '0')}-${_casualty.incidentDate.day.toString().padLeft(2, '0')}',
+                text: '${_casualty.incidentDate!.year}-${_casualty.incidentDate!.month.toString().padLeft(2, '0')}-${_casualty.incidentDate!.day.toString().padLeft(2, '0')}',
               ),
               onTap: () async {
                 final selectedDate = await showDatePicker(
                   context: context,
-                  initialDate: _casualty.incidentDate,
+                  initialDate: _casualty.incidentDate!,
                   firstDate: DateTime(2020),
                   lastDate: DateTime.now(),
                 );
@@ -368,14 +367,14 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              initialValue: _casualty.caseSignalNumber,
+              initialValue: _casualty.signalNumber,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'يرجى إدخال رقم الإشارة';
                 }
                 return null;
               },
-              onSaved: (value) => _casualty.caseSignalNumber = value!,
+              onSaved: (value) => _casualty.signalNumber = value!,
             ),
             if (_casualty.isInjured) ...[
               SizedBox(height: 12),
@@ -447,7 +446,63 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
     );
   }
 
- 
+  Widget _buildNextOfKinSection() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.contact_phone, color: Colors.purple),
+                SizedBox(width: 8),
+                Text(
+                  'بيانات ذوي القربى',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'اسم ذوي القربى',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              initialValue: _casualty.nextOfKinName,
+              onSaved: (value) => _casualty.nextOfKinName = value,
+            ),
+            SizedBox(height: 12),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'هاتف ذوي القربى',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              keyboardType: TextInputType.phone,
+              initialValue: _casualty.nextOfKinPhone,
+              onSaved: (value) => _casualty.nextOfKinPhone = value,
+            ),
+            SizedBox(height: 12),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'عنوان ذوي القربى',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              initialValue: _casualty.nextOfKinAddress,
+              onSaved: (value) => _casualty.nextOfKinAddress = value,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildCompensationSection() {
     if (!_showCompensationFields) return SizedBox();
@@ -655,8 +710,8 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
               SizedBox(height: 16),
               _buildIncidentInfoSection(),
               SizedBox(height: 16),
-             // _buildNextOfKinSection(),
-              //SizedBox(height: 16),
+              _buildNextOfKinSection(),
+              SizedBox(height: 16),
               _buildCompensationSection(),
               SizedBox(height: 20),
               _buildActionButtons(),
