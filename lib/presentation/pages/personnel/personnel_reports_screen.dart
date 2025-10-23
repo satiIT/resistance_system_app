@@ -31,80 +31,6 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
 
-  // Default empty data structure to prevent null errors
-  final Map<String, dynamic> _defaultData = {
-    'summary': {
-      'overall_status': 'جيد',
-      'report_period': 'الشهر الحالي'
-    },
-    'performance': {
-      'monthly_scores': [],
-      'average_score': 0,
-      'stats': {
-        'average_score': 0,
-        'highest_score': 0,
-        'lowest_score': 0,
-      },
-      'trends': {
-        'direction': 'stable'
-      }
-    },
-    'attendance': {
-      'breakdown': {
-        'present': 0,
-        'absent': 0,
-        'late': 0,
-        'leave': 0,
-      },
-      'stats': {
-        'present_days': 0,
-        'absent_days': 0,
-        'late_days': 0,
-        'attendance_rate': 0,
-        'percentage': 0,
-      },
-      'summary': {
-        'attendance_rate': 0,
-        'present_days': 0,
-        'absent_days': 0,
-        'late_days': 0,
-      },
-      'daily_records': []
-    },
-    'training': {
-      'courses': [],
-      'stats': {
-        'total_courses': 0,
-        'completed': 0,
-        'in_progress': 0,
-        'completion_rate': 0,
-      }
-    },
-    'financial': {
-      'stats': {
-        'total_received': 0,
-        'pending': 0,
-        'monthly_average': 0,
-      },
-      'summary': {
-        'total_received': 0,
-        'pending': 0,
-        'expenses': 0,
-        'net_income': 0,
-      },
-      'transactions': []
-    },
-    'equipment': {
-      'assigned': [],
-      'stats': {
-        'total_equipment': 0,
-        'borrowed': 0,
-        'in_stock': 0,
-        'under_maintenance': 0,
-      }
-    }
-  };
-
   @override
   void initState() {
     super.initState();
@@ -121,72 +47,68 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
       final reportData = await ReportsApi.getPersonnelReport(widget.personnelId);
       
       setState(() {
-        // Merge API data with default structure to ensure all keys exist
-        _reportData = _mergeWithDefaults(reportData);
+        _reportData = reportData;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
         _errorMessage = 'فشل في جلب بيانات التقرير: $e';
-        // Use default data when API fails
-        _reportData = _defaultData;
       });
       _showErrorMessage('فشل في جلب بيانات التقرير: $e');
     }
   }
 
-  // Merge API data with default structure to prevent null errors
-  Map<String, dynamic> _mergeWithDefaults(Map<String, dynamic> apiData) {
-    final mergedData = Map<String, dynamic>.from(_defaultData);
-    
-    // Recursively merge the data
-    void mergeRecursive(Map<String, dynamic> target, Map<String, dynamic> source) {
-      source.forEach((key, value) {
-        if (value is Map<String, dynamic> && target[key] is Map<String, dynamic>) {
-          mergeRecursive(target[key] as Map<String, dynamic>, value);
-        } else {
-          target[key] = value;
-        }
-      });
-    }
-    
-    mergeRecursive(mergedData, apiData);
-    return mergedData;
-  }
-
-  // Safe data access methods
+  // Safe data access methods with proper type handling
   Map<String, dynamic> _getMap(String key) {
     final data = _reportData[key];
-    return data is Map<String, dynamic> ? data : {};
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    if (data is Map) {
+      // Convert any Map to Map<String, dynamic>
+      return Map<String, dynamic>.from(data as Map);
+    }
+    return {};
   }
 
   List<dynamic> _getList(String key) {
     final data = _reportData[key];
-    return data is List ? data : [];
+    if (data is List) {
+      return data;
+    }
+    return [];
   }
 
+  // Safe number conversion
+  double _getNumber(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  // Safe string conversion - FIXED THE TYPE ERROR
+  String _getString(dynamic value) {
+    if (value == null) return '--';
+    if (value is String) return value;
+    // Convert any other type to string
+    return value.toString();
+  }
+
+  // Safe nested access
   dynamic _getNested(Map<String, dynamic> map, List<String> keys) {
     dynamic current = map;
     for (final key in keys) {
-      if (current is Map<String, dynamic>) {
-        current = current[key];
+      if (current is Map) {
+        current = (current as Map)[key];
       } else {
         return null;
       }
     }
     return current;
-  }
-
-  double _getNumber(dynamic value) {
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
-  }
-
-  String _getString(dynamic value) {
-    if (value is String) return value;
-    return value?.toString() ?? '--';
   }
 
   @override
@@ -391,7 +313,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: ReportsApi.getStatusColor(summary['overall_status']),
+                color: ReportsApi.getStatusColor(_getString(summary['overall_status'])),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -453,10 +375,11 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     final monthlyData = _getList('monthly_scores');
 
     final List<ChartData> chartData = monthlyData.map((item) {
-      if (item is Map<String, dynamic>) {
+      if (item is Map) {
+        final mapItem = Map<String, dynamic>.from(item as Map);
         return ChartData(
-          _getString(item['month']),
-          _getNumber(item['score']),
+          _getString(mapItem['month']),
+          _getNumber(mapItem['score']),
         );
       }
       return ChartData('--', 0);
@@ -590,6 +513,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     final attendance = _getMap('attendance');
     final training = _getMap('training');
     final financial = _getMap('financial');
+    final courses = _getList('courses');
 
     final stats = [
       StatItem(
@@ -600,19 +524,25 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
       ),
       StatItem(
         'نسبة الحضور', 
-        ReportsApi.formatPercentage(_getNumber(attendance['stats']?['attendance_rate'])), 
+        ReportsApi.formatPercentage(_getNumber(attendance['attendance_rate'] ?? attendance['stats']?['attendance_rate'])), 
         Icons.percent, 
         Colors.green
       ),
       StatItem(
         'الدورات المكتملة', 
-        '${_getList('courses').where((c) => _getString(c['status']).toLowerCase().contains('مكتمل')).length}', 
+        '${courses.where((c) {
+          if (c is Map) {
+            final course = Map<String, dynamic>.from(c as Map);
+            return _getString(course['status']).toLowerCase().contains('مكتمل');
+          }
+          return false;
+        }).length}', 
         Icons.check_circle, 
         Colors.orange
       ),
       StatItem(
         'المستحقات', 
-        ReportsApi.formatCurrency(_getNumber(financial['stats']?['pending'])), 
+        ReportsApi.formatCurrency(_getNumber(financial['pending'] ?? financial['stats']?['pending'])), 
         Icons.pending, 
         Colors.red
       ),
@@ -997,7 +927,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         margin: EdgeInsets.symmetric(vertical: 4),
         child: ListTile(
           title: Text(
-            entry.key,
+            _getString(entry.key), // Use _getString to handle key conversion
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           subtitle: _buildValueWidget(entry.value),
@@ -1007,13 +937,14 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   }
 
   Widget _buildValueWidget(dynamic value) {
-    if (value is Map<String, dynamic>) {
+    if (value is Map) {
+      final mapValue = Map<String, dynamic>.from(value as Map);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: value.entries.map((entry) {
+        children: mapValue.entries.map((entry) {
           return Padding(
             padding: EdgeInsets.symmetric(vertical: 2),
-            child: Text('${entry.key}: ${_formatValue(entry.value)}'),
+            child: Text('${_getString(entry.key)}: ${_formatValue(entry.value)}'),
           );
         }).toList(),
       );
@@ -1027,13 +958,12 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   String _formatValue(dynamic value) {
     if (value == null) return '--';
     if (value is num) {
-      // Check if it's a percentage or currency
       if (value.toString().contains('.') || value < 1) {
         return ReportsApi.formatPercentage(value);
       }
       return value.toString();
     }
-    return value.toString();
+    return _getString(value);
   }
 
   IconData _getReportIcon(String title) {
@@ -1084,10 +1014,11 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
       rows.add(['الشهر', 'التقييم']);
       
       for (var row in monthlyData) {
-        if (row is Map<String, dynamic>) {
+        if (row is Map) {
+          final mapRow = Map<String, dynamic>.from(row as Map);
           rows.add([
-            _getString(row['month']),
-            _getNumber(row['score']).toString()
+            _getString(mapRow['month']),
+            _getNumber(mapRow['score']).toString()
           ]);
         }
       }

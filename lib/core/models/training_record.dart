@@ -73,6 +73,7 @@ class TrainingRecord {
       courseStartDate: json['course_start_date'] != null ? DateTime.parse(json['course_start_date']) : null,
       courseEndDate: json['course_end_date'] != null ? DateTime.parse(json['course_end_date']) : null,
       courseDurationDays: json['course_duration_days'],
+      
     );
   }
 
@@ -91,6 +92,20 @@ class TrainingRecord {
       'training_camp_name': trainingCampName,
       'specialized_course_type': specializedCourseType,
       'weapon_training_type': weaponTrainingType,
+      
     };
   }
+  
+static String _safeString(dynamic value, String defaultValue) {
+  if (value == null) return defaultValue;
+  if (value is String) {
+    if (value.isEmpty || 
+        value.toLowerCase() == 'null' || 
+        value.toLowerCase() == 'undefined') {
+      return defaultValue;
+    }
+    return value;
+  }
+  return value.toString();
+}
 }

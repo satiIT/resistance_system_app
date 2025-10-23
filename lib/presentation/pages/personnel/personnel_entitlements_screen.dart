@@ -573,101 +573,177 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
   }
 
   void _showEntitlementFormDialog(BuildContext context, Map<String, dynamic>? ent) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(ent == null ? 'إضافة استحقاق جديد' : 'تعديل الاستحقاق'),
-        content: Container(
-          width: 500,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: ent?['entitlement_type'] ?? 'war_share',
-                  decoration: InputDecoration(labelText: 'نوع الاستحقاق'),
-                  items: [
-                    {'value': 'war_share', 'display': 'سهم حربي'},
-                    {'value': 'basic_salary', 'display': 'خلافة أساسية'},
-                    {'value': 'transportation', 'display': 'بدل انتقال'},
-                    {'value': 'housing', 'display': 'بدل سكن'},
-                    {'value': 'performance', 'display': 'مكافأة أداء'},
-                    {'value': 'mujahid_basket', 'display': 'سلة مجاهد'},
-                  ].map((item) => DropdownMenuItem(value: item['value'], child: Text(item['display']!))).toList(),
-                  onChanged: (value) {},
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  initialValue: ent?['amount']?.toString() ?? '',
-                  decoration: InputDecoration(
-                    labelText: 'المبلغ',
-                    prefixText: 'ج.س ',
+  // متغيرات لتخزين بيانات النموذج
+  String? selectedEntitlementType = ent?['entitlement_type'] ?? 'war_share';
+  String? selectedPaymentStatus = ent?['payment_status'] ?? 'pending';
+  TextEditingController amountController = TextEditingController(
+    text: ent?['amount']?.toString() ?? ''
+  );
+  TextEditingController notesController = TextEditingController(
+    text: ent?['notes'] ?? ''
+  );
+
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        return AlertDialog(
+          title: Text(ent == null ? 'إضافة استحقاق جديد' : 'تعديل الاستحقاق'),
+          content: Container(
+            width: 500,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: selectedEntitlementType,
+                    decoration: InputDecoration(labelText: 'نوع الاستحقاق'),
+                    items: [
+                      DropdownMenuItem(value: 'war_share', child: Text('سهم حربي')),
+                      DropdownMenuItem(value: 'basic_salary', child: Text('خلافة أساسية')),
+                      DropdownMenuItem(value: 'transportation', child: Text('بدل انتقال')),
+                      DropdownMenuItem(value: 'housing', child: Text('بدل سكن')),
+                      DropdownMenuItem(value: 'performance', child: Text('مكافأة أداء')),
+                      DropdownMenuItem(value: 'mujahid_basket', child: Text('سلة مجاهد')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedEntitlementType = value;
+                      });
+                    },
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  initialValue: ent?['notes'] ?? '',
-                  decoration: InputDecoration(labelText: 'الوصف'),
-                  maxLines: 3,
-                ),
-                SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: ent?['payment_status'] ?? 'pending',
-                  decoration: InputDecoration(labelText: 'حالة الدفع'),
-                  items: [
-                    {'value': 'pending', 'display': 'معلق'},
-                    {'value': 'paid', 'display': 'مستلم'},
-                    {'value': 'processing', 'display': 'قيد المعالجة'},
-                  ].map((item) => DropdownMenuItem(value: item['value'], child: Text(item['display']!))).toList(),
-                  onChanged: (value) {},
-                ),
-              ],
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: amountController,
+                    decoration: InputDecoration(
+                      labelText: 'المبلغ *',
+                      prefixText: 'ج.س ',
+                      errorText: _validateAmount(amountController.text),
+                    ),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: notesController,
+                    decoration: InputDecoration(labelText: 'الوصف'),
+                    maxLines: 3,
+                  ),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedPaymentStatus,
+                    decoration: InputDecoration(labelText: 'حالة الدفع'),
+                    items: [
+                      DropdownMenuItem(value: 'pending', child: Text('معلق')),
+                      DropdownMenuItem(value: 'paid', child: Text('مستلم')),
+                      DropdownMenuItem(value: 'processing', child: Text('قيد المعالجة')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedPaymentStatus = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _saveEntitlement(ent);
-              Navigator.pop(context);
-            },
-            child: Text('حفظ'),
-          ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: _validateAmount(amountController.text) == null
+                  ? () {
+                      _saveEntitlement(
+                        context,
+                        ent,
+                        selectedEntitlementType!,
+                        amountController.text,
+                        notesController.text,
+                        selectedPaymentStatus!,
+                      );
+                    }
+                  : null,
+              child: Text('حفظ'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+String? _validateAmount(String value) {
+  if (value.isEmpty) {
+    return 'المبلغ مطلوب';
   }
-
-  Future<void> _saveEntitlement(Map<String, dynamic>? ent) async {
-    try {
-      final entitlementData = {
-        'personnel_id': widget.personnelId,
-        'entitlement_type': 'war_share', // سيتم تحديثه من النموذج
-        'amount': 0.0, // سيتم تحديثه من النموذج
-        'currency': 'SDG',
-        'payment_status': 'pending', // سيتم تحديثه من النموذج
-        'notes': '', // سيتم تحديثه من النموذج
-        'entitlement_date': DateTime.now().toIso8601String().split('T')[0],
-      };
-
-      if (ent == null) {
-        await EntitlementsApi.createEntitlement(entitlementData);
-        _showSuccessMessage('تم إضافة الاستحقاق بنجاح');
-      } else {
-        await EntitlementsApi.updateEntitlement(ent['id'], entitlementData);
-        _showSuccessMessage('تم تعديل الاستحقاق بنجاح');
-      }
-      _loadEntitlementsData(); // إعادة تحميل البيانات
-    } catch (e) {
-      _showErrorMessage('فشل في حفظ الاستحقاق: $e');
+  final amount = double.tryParse(value);
+  if (amount == null || amount <= 0) {
+    return 'المبلغ يجب أن يكون رقم صحيح';
+  }
+  return null;
+}
+bool _isSaving = false;
+  Future<void> _saveEntitlement(
+  BuildContext context,
+  Map<String, dynamic>? ent,
+  String entitlementType,
+  String amount,
+  String notes,
+  String paymentStatus,
+) async {
+  if (_isSaving) return;
+  
+  setState(() {
+    _isSaving = true;
+  });
+  try {
+    // التحقق من صحة المبلغ
+    final amountValue = double.tryParse(amount);
+    if (amountValue == null || amountValue <= 0) {
+      _showErrorMessage('المبلغ غير صحيح');
+      return;
     }
-  }
 
+    final entitlementData = {
+      'personnel_id': widget.personnelId,
+      'entitlement_type': entitlementType,
+      'amount': amountValue,
+      'currency': 'SDG',
+      'payment_status': paymentStatus,
+      'notes': notes,
+      'entitlement_date': DateTime.now().toIso8601String().split('T')[0],
+    };
+
+    // إذا كانت حالة الدفع "مدفوع"، نضيف تاريخ الدفع
+    if (paymentStatus == 'paid') {
+      entitlementData['payment_date'] = DateTime.now().toIso8601String().split('T')[0];
+    }
+
+    if (ent == null) {
+      // إنشاء استحقاق جديد
+      await EntitlementsApi.createEntitlement(entitlementData);
+      _showSuccessMessage('تم إضافة الاستحقاق بنجاح');
+    } else {
+      // تحديث استحقاق موجود
+      await EntitlementsApi.updateEntitlement(ent['id'], entitlementData);
+      _showSuccessMessage('تم تعديل الاستحقاق بنجاح');
+    }
+    
+    // إعادة تحميل البيانات
+    _loadEntitlementsData();
+  } catch (e) {
+    _showErrorMessage('فشل في حفظ الاستحقاق: $e');
+  } finally {
+    setState(() {
+      _isSaving = false;
+    });
+  }
+}
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -685,4 +761,5 @@ class _PersonnelEntitlementsScreenState extends State<PersonnelEntitlementsScree
       ),
     );
   }
+  
 }

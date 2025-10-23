@@ -85,28 +85,31 @@ class EntitlementsApi {
   }
 
   static Future<Map<String, dynamic>> createEntitlement(Map<String, dynamic> entitlementData) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/personnel-entitlements'),
-        headers: getHeaders(),
-        body: json.encode(entitlementData),
-      );
+  try {
+    // التحقق من صحة البيانات قبل الإرسال
+    validateEntitlementData(entitlementData);
+    
+    final response = await http.post(
+      Uri.parse('$baseUrl/personnel-entitlements'),
+      headers: getHeaders(),
+      body: json.encode(entitlementData),
+    );
 
-      if (response.statusCode == 201) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        if (responseData['success'] == true) {
-          return responseData['data'];
-        } else {
-          throw Exception(responseData['message'] ?? 'فشل في إنشاء الاستحقاق');
-        }
+    if (response.statusCode == 201) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['success'] == true) {
+        return responseData['data'];
       } else {
-        final Map<String, dynamic> errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء الاستحقاق - رمز الخطأ: ${response.statusCode}');
+        throw Exception(responseData['message'] ?? 'فشل في إنشاء الاستحقاق');
       }
-    } catch (e) {
-      throw Exception('خطأ في الاتصال: $e');
+    } else {
+      final Map<String, dynamic> errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'فشل في إنشاء الاستحقاق - رمز الخطأ: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('خطأ في الاتصال: $e');
   }
+}
 
   static Future<Map<String, dynamic>> updateEntitlement(int id, Map<String, dynamic> entitlementData) async {
     try {
@@ -321,4 +324,23 @@ class EntitlementsApi {
     if (date == null) return '--';
     return date;
   }
+  static void validateEntitlementData(Map<String, dynamic> data) {
+  if (data['amount'] == null) {
+    throw Exception('حقل المبلغ مطلوب');
+  }
+  
+  final amount = double.tryParse(data['amount'].toString());
+  if (amount == null || amount <= 0) {
+    throw Exception('المبلغ يجب أن يكون رقم موجب');
+  }
+  
+  if (data['entitlement_type'] == null || data['entitlement_type'].toString().isEmpty) {
+    throw Exception('نوع الاستحقاق مطلوب');
+  }
+  
+  if (data['personnel_id'] == null) {
+    throw Exception('معرف المستنفر مطلوب');
+  }
+}
+
 }

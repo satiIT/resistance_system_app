@@ -11,6 +11,7 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
   List<dynamic> _instructors = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -36,7 +37,7 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
+        content: Text(message),
         backgroundColor: Colors.red,
         duration: Duration(seconds: 3),
       ),
@@ -46,7 +47,7 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
+        content: Text(message),
         backgroundColor: Colors.green,
       ),
     );
@@ -61,10 +62,20 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
     }).toList();
   }
 
-  Widget _buildInstructorCard(Map<String, dynamic> instructor) {
-    return Card(
-      elevation: 3,
-      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+  Widget _buildInstructorTableRow(Map<String, dynamic> instructor, int index) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: index.isEven ? Colors.grey[50]! : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.blue,
@@ -75,27 +86,70 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
         ),
         title: Text(
           instructor['full_name'] ?? 'غير معروف',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (instructor['specialty'] != null) 
-              Text('التخصص: ${instructor['specialty']}'),
-            if (instructor['military_rank'] != null)
-              Text('الرتبة: ${instructor['military_rank']}'),
-            if (instructor['current_residence'] != null)
-              Text('المقر: ${instructor['current_residence']}'),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.work, size: 14, color: Colors.blue),
+                SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'التخصص: ${instructor['specialty'] ?? 'غير محدد'}',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.military_tech, size: 14, color: Colors.orange),
+                SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'الرتبة: ${instructor['military_rank'] ?? 'غير محدد'}',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 14, color: Colors.green),
+                SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'المقر: ${instructor['current_residence'] ?? 'غير محدد'}',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert),
+          icon: Icon(Icons.more_vert, color: Colors.blue),
           itemBuilder: (context) => [
             PopupMenuItem(
-              value: 'edit', 
+              value: 'view',
               child: Row(
                 children: [
-                  Icon(Icons.edit, color: Colors.blue),
+                  Icon(Icons.visibility, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text('عرض التفاصيل'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit, color: Colors.orange),
                   SizedBox(width: 8),
                   Text('تعديل'),
                 ],
@@ -113,14 +167,101 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
             ),
           ],
           onSelected: (value) {
-            if (value == 'edit') {
+            if (value == 'view') {
+              _showInstructorDetails(instructor);
+            } else if (value == 'edit') {
               _editInstructor(instructor);
             } else if (value == 'delete') {
               _deleteInstructor(instructor);
             }
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildInstructorGridItem(Map<String, dynamic> instructor) {
+    return Card(
+      elevation: 3,
+      margin: EdgeInsets.all(8),
+      child: InkWell(
         onTap: () => _showInstructorDetails(instructor),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Text(
+                      instructor['full_name']?.toString().substring(0, 1) ?? '?',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      instructor['full_name'] ?? 'غير معروف',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              _buildInfoRow(Icons.work, 'التخصص', instructor['specialty']),
+              _buildInfoRow(Icons.military_tech, 'الرتبة', instructor['military_rank']),
+              _buildInfoRow(Icons.location_on, 'المقر', instructor['current_residence']),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.visibility, color: Colors.blue),
+                    onPressed: () => _showInstructorDetails(instructor),
+                    tooltip: 'عرض التفاصيل',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Colors.orange),
+                    onPressed: () => _editInstructor(instructor),
+                    tooltip: 'تعديل',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteInstructor(instructor),
+                    tooltip: 'حذف',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String? value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[600]),
+          SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+          Expanded(
+            child: Text(
+              value ?? 'غير محدد',
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -129,12 +270,22 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.person, color: Colors.blue),
-            SizedBox(width: 8),
-            Text('تفاصيل المدرب'),
-          ],
+        title: Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.person, color: Colors.white),
+              SizedBox(width: 8),
+              Text(
+                'تفاصيل المدرب',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -157,7 +308,7 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق'),
+            child: Text('إغلاق', style: TextStyle(color: Colors.blue)),
           ),
         ],
       ),
@@ -165,19 +316,33 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
   }
 
   Widget _buildDetailItem(String label, String? value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50]!,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label: ',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+            ),
           ),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               value ?? 'غير محدد',
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: Colors.grey[800], fontSize: 14),
             ),
           ),
         ],
@@ -198,25 +363,58 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.warning, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('تأكيد الحذف'),
-          ],
+        title: Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.white),
+              SizedBox(width: 8),
+              Text('تأكيد الحذف', style: TextStyle(color: Colors.white)),
+            ],
+          ),
         ),
-        content: Text('هل تريد حذف المدرب ${instructor['full_name']}؟'),
+        content: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.delete_forever, size: 48, color: Colors.orange),
+              SizedBox(height: 16),
+              Text(
+                'هل تريد حذف المدرب',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                instructor['full_name'] ?? 'غير معروف',
+                style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'هذا الإجراء لا يمكن التراجع عنه',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء'),
+            child: Text('إلغاء', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await _confirmDelete(instructor['id']);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
             child: Text('حذف', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -250,7 +448,18 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
         title: Text('إدارة المدربين'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        elevation: 2,
         actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) _searchQuery = '';
+              });
+            },
+            tooltip: 'بحث',
+          ),
           IconButton(
             icon: Icon(Icons.add),
             onPressed: _addNewInstructor,
@@ -265,59 +474,91 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: 'بحث في المدربين',
-                hintText: 'ابحث بالاسم، التخصص، أو الرتبة...',
-                prefixIcon: Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              onChanged: (value) => setState(() => _searchQuery = value),
-            ),
-          ),
-          if (!_isLoading)
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Icon(Icons.people, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Text(
-                    'إجمالي المدربين: ${_filteredInstructors.length}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+          // Search Section
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            height: _isSearching ? 80 : 0,
+            child: _isSearching
+                ? Padding(
+                    padding: EdgeInsets.all(16),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'بحث في المدربين',
+                        hintText: 'ابحث بالاسم، التخصص، أو الرتبة...',
+                        prefixIcon: Icon(Icons.search),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50]!,
+                      ),
+                      onChanged: (value) => setState(() => _searchQuery = value),
                     ),
+                  )
+                : SizedBox.shrink(),
+          ),
+
+          // Header Info
+          if (!_isLoading)
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue[50]!,
+                border: Border(bottom: BorderSide(color: Colors.blue[100]!)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.people, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text(
+                        'إجمالي المدربين: ${_filteredInstructors.length}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Chip(
+                    label: Text(
+                      _filteredInstructors.length == _instructors.length 
+                          ? 'جميع المدربين' 
+                          : 'نتائج البحث',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.blue,
                   ),
                 ],
               ),
             ),
+
+          // Content
           Expanded(
             child: _isLoading
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircularProgressIndicator(),
+                        CircularProgressIndicator(color: Colors.blue),
                         SizedBox(height: 16),
-                        Text('جاري تحميل بيانات المدربين...'),
+                        Text(
+                          'جاري تحميل بيانات المدربين...',
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
+                        ),
                       ],
                     ),
                   )
@@ -326,20 +567,32 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.person_off, size: 64, color: Colors.grey),
+                            Icon(Icons.person_off, size: 80, color: Colors.grey[400]!),
                             SizedBox(height: 16),
                             Text(
                               _searchQuery.isEmpty
                                   ? 'لا توجد مدربين مسجلين'
                                   : 'لا توجد نتائج للبحث',
-                              style: TextStyle(fontSize: 18, color: Colors.grey),
+                              style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 8),
+                            Text(
+                              _searchQuery.isEmpty
+                                  ? 'انقر على زر (+) لإضافة مدرب جديد'
+                                  : 'حاول البحث بكلمات أخرى',
+                              style: TextStyle(color: Colors.grey, fontSize: 14),
+                            ),
+                            SizedBox(height: 20),
                             if (_searchQuery.isEmpty)
                               ElevatedButton.icon(
                                 onPressed: _addNewInstructor,
                                 icon: Icon(Icons.add),
                                 label: Text('إضافة مدرب جديد'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                ),
                               ),
                           ],
                         ),
@@ -347,7 +600,7 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
                     : ListView.builder(
                         itemCount: _filteredInstructors.length,
                         itemBuilder: (context, index) {
-                          return _buildInstructorCard(_filteredInstructors[index]);
+                          return _buildInstructorTableRow(_filteredInstructors[index], index);
                         },
                       ),
           ),
@@ -359,6 +612,7 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
         tooltip: 'إضافة مدرب جديد',
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        elevation: 4,
       ),
     );
   }

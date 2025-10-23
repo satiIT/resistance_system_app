@@ -8,21 +8,58 @@ class TrainingApi {
 
   // === دوال سجلات التدريب ===
 
-  static Future<List<TrainingRecord>> getTrainingRecords() async {
+static Future<List<TrainingRecord>> getTrainingRecords() async {
+  try {
     final response = await http.get(Uri.parse('$baseUrl/personnel-training'));
     
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
       if (responseData['success'] == true) {
         final List<dynamic> data = responseData['data'];
-        return data.map((json) => TrainingRecord.fromJson(json)).toList();
+        
+        // تنظيف البيانات قبل تحويلها
+        final cleanedData = data.map((json) => _cleanTrainingRecordData(json)).toList();
+        
+        return cleanedData.map((json) => TrainingRecord.fromJson(json)).toList();
       } else {
         throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات التدريب');
       }
     } else {
       throw Exception('فشل في تحميل بيانات التدريب - رمز الخطأ: ${response.statusCode}');
     }
+  } catch (e) {
+    print('Error in getTrainingRecords: $e');
+    throw e;
   }
+}
+
+// دالة لتنظيف بيانات سجل التدريب
+static Map<String, dynamic> _cleanTrainingRecordData(Map<String, dynamic> data) {
+  return {
+    'id': data['id'],
+    'personnel_name': _cleanString(data['personnel_name']),
+    'military_number': _cleanString(data['military_number']),
+    'course_name': _cleanString(data['course_name']),
+    'prior_training_type': _cleanString(data['prior_training_type']),
+    'evaluation_score': data['evaluation_score'],
+    'attendance_status': _cleanString(data['attendance_status']),
+    // أضف باقي الحقول حسب نموذج TrainingRecord الخاص بك
+  };
+}
+
+// دالة لتنظيف النصوص
+static String _cleanString(dynamic value) {
+  if (value == null) return 'غير محدد';
+  if (value is String) {
+    if (value.isEmpty || 
+        value.toLowerCase() == 'null' || 
+        value.toLowerCase() == 'undefined') {
+      return 'غير محدد';
+    }
+    return value;
+  }
+  return value.toString();
+}
 
   static Future<TrainingRecord> getTrainingRecord(int id) async {
     final response = await http.get(Uri.parse('$baseUrl/personnel-training/$id'));
@@ -389,6 +426,44 @@ static Future<List<TrainingRecord>> getCourseTrainees(int courseId) async {
     }
   } else {
     throw Exception('فشل في تحميل المتدربين - رمز الخطأ: ${response.statusCode}');
+  }
+}
+static Future<void> debugTrainingRecords() async {
+  try {
+    final response = await http.get(Uri.parse('$baseUrl/personnel-training'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      print('=== DEBUG: API Response ===');
+      print('Success: ${responseData['success']}');
+      print('Message: ${responseData['message']}');
+      
+      if (responseData['success'] == true) {
+        final List<dynamic> data = responseData['data'];
+        print('Number of records: ${data.length}');
+        
+        if (data.isNotEmpty) {
+          print('First record structure:');
+          for (var key in data.first.keys) {
+            print('  $key: ${data.first[key]} (type: ${data.first[key]?.runtimeType})');
+          }
+          
+          // Check for null values
+          print('\nRecords with null values:');
+          for (int i = 0; i < data.length; i++) {
+            var record = data[i];
+            var nullFields = record.keys.where((key) => record[key] == null).toList();
+            if (nullFields.isNotEmpty) {
+              print('Record $i has null fields: $nullFields');
+            }
+          }
+        }
+      }
+    } else {
+      print('API Error: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Debug Error: $e');
   }
 }
 }
