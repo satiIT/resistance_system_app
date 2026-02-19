@@ -1,22 +1,52 @@
 // lib/core/services/personnel_service.dart
 import 'dart:convert';
+import 'dart:io'; // Import for encoding
 import 'package:http/http.dart' as http;
 
 class PersonnelService {
   // 🔹 استخدام عنوان IP بدلاً من localhost للجوال
-  //static const String baseUrl = 'http://10.0.2.2:5000/api'; // للاندرويد
-   static const String baseUrl = 'http://localhost:5000/api'; // للويب
+  // static const String baseUrl = 'http://10.0.2.2:5000/api'; // للاندرويد
+  static const String baseUrl = 'http://localhost:5000/api'; // للويب
   // static const String baseUrl = 'http://192.168.1.100:5000/api'; // للشبكة المحلية
 
-  // Headers مشتركة
+  // Headers مشتركة مع UTF-8
   static Map<String, String> getHeaders() {
     return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Accept': 'application/json; charset=UTF-8', // ✅ إضافة charset هنا أيضاً
+      'Accept-Charset': 'UTF-8', // ✅ إضافة هذا الحقل
     };
   }
 
-  // 🔹 جلب جميع المستنفرين - مع إصلاح الـ endpoint
+  // 🔹 **دالة لمعالجة الاستجابة مع UTF-8**
+  static dynamic _decodeResponse(http.Response response) {
+    try {
+      // ✅ **الإصلاح: استخدام UTF-8 بشكل صريح**
+      final decodedBody = json.decode(utf8.decode(response.bodyBytes));
+      return decodedBody;
+    } catch (e) {
+      print('❌ خطأ في فك ترميز الاستجابة: $e');
+      print('📄 النص الخام: ${response.body}');
+      
+      // محاولة بديلة باستخدام Latin-1 (قد يعمل مع بعض الحروف)
+      try {
+        return json.decode(latin1.decode(response.bodyBytes));
+      } catch (e2) {
+        print('❌ فشل فك الترميز بالبديل: $e2');
+        
+        // محاولة التحليل كسلسلة نصية مباشرة
+        try {
+          final responseBody = String.fromCharCodes(response.bodyBytes);
+          return json.decode(responseBody);
+        } catch (e3) {
+          print('❌ فشل كامل في فك الترميز: $e3');
+          throw Exception('تعذر معالجة استجابة الخادم (مشكلة ترميز): $e');
+        }
+      }
+    }
+  }
+
+  // 🔹 جلب جميع المستنفرين - مع إصلاح الـ endpoint والتشفير
   static Future<List<dynamic>> getAllPersonnel() async {
     try {
       print('🌐 جاري الاتصال بـ: $baseUrl/personnel');
@@ -26,10 +56,11 @@ class PersonnelService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        // ✅ **استخدام الدالة المعدلة لفك الترميز**
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is List) {
           print('✅ تم جلب ${decodedBody.length} مستنفر');
           return decodedBody;
@@ -38,11 +69,13 @@ class PersonnelService {
             final data = decodedBody['data'] as List;
             print('✅ تم جلب ${data.length} مستنفر من data');
             return data;
-          } else if (decodedBody.containsKey('personnel') && decodedBody['personnel'] is List) {
+          } else if (decodedBody.containsKey('personnel') &&
+              decodedBody['personnel'] is List) {
             final personnel = decodedBody['personnel'] as List;
             print('✅ تم جلب ${personnel.length} مستنفر من personnel');
             return personnel;
-          } else if (decodedBody.containsKey('results') && decodedBody['results'] is List) {
+          } else if (decodedBody.containsKey('results') &&
+              decodedBody['results'] is List) {
             final results = decodedBody['results'] as List;
             print('✅ تم جلب ${results.length} مستنفر من results');
             return results;
@@ -51,12 +84,18 @@ class PersonnelService {
             return [];
           }
         } else {
-          throw Exception('تنسيق الاستجابة غير معروف: ${decodedBody.runtimeType}');
+          throw Exception(
+            'تنسيق الاستجابة غير معروف: ${decodedBody.runtimeType}',
+          );
         }
       } else if (response.statusCode == 404) {
         throw Exception('Endpoint غير موجود (404). تأكد من عنوان الـ API');
       } else {
-        throw Exception('فشل في جلب البيانات: ${response.statusCode} - ${response.body}');
+        // ✅ **استخدام utf8.decode لعرض الرسالة**
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception(
+          'فشل في جلب البيانات: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -74,10 +113,11 @@ class PersonnelService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        // ✅ **استخدام الدالة المعدلة**
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is Map) {
           if (decodedBody.containsKey('data')) {
             return Map<String, dynamic>.from(decodedBody['data'] as Map);
@@ -85,12 +125,15 @@ class PersonnelService {
             return Map<String, dynamic>.from(decodedBody);
           }
         } else {
-          throw Exception('تنسيق الاستجابة غير متوقع: ${decodedBody.runtimeType}');
+          throw Exception(
+            'تنسيق الاستجابة غير متوقع: ${decodedBody.runtimeType}',
+          );
         }
       } else if (response.statusCode == 404) {
         throw Exception('المستنفر غير موجود (404)');
       } else {
-        throw Exception('فشل في جلب بيانات المستنفر: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception('فشل في جلب بيانات المستنفر: ${response.statusCode} - $errorMessage');
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -99,20 +142,27 @@ class PersonnelService {
   }
 
   // 🔹 إنشاء مستنفر جديد - مع إصلاح الـ endpoint
-  static Future<Map<String, dynamic>> createPersonnel(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createPersonnel(
+    Map<String, dynamic> data,
+  ) async {
     try {
       print('🌐 جاري إنشاء مستنفر جديد في: $baseUrl/personnel');
+      print('📦 البيانات المرسلة: ${json.encode(data)}');
+      
+      // ✅ **استخدام utf8.encode لترميز الجسم**
+      final body = utf8.encode(json.encode(data));
+      
       final response = await http.post(
         Uri.parse('$baseUrl/personnel'),
         headers: getHeaders(),
-        body: json.encode(data),
+        body: body, // ✅ استخدام الجسم المشفر
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is Map) {
           if (decodedBody.containsKey('data')) {
             return Map<String, dynamic>.from(decodedBody['data'] as Map);
@@ -125,7 +175,10 @@ class PersonnelService {
       } else if (response.statusCode == 404) {
         throw Exception('Endpoint غير موجود (404)');
       } else {
-        throw Exception('فشل في إنشاء المستنفر: ${response.statusCode} - ${response.body}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception(
+          'فشل في إنشاء المستنفر: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -134,20 +187,27 @@ class PersonnelService {
   }
 
   // 🔹 تحديث مستنفر - مع إصلاح الـ endpoint
-  static Future<Map<String, dynamic>> updatePersonnel(String id, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updatePersonnel(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     try {
       print('🌐 جاري تحديث مستنفر في: $baseUrl/personnel/$id');
+      
+      // ✅ **استخدام utf8.encode**
+      final body = utf8.encode(json.encode(data));
+      
       final response = await http.put(
         Uri.parse('$baseUrl/personnel/$id'),
         headers: getHeaders(),
-        body: json.encode(data),
+        body: body,
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is Map) {
           if (decodedBody.containsKey('data')) {
             return Map<String, dynamic>.from(decodedBody['data'] as Map);
@@ -160,7 +220,10 @@ class PersonnelService {
       } else if (response.statusCode == 404) {
         throw Exception('المستنفر غير موجود (404)');
       } else {
-        throw Exception('فشل في تحديث المستنفر: ${response.statusCode} - ${response.body}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception(
+          'فشل في تحديث المستنفر: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -178,13 +241,18 @@ class PersonnelService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
-      if (response.statusCode == 200 || response.statusCode == 204 || response.statusCode == 202) {
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 204 ||
+          response.statusCode == 202) {
         return true;
       } else if (response.statusCode == 404) {
         throw Exception('المستنفر غير موجود (404)');
       } else {
-        throw Exception('فشل في حذف المستنفر: ${response.statusCode} - ${response.body}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception(
+          'فشل في حذف المستنفر: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -195,23 +263,27 @@ class PersonnelService {
   // 🔹 البحث في المستنفرين - مع إصلاح الـ endpoint
   static Future<List<dynamic>> searchPersonnel(String query) async {
     try {
-      print('🌐 جاري البحث في: $baseUrl/personnel/search?q=$query');
+      // ✅ **ترميز استعلام البحث**
+      final encodedQuery = Uri.encodeComponent(query);
+      print('🌐 جاري البحث في: $baseUrl/personnel/search?q=$encodedQuery');
+      
       final response = await http.get(
-        Uri.parse('$baseUrl/personnel/search?q=$query'),
+        Uri.parse('$baseUrl/personnel/search?q=$encodedQuery'),
         headers: getHeaders(),
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is List) {
           return decodedBody;
         } else if (decodedBody is Map) {
           if (decodedBody.containsKey('data') && decodedBody['data'] is List) {
             return decodedBody['data'] as List;
-          } else if (decodedBody.containsKey('results') && decodedBody['results'] is List) {
+          } else if (decodedBody.containsKey('results') &&
+              decodedBody['results'] is List) {
             return decodedBody['results'] as List;
           } else {
             return [];
@@ -222,7 +294,8 @@ class PersonnelService {
       } else if (response.statusCode == 404) {
         throw Exception('Endpoint البحث غير موجود (404)');
       } else {
-        throw Exception('فشل في البحث: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception('فشل في البحث: ${response.statusCode} - $errorMessage');
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -233,17 +306,20 @@ class PersonnelService {
   // 🔹 التصفية حسب الولاية - مع إصلاح الـ endpoint
   static Future<List<dynamic>> getPersonnelByState(String state) async {
     try {
-      print('🌐 جاري التصفية حسب الولاية: $baseUrl/personnel/state/$state');
+      // ✅ **ترميز اسم الولاية**
+      final encodedState = Uri.encodeComponent(state);
+      print('🌐 جاري التصفية حسب الولاية: $baseUrl/personnel/state/$encodedState');
+      
       final response = await http.get(
-        Uri.parse('$baseUrl/personnel/state/$state'),
+        Uri.parse('$baseUrl/personnel/state/$encodedState'),
         headers: getHeaders(),
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is List) {
           return decodedBody;
         } else if (decodedBody is Map) {
@@ -258,7 +334,10 @@ class PersonnelService {
       } else if (response.statusCode == 404) {
         throw Exception('Endpoint التصفية غير موجود (404)');
       } else {
-        throw Exception('فشل في جلب البيانات حسب الولاية: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception(
+          'فشل في جلب البيانات حسب الولاية: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -269,17 +348,22 @@ class PersonnelService {
   // 🔹 التصفية حسب المحلية - مع إصلاح الـ endpoint
   static Future<List<dynamic>> getPersonnelByLocality(String locality) async {
     try {
-      print('🌐 جاري التصفية حسب المحلية: $baseUrl/personnel/locality/$locality');
+      // ✅ **ترميز اسم المحلية**
+      final encodedLocality = Uri.encodeComponent(locality);
+      print(
+        '🌐 جاري التصفية حسب المحلية: $baseUrl/personnel/locality/$encodedLocality',
+      );
+      
       final response = await http.get(
-        Uri.parse('$baseUrl/personnel/locality/$locality'),
+        Uri.parse('$baseUrl/personnel/locality/$encodedLocality'),
         headers: getHeaders(),
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is List) {
           return decodedBody;
         } else if (decodedBody is Map) {
@@ -294,7 +378,10 @@ class PersonnelService {
       } else if (response.statusCode == 404) {
         throw Exception('Endpoint التصفية غير موجود (404)');
       } else {
-        throw Exception('فشل في جلب البيانات حسب المحلية: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception(
+          'فشل في جلب البيانات حسب المحلية: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -312,10 +399,10 @@ class PersonnelService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is Map) {
           if (decodedBody.containsKey('data')) {
             return Map<String, dynamic>.from(decodedBody['data'] as Map);
@@ -328,7 +415,10 @@ class PersonnelService {
       } else if (response.statusCode == 404) {
         throw Exception('Endpoint الإحصائيات غير موجود (404)');
       } else {
-        throw Exception('فشل في جلب الإحصائيات الجغرافية: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception(
+          'فشل في جلب الإحصائيات الجغرافية: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -346,16 +436,17 @@ class PersonnelService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is List) {
           return decodedBody;
         } else if (decodedBody is Map) {
           if (decodedBody.containsKey('data') && decodedBody['data'] is List) {
             return decodedBody['data'] as List;
-          } else if (decodedBody.containsKey('states') && decodedBody['states'] is List) {
+          } else if (decodedBody.containsKey('states') &&
+              decodedBody['states'] is List) {
             return decodedBody['states'] as List;
           } else {
             return [];
@@ -367,7 +458,8 @@ class PersonnelService {
         print('⚠️ استخدام الولايات الافتراضية بسبب 404');
         return _getDefaultStates();
       } else {
-        throw Exception('فشل في جلب قائمة الولايات: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception('فشل في جلب قائمة الولايات: ${response.statusCode} - $errorMessage');
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -386,16 +478,17 @@ class PersonnelService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        
+        final decodedBody = _decodeResponse(response);
+
         if (decodedBody is List) {
           return decodedBody;
         } else if (decodedBody is Map) {
           if (decodedBody.containsKey('data') && decodedBody['data'] is List) {
             return decodedBody['data'] as List;
-          } else if (decodedBody.containsKey('localities') && decodedBody['localities'] is List) {
+          } else if (decodedBody.containsKey('localities') &&
+              decodedBody['localities'] is List) {
             return decodedBody['localities'] as List;
           } else {
             return [];
@@ -407,7 +500,8 @@ class PersonnelService {
         print('⚠️ استخدام المحليات الافتراضية بسبب 404');
         return _getDefaultLocalities();
       } else {
-        throw Exception('فشل في جلب قائمة المحليات: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        throw Exception('فشل في جلب قائمة المحليات: ${response.statusCode} - $errorMessage');
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -451,7 +545,7 @@ class PersonnelService {
     ];
   }
 
-  // 🔹 دالة لاختبار الاتصال
+  // 🔹 دالة لاختبار الاتصال مع UTF-8
   static Future<bool> testConnection() async {
     try {
       print('🧪 اختبار الاتصال بـ: $baseUrl/personnel');
@@ -461,17 +555,55 @@ class PersonnelService {
       );
 
       print('📡 نتيجة اختبار الاتصال: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
-        print('✅ الاتصال ناجح');
+        // ✅ محاولة فك الترميز للتحقق من العملية
+        try {
+          _decodeResponse(response);
+          print('✅ الاتصال ناجح وترميز UTF-8 يعمل');
+        } catch (e) {
+          print('⚠️ الاتصال ناجح ولكن هناك مشكلة في الترميز: $e');
+        }
         return true;
       } else {
-        print('❌ فشل الاتصال: ${response.statusCode}');
+        final errorMessage = utf8.decode(response.bodyBytes);
+        print('❌ فشل الاتصال: ${response.statusCode} - $errorMessage');
         return false;
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
       return false;
+    }
+  }
+
+  // 🔹 **دالة جديدة: اختبار ترميز النص العربي**
+  static Future<void> testArabicEncoding() async {
+    try {
+      print('🧪 اختبار ترميز النص العربي...');
+      
+      // اختبار مع نص عربي
+      final testResponse = await http.get(
+        Uri.parse('$baseUrl/personnel'),
+        headers: getHeaders(),
+      );
+      
+      if (testResponse.statusCode == 200) {
+        final rawBytes = testResponse.bodyBytes;
+        final utf8String = utf8.decode(rawBytes);
+        final latin1String = latin1.decode(rawBytes);
+        
+        print('📊 نتائج اختبار الترميز:');
+        print('   طول البيانات (بايت): ${rawBytes.length}');
+        print('   الترميز UTF-8 ناجح: ${utf8String.contains('عربي') || utf8String.contains('مستنفر')}');
+        print('   الترميز Latin-1 ناجح: ${latin1String.contains('عربي') || latin1String.contains('مستنفر')}');
+        
+        // عرض عينة من النص
+        if (utf8String.length > 100) {
+          print('   عينة من النص (UTF-8): ${utf8String.substring(0, 100)}...');
+        }
+      }
+    } catch (e) {
+      print('❌ خطأ في اختبار الترميز: $e');
     }
   }
 }

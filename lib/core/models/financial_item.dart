@@ -23,35 +23,48 @@ class FinancialItem {
   factory FinancialItem.fromJson(Map<String, dynamic> json) {
     return FinancialItem(
       id: json['id'],
-      entryDate: DateTime.parse(json['entry_date'] ?? DateTime.now().toString()),
+      entryDate: DateTime.parse(
+        json['entry_date'] ?? DateTime.now().toString(),
+      ),
       type: json['type'] ?? '',
-      source: json['source'] ?? '',
-      amount: (json['amount'] ?? 0).toDouble(),
-      method: json['method'] ?? '',
+      source: json['source'] ?? json['expense_item'] ?? '',
+      amount: double.tryParse(json['amount'].toString()) ?? 0.0,
+      method: json['method'] ?? json['recipient'] ?? '',
       notes: json['notes'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       if (id != null) 'id': id,
       'entry_date': entryDate.toIso8601String().split('T')[0],
       'type': type,
-      'source': source,
       'amount': amount,
-      'method': method,
       'notes': notes,
     };
+
+    if (type == 'outgoing') {
+      data['expense_item'] = source;
+      data['recipient'] = method;
+    } else {
+      data['source'] = source;
+      data['method'] = method;
+    }
+
+    return data;
   }
 
   // دوال مساعدة
   String get description => type == 'incoming' ? 'وارد' : 'منصرف';
-  
+
   Color get typeColor => type == 'incoming' ? Colors.green : Colors.orange;
-  IconData get typeIcon => type == 'incoming' ? Icons.trending_up : Icons.trending_down;
-  
-  String get displaySource => type == 'incoming' ? 'الجهة: $source' : 'بند الصرف: $source';
-  String get displayMethod => type == 'incoming' ? 'طريقة التوريد: $method' : 'المستلم: $method';
+  IconData get typeIcon =>
+      type == 'incoming' ? Icons.trending_up : Icons.trending_down;
+
+  String get displaySource =>
+      type == 'incoming' ? 'الجهة: $source' : 'بند الصرف: $source';
+  String get displayMethod =>
+      type == 'incoming' ? 'طريقة التوريد: $method' : 'المستلم: $method';
 
   FinancialItem copyWith({
     int? id,

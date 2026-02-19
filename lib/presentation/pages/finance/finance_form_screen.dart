@@ -6,8 +6,9 @@ import '../../../core/services/financial_api.dart';
 class FinanceFormScreen extends StatefulWidget {
   final FinancialItem? existingItem;
   final String? type; // 'incoming' أو 'outgoing'
+  final double? currentBalance;
 
-  FinanceFormScreen({this.existingItem, this.type});
+  FinanceFormScreen({this.existingItem, this.type, this.currentBalance});
 
   @override
   _FinanceFormScreenState createState() => _FinanceFormScreenState();
@@ -25,7 +26,7 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
     'بنك',
     'تحويل إلكتروني',
     'شيك',
-    'أخرى'
+    'أخرى',
   ];
 
   final List<String> _expenseItems = [
@@ -39,14 +40,14 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
     'معدات',
     'أدوية',
     'مواد غذائية',
-    'أخرى'
+    'أخرى',
   ];
 
   @override
   void initState() {
     super.initState();
     _isEditMode = widget.existingItem != null;
-    
+
     if (_isEditMode) {
       _item = widget.existingItem!;
     } else {
@@ -137,7 +138,8 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
               ),
               readOnly: true,
               controller: TextEditingController(
-                text: '${_item.entryDate.year}-${_item.entryDate.month.toString().padLeft(2, '0')}-${_item.entryDate.day.toString().padLeft(2, '0')}',
+                text:
+                    '${_item.entryDate.year}-${_item.entryDate.month.toString().padLeft(2, '0')}-${_item.entryDate.day.toString().padLeft(2, '0')}',
               ),
               onTap: () async {
                 final selectedDate = await showDatePicker(
@@ -208,7 +210,9 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
                 Icon(Icons.business, color: Colors.green),
                 SizedBox(width: 8),
                 Text(
-                  _item.type == 'incoming' ? 'معلومات الوارد' : 'معلومات المنصرف',
+                  _item.type == 'incoming'
+                      ? 'معلومات الوارد'
+                      : 'معلومات المنصرف',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -242,10 +246,7 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
                 ),
                 value: _item.source.isNotEmpty ? _item.source : null,
                 items: _expenseItems.map((item) {
-                  return DropdownMenuItem(
-                    value: item,
-                    child: Text(item),
-                  );
+                  return DropdownMenuItem(value: item, child: Text(item));
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -299,12 +300,21 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
                 if (value == null || value.isEmpty) {
                   return 'يرجى إدخال المبلغ';
                 }
-                if (double.tryParse(value) == null) {
+                final amount = double.tryParse(value);
+                if (amount == null) {
                   return 'يرجى إدخال رقم صحيح';
+                }
+                if (_item.type == 'outgoing' &&
+                    !_isEditMode &&
+                    widget.currentBalance != null) {
+                  if (amount > widget.currentBalance!) {
+                    return 'المبلغ يتجاوز الرصيد الحالي (${widget.currentBalance})';
+                  }
                 }
                 return null;
               },
-              onSaved: (value) => _item = _item.copyWith(amount: double.parse(value!)),
+              onSaved: (value) =>
+                  _item = _item.copyWith(amount: double.parse(value!)),
             ),
             SizedBox(height: 12),
             if (_item.type == 'incoming') ...[
@@ -317,10 +327,7 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
                 ),
                 value: _item.method.isNotEmpty ? _item.method : null,
                 items: _paymentMethods.map((method) {
-                  return DropdownMenuItem(
-                    value: method,
-                    child: Text(method),
-                  );
+                  return DropdownMenuItem(value: method, child: Text(method));
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -404,7 +411,7 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
           Expanded(
             child: ElevatedButton.icon(
               icon: _isLoading ? SizedBox() : Icon(Icons.save),
-              label: _isLoading 
+              label: _isLoading
                   ? CircularProgressIndicator(color: Colors.white)
                   : Text(_isEditMode ? 'تحديث السجل' : 'حفظ السجل'),
               onPressed: _isLoading ? null : _saveItem,
@@ -434,9 +441,10 @@ class _FinanceFormScreenState extends State<FinanceFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditMode 
-            ? 'تعديل سجل ${_item.description}'
-            : 'إضافة سجل ${_item.type == 'incoming' ? 'وارد' : 'منصرف'} جديد'
+        title: Text(
+          _isEditMode
+              ? 'تعديل سجل ${_item.description}'
+              : 'إضافة سجل ${_item.type == 'incoming' ? 'وارد' : 'منصرف'} جديد',
         ),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,

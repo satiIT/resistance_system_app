@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:resistance_system_app/core/theme/app_theme.dart';
+import 'package:resistance_system_app/presentation/widgets/modern_widgets.dart';
 import '../../../core/models/training_course.dart';
 import '../../../core/services/training_api.dart';
 
@@ -8,14 +11,18 @@ class TrainingCourseFormScreen extends StatefulWidget {
   TrainingCourseFormScreen({this.existingCourse});
 
   @override
-  _TrainingCourseFormScreenState createState() => _TrainingCourseFormScreenState();
+  _TrainingCourseFormScreenState createState() =>
+      _TrainingCourseFormScreenState();
 }
 
 class _TrainingCourseFormScreenState extends State<TrainingCourseFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TrainingCourse _course; // تغيير إلى late
+  late TrainingCourse _course;
   bool _isLoading = false;
   bool _isEditMode = false;
+
+  List<Map<String, dynamic>> _instructors = [];
+  String? _selectedInstructorId;
 
   final List<String> _courseTypes = [
     'تدريب أساسي',
@@ -24,580 +31,292 @@ class _TrainingCourseFormScreenState extends State<TrainingCourseFormScreen> {
     'دورة سلاح',
     'دورة قيادة',
     'دورة طبية',
-    'دورة اتصالات'
+    'دورة اتصالات',
   ];
+  final List<String> _courseStatuses = ['مخطط', 'قيد التنفيذ', 'مكتمل', 'ملغى'];
 
-  final List<String> _courseStatuses = [
-    'مخطط',
-    'قيد التنفيذ',
-    'مكتمل',
-    'ملغى'
-  ];
-
-  final List<String> _courseLevels = [
-    'مبتدئ',
-    'متوسط',
-    'متقدم',
-    'متخصص'
-  ];
+  late TextEditingController _nameController;
+  late TextEditingController _locationController;
+  late TextEditingController _targetGroupController;
+  late TextEditingController _durationController;
+  late TextEditingController _maxParticipantsController;
+  late TextEditingController _notesController;
+  late TextEditingController _startDateController;
 
   @override
   void initState() {
     super.initState();
     _isEditMode = widget.existingCourse != null;
-    
-    // تهيئة _course مع القيمة المناسبة
-    if (_isEditMode) {
-      _course = widget.existingCourse!;
-    } else {
-      _course = TrainingCourse(courseName: ''); // توفير المعامل المطلوب
+    _course =
+        widget.existingCourse ??
+        TrainingCourse(
+          courseName: '',
+          courseType: 'تدريب متخصص',
+          courseStatus: 'مخطط',
+        );
+
+    _nameController = TextEditingController(text: _course.courseName);
+    _locationController = TextEditingController(text: _course.location);
+    _targetGroupController = TextEditingController(text: _course.targetGroup);
+    _durationController = TextEditingController(
+      text: _course.durationDays?.toString() ?? '',
+    );
+    _maxParticipantsController = TextEditingController(
+      text: _course.maxParticipants?.toString() ?? '',
+    );
+    _notesController = TextEditingController(text: _course.notes);
+    _startDateController = TextEditingController(
+      text: _course.startDate != null
+          ? '${_course.startDate?.year}-${_course.startDate?.month}-${_course.startDate?.day}'
+          : '',
+    );
+
+    _loadInstructors();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locationController.dispose();
+    _targetGroupController.dispose();
+    _durationController.dispose();
+    _maxParticipantsController.dispose();
+    _notesController.dispose();
+    _startDateController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadInstructors() async {
+    try {
+      final instructors = await TrainingApi.getInstructors();
+      setState(() {
+        _instructors = instructors.cast<Map<String, dynamic>>();
+        if (_isEditMode && _course.instructorName != null) {
+          final inst = _instructors.firstWhere(
+            (i) => i['name'] == _course.instructorName,
+            orElse: () => {},
+          );
+          if (inst.isNotEmpty) _selectedInstructorId = inst['id'].toString();
+        }
+      });
+    } catch (e) {
+      _showError('خطأ في تحميل المدربين');
     }
+  }
+
+  void _showError(String m) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(m), backgroundColor: AppColors.error));
+
+  @override
+  Widget build(BuildContext context) {
+    return ModernPageScaffold(
+      title: _isEditMode ? 'تعديل الدورة' : 'إضافة دورة جديدة',
+      children: [
+        Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              const ModernScreenHeader(
+                title: 'بيانات الدورة التدريبية',
+                subtitle:
+                    'قم بتحديد تفاصيل البرنامج التدريبي والجدول الزمني المخطط لضمان سير العملية التدريبية بنجاح.',
+              ),
+              const SizedBox(height: 32),
+
+              ModernSectionCard(
+                title: 'المعلومات الأساسية',
+                icon: Icons.info_rounded,
+                child: Column(
+                  children: [
+                    ModernTextField(
+                      label: 'اسم الدورة',
+                      controller: _nameController,
+                      onSaved: (v) => _course.courseName = v!,
+                      validator: (v) => (v == null || v.isEmpty)
+                          ? 'يرجى إدخال اسم الدورة'
+                          : null,
+                      prefixIcon: Icons.auto_stories_rounded,
+                    ),
+                    ModernDropdownField<String>(
+                      label: 'نوع الدورة',
+                      value: _course.courseType,
+                      items: _courseTypes
+                          .map(
+                            (t) => DropdownMenuItem(value: t, child: Text(t)),
+                          )
+                          .toList(),
+                      onChanged: (v) => setState(() => _course.courseType = v),
+                      prefixIcon: Icons.category_rounded,
+                    ),
+                  ],
+                ),
+              ),
+
+              ModernSectionCard(
+                title: 'المكان والزمان',
+                icon: Icons.map_rounded,
+                child: Column(
+                  children: [
+                    ModernTextField(
+                      label: 'مكان التدريب',
+                      controller: _locationController,
+                      onSaved: (v) => _course.location = v,
+                      prefixIcon: Icons.location_on_rounded,
+                    ),
+                    ModernTextField(
+                      label: 'تاريخ البدء',
+                      controller: _startDateController,
+                      readOnly: true,
+                      prefixIcon: Icons.calendar_today_rounded,
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                        );
+                        if (d != null) {
+                          setState(() {
+                            _course.startDate = d;
+                            _startDateController.text =
+                                '${d.year}-${d.month}-${d.day}';
+                          });
+                        }
+                      },
+                    ),
+                    ModernTextField(
+                      label: 'مدة الدورة (أيام)',
+                      controller: _durationController,
+                      keyboardType: TextInputType.number,
+                      onSaved: (v) =>
+                          _course.durationDays = int.tryParse(v ?? ''),
+                      prefixIcon: Icons.timer_rounded,
+                    ),
+                  ],
+                ),
+              ),
+
+              ModernSectionCard(
+                title: 'المدرب المسؤول',
+                icon: Icons.person_search_rounded,
+                child: ModernDropdownField<String>(
+                  label: 'المدرب',
+                  hint: 'اختر مدرباً للدورة من القائمة',
+                  value: _selectedInstructorId,
+                  items: _instructors
+                      .map(
+                        (i) => DropdownMenuItem(
+                          value: i['id'].toString(),
+                          child: Text(
+                            '${i['rank'] ?? i['military_rank'] ?? ''} ${i['name'] ?? i['full_name'] ?? ''}',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    setState(() {
+                      _selectedInstructorId = v;
+                      final inst = _instructors.firstWhere(
+                        (i) => i['id'].toString() == v,
+                      );
+                      _course.instructorName = inst['name'];
+                      _course.instructorRank = inst['rank'];
+                    });
+                  },
+                  prefixIcon: Icons.supervisor_account_rounded,
+                ),
+              ),
+
+              ModernSectionCard(
+                title: 'السعة والحالة',
+                icon: Icons.settings_rounded,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ModernTextField(
+                            label: 'السعة القصوى',
+                            controller: _maxParticipantsController,
+                            keyboardType: TextInputType.number,
+                            onSaved: (v) =>
+                                _course.maxParticipants = int.tryParse(v ?? ''),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ModernDropdownField<String>(
+                            label: 'حالة الدورة',
+                            value: _course.courseStatus,
+                            items: _courseStatuses
+                                .map(
+                                  (s) => DropdownMenuItem(
+                                    value: s,
+                                    child: Text(s),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _course.courseStatus = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                    ModernTextField(
+                      label: 'ملاحظات',
+                      controller: _notesController,
+                      maxLines: 3,
+                      onSaved: (v) => _course.notes = v,
+                      prefixIcon: Icons.note_rounded,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+              ModernGradientButton(
+                text: _isLoading ? 'جاري الحفظ...' : 'حفظ الدورة',
+                onPressed: _isLoading ? () {} : _saveCourse,
+                icon: Icons.save_rounded,
+                isLoading: _isLoading,
+                height: 60,
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.tajawal(
+                    color: AppColors.slate500,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _saveCourse() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      setState(() {
-        _isLoading = true;
-      });
-
+      setState(() => _isLoading = true);
       try {
         if (_isEditMode) {
           await TrainingApi.updateTrainingCourse(_course);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('تم تحديث الدورة بنجاح'),
-              backgroundColor: Colors.green,
-            ),
-          );
         } else {
           await TrainingApi.createTrainingCourse(_course);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('تم إنشاء الدورة بنجاح'),
-              backgroundColor: Colors.green,
-            ),
-          );
         }
         Navigator.pop(context, true);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطأ: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showError('خطأ أثناء الحفظ');
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
-  }
-
-  Widget _buildBasicInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info, color: Colors.blue),
-                SizedBox(width: 8),
-                Text(
-                  'المعلومات الأساسية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'اسم الدورة *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.courseName,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال اسم الدورة';
-                }
-                return null;
-              },
-              onSaved: (value) => _course.courseName = value!,
-            ),
-            SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'نوع الدورة *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              value: _course.courseType,
-              items: _courseTypes.map((type) {
-                return DropdownMenuItem(
-                  value: type,
-                  child: Text(type),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _course.courseType = value;
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى اختيار نوع الدورة';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'مستوى الدورة',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              value: _course.courseLevel,
-              items: _courseLevels.map((level) {
-                return DropdownMenuItem(
-                  value: level,
-                  child: Text(level),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _course.courseLevel = value;
-                });
-              },
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'مكان التدريب *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.location,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال مكان التدريب';
-                }
-                return null;
-              },
-              onSaved: (value) => _course.location = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'الفئة المستهدفة',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.targetGroup,
-              onSaved: (value) => _course.targetGroup = value,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScheduleSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: Colors.green),
-                SizedBox(width: 8),
-                Text(
-                  'الجدول الزمني',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'تاريخ البدء',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              readOnly: true,
-              controller: TextEditingController(
-                text: _course.startDate != null 
-                    ? '${_course.startDate!.year}-${_course.startDate!.month.toString().padLeft(2, '0')}-${_course.startDate!.day.toString().padLeft(2, '0')}'
-                    : '',
-              ),
-              onTap: () async {
-                final selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: _course.startDate ?? DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2030),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    _course.startDate = selectedDate;
-                  });
-                }
-              },
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'تاريخ الانتهاء',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              readOnly: true,
-              controller: TextEditingController(
-                text: _course.endDate != null 
-                    ? '${_course.endDate!.year}-${_course.endDate!.month.toString().padLeft(2, '0')}-${_course.endDate!.day.toString().padLeft(2, '0')}'
-                    : '',
-              ),
-              onTap: () async {
-                final selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: _course.endDate ?? DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2030),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    _course.endDate = selectedDate;
-                  });
-                }
-              },
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'مدة الدورة (أيام)',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              keyboardType: TextInputType.number,
-              initialValue: _course.durationDays?.toString(),
-              onSaved: (value) => _course.durationDays = int.tryParse(value ?? '0'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInstructorSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.person, color: Colors.orange),
-                SizedBox(width: 8),
-                Text(
-                  'معلومات المدرب',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'اسم المدرب',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.instructorName,
-              onSaved: (value) => _course.instructorName = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'رتبة المدرب',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.instructorRank,
-              onSaved: (value) => _course.instructorRank = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'وحدة المدرب',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.instructorUnit,
-              onSaved: (value) => _course.instructorUnit = value,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapacitySection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.people, color: Colors.purple),
-                SizedBox(width: 8),
-                Text(
-                  'السعة والحالة',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'العدد الأقصى للمشاركين',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              keyboardType: TextInputType.number,
-              initialValue: _course.maxParticipants?.toString(),
-              onSaved: (value) => _course.maxParticipants = int.tryParse(value ?? '0'),
-            ),
-            SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'حالة الدورة',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              value: _course.courseStatus ?? 'مخطط',
-              items: _courseStatuses.map((status) {
-                return DropdownMenuItem(
-                  value: status,
-                  child: Text(status),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _course.courseStatus = value;
-                });
-              },
-            ),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                Checkbox(
-                  value: _course.isActive ?? true,
-                  onChanged: (value) {
-                    setState(() {
-                      _course.isActive = value;
-                    });
-                  },
-                ),
-                Text('الدورة نشطة'),
-                SizedBox(width: 20),
-                Checkbox(
-                  value: _course.certificateIssued ?? false,
-                  onChanged: (value) {
-                    setState(() {
-                      _course.certificateIssued = value;
-                    });
-                  },
-                ),
-                Text('يتم إصدار شهادات'),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.attach_file, color: Colors.brown),
-                SizedBox(width: 8),
-                Text(
-                  'معلومات إضافية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'اسم السلاح (إن وجد)',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.trainingWeaponName,
-              onSaved: (value) => _course.trainingWeaponName = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'المتطلبات الأساسية',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.prerequisites,
-              maxLines: 2,
-              onSaved: (value) => _course.prerequisites = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'المنظم',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.organizer,
-              onSaved: (value) => _course.organizer = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'رابط المواد التدريبية',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.courseMaterialUrl,
-              onSaved: (value) => _course.courseMaterialUrl = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'رابط نموذج التقييم',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _course.evaluationFormUrl,
-              onSaved: (value) => _course.evaluationFormUrl = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'ملاحظات',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                alignLabelWithHint: true,
-              ),
-              initialValue: _course.notes,
-              maxLines: 3,
-              onSaved: (value) => _course.notes = value,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              icon: _isLoading ? SizedBox() : Icon(Icons.save),
-              label: _isLoading 
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text(_isEditMode ? 'تحديث الدورة' : 'إنشاء الدورة'),
-              onPressed: _isLoading ? null : _saveCourse,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 15),
-                backgroundColor: Colors.green,
-              ),
-            ),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: OutlinedButton.icon(
-              icon: Icon(Icons.cancel),
-              label: Text('إلغاء'),
-              onPressed: _isLoading ? null : () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 15),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditMode ? 'تعديل الدورة التدريبية' : 'إضافة دورة تدريبية جديدة'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-      ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: ListView(
-            children: [
-              _buildBasicInfoSection(),
-              SizedBox(height: 16),
-              _buildScheduleSection(),
-              SizedBox(height: 16),
-              _buildInstructorSection(),
-              SizedBox(height: 16),
-              _buildCapacitySection(),
-              SizedBox(height: 16),
-              _buildAdditionalInfoSection(),
-              SizedBox(height: 20),
-              _buildActionButtons(),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

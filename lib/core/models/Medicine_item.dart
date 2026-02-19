@@ -16,7 +16,7 @@ class MedicineItem {
   final String? notes;
   final String? dosageForm;
   final String? strength;
-  
+
   // حقول مرتبطة (من JOIN)
   final String? itemName;
   final String? itemCode;
@@ -51,7 +51,9 @@ class MedicineItem {
   factory MedicineItem.fromJson(Map<String, dynamic> json) {
     return MedicineItem(
       id: json['id'],
-      movementDate: DateTime.parse(json['movement_date'] ?? DateTime.now().toString()),
+      movementDate: DateTime.parse(
+        json['movement_date'] ?? DateTime.now().toString(),
+      ),
       movementType: json['movement_type_ar'] ?? json['movement_type'] ?? '',
       itemId: json['item_id'],
       storeId: json['store_id'],
@@ -60,7 +62,9 @@ class MedicineItem {
       packaging: json['packaging'],
       quantity: (json['quantity'] ?? 0).toDouble(),
       unit: json['unit'],
-      expiryDate: json['expiry_date'] != null ? DateTime.parse(json['expiry_date']) : null,
+      expiryDate: json['expiry_date'] != null
+          ? DateTime.parse(json['expiry_date'])
+          : null,
       notes: json['notes'],
       dosageForm: json['dosage_form'],
       strength: json['strength'],
@@ -77,8 +81,9 @@ class MedicineItem {
     return {
       if (id != null) 'id': id,
       'movement_date': movementDate.toIso8601String().split('T')[0],
-      'movement_type': movementType == 'وارد' ? 'incoming' : 'outgoing',
+      'movement_type': movementType, // Send as is (Arabic)
       'item_id': itemId,
+      'item_name': itemName, // Include name for creation if supported
       'store_id': storeId,
       'source_or_recipient': sourceOrRecipient,
       'medicine_type': medicineType,
@@ -94,27 +99,29 @@ class MedicineItem {
 
   // دوال مساعدة
   String get description => movementType;
-  
+
   Color get typeColor => movementType == 'وارد' ? Colors.green : Colors.orange;
-  IconData get typeIcon => movementType == 'وارد' ? Icons.local_pharmacy : Icons.medical_services;
-  
-  bool get isExpired => expiryDate != null && expiryDate!.isBefore(DateTime.now());
-  
+  IconData get typeIcon =>
+      movementType == 'وارد' ? Icons.local_pharmacy : Icons.medical_services;
+
+  bool get isExpired =>
+      expiryDate != null && expiryDate!.isBefore(DateTime.now());
+
   String get expiryStatus {
     if (expiryDate == null) return 'غير محدد';
     final now = DateTime.now();
     final difference = expiryDate!.difference(now).inDays;
-    
+
     if (difference < 0) return 'منتهي';
     if (difference <= 30) return 'قريب الانتهاء';
     return 'ساري';
   }
-  
+
   Color get expiryColor {
     if (expiryDate == null) return Colors.grey;
     final now = DateTime.now();
     final difference = expiryDate!.difference(now).inDays;
-    
+
     if (difference < 0) return Colors.red;
     if (difference <= 30) return Colors.orange;
     return Colors.green;

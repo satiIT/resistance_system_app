@@ -1,10 +1,16 @@
+// lib/presentation/pages/casualties/casualties_screen.dart
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:resistance_system_app/core/theme/app_theme.dart';
+import 'package:resistance_system_app/presentation/widgets/modern_widgets.dart';
 import '../../../core/models/casualty.dart';
 import '../../../core/services/casualty_api.dart';
 import 'casualty_form_screen.dart';
 import 'casualty_detail_screen.dart';
 
 class CasualtiesScreen extends StatefulWidget {
+  const CasualtiesScreen({Key? key}) : super(key: key);
+
   @override
   _CasualtiesScreenState createState() => _CasualtiesScreenState();
 }
@@ -14,6 +20,8 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
   bool _isLoading = true;
   String _searchQuery = '';
   int _selectedFilter = 0; // 0: الكل, 1: شهداء فقط, 2: جرحى فقط
+
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -39,142 +47,262 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
-        backgroundColor: Colors.red,
-        duration: Duration(seconds: 3),
+        content: Text(message, style: GoogleFonts.tajawal()),
+        backgroundColor: AppColors.error,
       ),
     );
   }
 
   List<Casualty> get _filteredCasualties {
     var filtered = _casualties;
-
-    // تطبيق البحث
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((casualty) {
-        return (casualty.militaryNumber ?? '').toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               (casualty.fullName ?? '').toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               (casualty.incidentLocation ?? '').toLowerCase().contains(_searchQuery.toLowerCase());
+        return (casualty.militaryNumber ?? '').toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ||
+            (casualty.fullName ?? '').toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ||
+            (casualty.incidentLocation ?? '').toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
       }).toList();
     }
-
-    // تطبيق الفلتر
     if (_selectedFilter == 1) {
       filtered = filtered.where((casualty) => casualty.isMartyr).toList();
     } else if (_selectedFilter == 2) {
       filtered = filtered.where((casualty) => casualty.isInjured).toList();
     }
-
     return filtered;
   }
 
-  Color _getTypeColor(Casualty casualty) {
-    return casualty.isMartyr ? Colors.red : Colors.orange;
+  @override
+  Widget build(BuildContext context) {
+    return ModernPageScaffold(
+      title: 'الجرحى والشهداء',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.analytics_outlined, color: Colors.white),
+          onPressed: () => _showCasualtyStats(context),
+        ),
+      ],
+      children: [
+        _buildTopHeader(),
+        _buildSearchAndFilter(),
+        const SizedBox(height: 16),
+        _isLoading ? _buildLoading() : _buildList(),
+      ],
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.error, Color(0xFFD32F2F)],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.error.withOpacity(0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: _addNewCasualty,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
+    );
   }
 
-  Color _getSeverityColor(Casualty casualty) {
-    switch (casualty.injurySeverity) {
-      case 'خطيرة':
-        return Colors.red;
-      case 'محدودة':
-        return Colors.orange;
-      case 'بسيطة':
-        return Colors.yellow;
-      case 'بسيطة جدا':
-        return Colors.green;
-      default:
-        return Colors.grey;
+  Widget _buildTopHeader() {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(24, 0, 24, 20),
+      child: ModernScreenHeader(
+        title: 'سجل التضحيات',
+        subtitle: 'توثيق بيانات الشهداء والجرحى في استمارة رقم (4).',
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilter() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Column(
+        children: [
+          ModernSearchField(
+            controller: _searchController,
+            hint: 'ابحث بالاسم، الرقم العسكري...',
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip('الكل', 0),
+                const SizedBox(width: 12),
+                _buildFilterChip('الشهداء', 1, color: AppColors.error),
+                const SizedBox(width: 12),
+                _buildFilterChip('الجرحى', 2, color: Colors.orange),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, int index, {Color? color}) {
+    final isSelected = _selectedFilter == index;
+    final activeColor = color ?? AppColors.primary;
+
+    return InkWell(
+      onTap: () => setState(() => _selectedFilter = index),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : (color?.withOpacity(0.5) ?? AppColors.slate200),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.tajawal(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            color: isSelected ? Colors.white : (color ?? AppColors.slate600),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoading() {
+    return const Center(
+      child: CircularProgressIndicator(color: AppColors.error),
+    );
+  }
+
+  Widget _buildList() {
+    final filtered = _filteredCasualties;
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off_rounded, size: 64, color: AppColors.slate300),
+            const SizedBox(height: 16),
+            Text(
+              'لا توجد سجلات مطابقة',
+              style: GoogleFonts.tajawal(
+                color: AppColors.slate500,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
     }
-  }
-
-  String _getIncidentDateFormatted(Casualty casualty) {
-    if (casualty.incidentDate == null) return 'غير محدد';
-    return '${casualty.incidentDate!.year}-${casualty.incidentDate!.month.toString().padLeft(2, '0')}-${casualty.incidentDate!.day.toString().padLeft(2, '0')}';
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 80),
+      itemCount: filtered.length,
+      itemBuilder: (context, index) => _buildCasualtyCard(filtered[index]),
+    );
   }
 
   Widget _buildCasualtyCard(Casualty casualty) {
-    return Card(
-      elevation: 3,
-      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getTypeColor(casualty),
-          child: Icon(
-            casualty.isMartyr ? Icons.flag : Icons.medical_services,
-            color: Colors.white,
-          ),
-        ),
-        title: Text(
-          casualty.fullName ?? 'غير محدد',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('الرقم العسكري: ${casualty.militaryNumber ?? "غير محدد"}'),
-            Text('النوع: ${casualty.caseType}'),
-            Text('التاريخ: ${_getIncidentDateFormatted(casualty)}'),
-            Text('المكان: ${casualty.incidentLocation ?? "غير محدد"}'),
-            if (casualty.isInjured)
-              Chip(
-                label: Text(
-                  casualty.injurySeverity ?? 'غير محدد',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-                backgroundColor: _getSeverityColor(casualty),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'view',
-              child: Row(
-                children: [
-                  Icon(Icons.visibility, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Text('عرض التفاصيل'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text('تعديل'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('حذف'),
-                ],
-              ),
-            ),
-          ],
-          onSelected: (value) {
-            switch (value) {
-              case 'view':
-                _viewCasualtyDetails(casualty);
-                break;
-              case 'edit':
-                _editCasualty(casualty);
-                break;
-              case 'delete':
-                _deleteCasualty(casualty);
-                break;
-            }
-          },
-        ),
+    final isMartyr = casualty.isMartyr;
+    final color = isMartyr ? AppColors.error : Colors.orange;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: ModernGlassCard(
         onTap: () => _viewCasualtyDetails(casualty),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withOpacity(0.2)),
+              ),
+              child: Icon(
+                isMartyr ? Icons.flag_rounded : Icons.medical_services_rounded,
+                color: color,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    casualty.fullName ?? 'غير مسمى',
+                    style: GoogleFonts.tajawal(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.badge_outlined,
+                        size: 14,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${casualty.militaryNumber ?? "-"}',
+                        style: GoogleFonts.tajawal(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                isMartyr ? 'شهيد' : 'جريح',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -188,62 +316,6 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
     );
   }
 
-  void _editCasualty(Casualty casualty) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CasualtyFormScreen(existingCasualty: casualty),
-      ),
-    ).then((_) => _loadCasualties());
-  }
-
-  void _deleteCasualty(Casualty casualty) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.warning, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('تأكيد الحذف'),
-          ],
-        ),
-        content: Text('هل تريد حذف سجل ${casualty.caseType} ${casualty.fullName}؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _confirmDelete(casualty.id!);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('حذف', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _confirmDelete(int id) async {
-    try {
-      await CasualtyApi.deleteCasualty(id);
-      setState(() {
-        _casualties.removeWhere((casualty) => casualty.id == id);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('تم الحذف بنجاح'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      _showErrorSnackBar('خطأ في الحذف: $e');
-    }
-  }
-
   void _addNewCasualty() {
     Navigator.push(
       context,
@@ -251,239 +323,97 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
     ).then((_) => _loadCasualties());
   }
 
-  void _showCasualtyStats() async {
+  void _showCasualtyStats(BuildContext context) async {
     try {
       final stats = await CasualtyApi.getCasualtyStats();
-      showDialog(
+      showModalBottomSheet(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.analytics, color: Colors.blue),
-              SizedBox(width: 8),
-              Text('إحصائيات الشهداء والجرحى'),
-            ],
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
-          content: Column(
+          padding: const EdgeInsets.all(32),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildStatItem('إجمالي السجلات', stats['total']?.toString() ?? '0', Icons.list),
-              _buildStatItem('عدد الشهداء', stats['martyrs']?.toString() ?? '0', Icons.flag),
-              _buildStatItem('عدد الجرحى', stats['injured']?.toString() ?? '0', Icons.medical_services),
-              _buildStatItem('إصابات خطيرة', stats['critical']?.toString() ?? '0', Icons.warning),
+              Text(
+                'ملخص الإحصائيات',
+                style: GoogleFonts.tajawal(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildStatRow(
+                'إجمالي السجلات',
+                stats['total']?.toString() ?? '0',
+                Icons.analytics_rounded,
+              ),
+              _buildStatRow(
+                'عدد الشهداء',
+                stats['martyrs']?.toString() ?? '0',
+                Icons.flag_rounded,
+                color: AppColors.error,
+              ),
+              _buildStatRow(
+                'عدد الجرحى',
+                stats['injured']?.toString() ?? '0',
+                Icons.medical_services_rounded,
+                color: Colors.orange,
+              ),
+              const SizedBox(height: 24),
+              ModernGradientButton(
+                text: 'إغلاق',
+                onPressed: () => Navigator.pop(context),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('إغلاق'),
-            ),
-          ],
         ),
       );
     } catch (e) {
-      _showErrorSnackBar('خطأ في تحميل الإحصائيات: $e');
+      _showErrorSnackBar('فشل تحميل الإحصائيات');
     }
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
+  Widget _buildStatRow(
+    String label,
+    String value,
+    IconData icon, {
+    Color? color,
+  }) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 20, color: Colors.blue),
-              SizedBox(width: 8),
-              Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(16),
+              color: (color ?? AppColors.primary).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(value, style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+            child: Icon(icon, color: color ?? AppColors.primary, size: 24),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChips() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Wrap(
-        spacing: 8,
-        children: [
-          FilterChip(
-            label: Text('الكل (${_casualties.length})'),
-            selected: _selectedFilter == 0,
-            onSelected: (selected) {
-              setState(() {
-                _selectedFilter = selected ? 0 : _selectedFilter;
-              });
-            },
-          ),
-          FilterChip(
-            label: Text('شهداء فقط'),
-            selected: _selectedFilter == 1,
-            onSelected: (selected) {
-              setState(() {
-                _selectedFilter = selected ? 1 : 0;
-              });
-            },
-          ),
-          FilterChip(
-            label: Text('جرحى فقط'),
-            selected: _selectedFilter == 2,
-            onSelected: (selected) {
-              setState(() {
-                _selectedFilter = selected ? 2 : 0;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('استمارة الجرحى والشهداء - استمارة رقم (4)'),
-        backgroundColor: Colors.red,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _addNewCasualty,
-            tooltip: 'إضافة سجل جديد',
-          ),
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'stats',
-                child: Row(
-                  children: [
-                    Icon(Icons.analytics, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Text('الإحصائيات'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'refresh',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Text('تحديث البيانات'),
-                  ],
-                ),
-              ),
-            ],
-            onSelected: (value) {
-              switch (value) {
-                case 'stats':
-                  _showCasualtyStats();
-                  break;
-                case 'refresh':
-                  _loadCasualties();
-                  break;
-              }
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: 'بحث في السجلات',
-                hintText: 'ابحث بالاسم، الرقم العسكري، أو المكان...',
-                prefixIcon: Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+          const SizedBox(width: 16),
+          Text(
+            label,
+            style: GoogleFonts.tajawal(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          _buildFilterChips(),
-          Expanded(
-            child: _isLoading
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('جاري تحميل البيانات...'),
-                      ],
-                    ),
-                  )
-                : _filteredCasualties.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.people_outline, size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
-                            Text(
-                              _searchQuery.isEmpty && _selectedFilter == 0
-                                  ? 'لا توجد سجلات'
-                                  : 'لا توجد نتائج للبحث',
-                              style: TextStyle(fontSize: 18, color: Colors.grey),
-                            ),
-                            SizedBox(height: 8),
-                            if (_searchQuery.isEmpty && _selectedFilter == 0)
-                              ElevatedButton.icon(
-                                onPressed: _addNewCasualty,
-                                icon: Icon(Icons.add),
-                                label: Text('إضافة سجل جديد'),
-                              ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _filteredCasualties.length,
-                        itemBuilder: (context, index) {
-                          return _buildCasualtyCard(_filteredCasualties[index]);
-                        },
-                      ),
+          const Spacer(),
+          Text(
+            value,
+            style: GoogleFonts.tajawal(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addNewCasualty,
-        child: Icon(Icons.add),
-        tooltip: 'إضافة سجل جديد',
-        backgroundColor: Colors.red,
-        foregroundColor: Colors.white,
       ),
     );
   }

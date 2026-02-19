@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:resistance_system_app/core/theme/app_theme.dart';
+import 'package:resistance_system_app/presentation/widgets/modern_widgets.dart';
 import '../../../core/services/training_api.dart';
 
 class InstructorFormScreen extends StatefulWidget {
@@ -12,11 +15,13 @@ class InstructorFormScreen extends StatefulWidget {
 
 class _InstructorFormScreenState extends State<InstructorFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final Map<String, dynamic> _instructorData = {};
+  late Map<String, dynamic> _instructor;
   bool _isLoading = false;
   bool _isEditMode = false;
 
-  final List<String> _militaryRanks = [
+  final List<String> _ranks = [
+    'مساعد',
+    'مساعد أول',
     'ملازم',
     'ملازم أول',
     'نقيب',
@@ -24,403 +29,253 @@ class _InstructorFormScreenState extends State<InstructorFormScreen> {
     'مقدم',
     'عقيد',
     'عميد',
-    'لواء'
+    'لواء',
+    'فريق',
+    'فريق أول',
+  ];
+  final List<String> _specialties = [
+    'أسلحة خفيفة',
+    'أسلحة ثقيلة',
+    'تكتيك',
+    'استخبارات',
+    'إشارة/اتصالات',
+    'طبابة',
+    'سواقة/آليات',
+    'تدريب مشاة',
   ];
 
-  final List<String> _specialties = [
-    'تدريب عسكري',
-    'تدريب سلاح',
-    'تدريب قيادة',
-    'تدريب اتصالات',
-    'تدريب طبي',
-    'تدريب هندسي',
-    'تدريب استخبارات'
-  ];
+  late TextEditingController _nameController;
+  late TextEditingController _militaryNoController;
+  late TextEditingController _unitController;
+  late TextEditingController _phoneController;
+  late TextEditingController _residenceController;
+  late TextEditingController _experienceController;
+  late TextEditingController _qualificationsController;
+  late TextEditingController _notesController;
 
   @override
   void initState() {
     super.initState();
     _isEditMode = widget.existingInstructor != null;
-    if (_isEditMode) {
-      _instructorData.addAll(widget.existingInstructor!);
+    _instructor = widget.existingInstructor != null
+        ? Map.from(widget.existingInstructor!)
+        : {};
+
+    // Aligning with API keys: name, rank, specialization, residence, etc.
+    _nameController = TextEditingController(
+      text: _instructor['name'] ?? _instructor['full_name'],
+    );
+    _militaryNoController = TextEditingController(
+      text: _instructor['military_number'],
+    );
+    _unitController = TextEditingController(text: _instructor['unit']);
+    _phoneController = TextEditingController(text: _instructor['phone_number']);
+    _residenceController = TextEditingController(
+      text: _instructor['residence'] ?? _instructor['current_residence'],
+    );
+    _experienceController = TextEditingController(
+      text: _instructor['experience_years']?.toString(),
+    );
+    _qualificationsController = TextEditingController(
+      text: _instructor['qualifications'],
+    );
+    _notesController = TextEditingController(text: _instructor['notes']);
+
+    // Ensure initial values for dropdowns match API keys if present
+    if (_instructor['rank'] == null && _instructor['military_rank'] != null) {
+      _instructor['rank'] = _instructor['military_rank'];
     }
+    if (_instructor['specialization'] == null &&
+        _instructor['specialty'] != null) {
+      _instructor['specialization'] = _instructor['specialty'];
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _militaryNoController.dispose();
+    _unitController.dispose();
+    _phoneController.dispose();
+    _residenceController.dispose();
+    _experienceController.dispose();
+    _qualificationsController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ModernPageScaffold(
+      title: _isEditMode ? 'تعديل البيانات' : 'إضافة مدرب جديد',
+      children: [
+        Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              const ModernScreenHeader(
+                title: 'بيانات المدرب',
+                subtitle:
+                    'يرجى تزويدنا بكافة المعلومات المهنية والعسكرية لتوثيق الكفاءات التدريبية بمصداقية.',
+              ),
+              const SizedBox(height: 32),
+
+              ModernSectionCard(
+                title: 'المعلومات العسكرية',
+                icon: Icons.military_tech_rounded,
+                child: Column(
+                  children: [
+                    ModernTextField(
+                      label: 'الاسم الرباعي',
+                      controller: _nameController,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'مطلوب' : null,
+                      prefixIcon: Icons.person_rounded,
+                    ),
+                    ModernDropdownField<String>(
+                      label: 'الرتبة العسكرية',
+                      value: _instructor['rank'],
+                      items: _ranks
+                          .map(
+                            (r) => DropdownMenuItem(value: r, child: Text(r)),
+                          )
+                          .toList(),
+                      onChanged: (v) => setState(() => _instructor['rank'] = v),
+                      prefixIcon: Icons.workspace_premium_rounded,
+                    ),
+                    ModernTextField(
+                      label: 'الرقم العسكري',
+                      controller: _militaryNoController,
+                      prefixIcon: Icons.badge_rounded,
+                    ),
+                    ModernTextField(
+                      label: 'الوحدة / التابعية',
+                      controller: _unitController,
+                      prefixIcon: Icons.corporate_fare_rounded,
+                    ),
+                  ],
+                ),
+              ),
+
+              ModernSectionCard(
+                title: 'الكفاءة المهنية',
+                icon: Icons.workspace_premium_rounded,
+                child: Column(
+                  children: [
+                    ModernDropdownField<String>(
+                      label: 'التخصص التدريبي',
+                      value: _instructor['specialization'],
+                      items: _specialties
+                          .map(
+                            (s) => DropdownMenuItem(value: s, child: Text(s)),
+                          )
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _instructor['specialization'] = v),
+                      prefixIcon: Icons.stars_rounded,
+                    ),
+                    ModernTextField(
+                      label: 'سنوات الخبرة',
+                      controller: _experienceController,
+                      keyboardType: TextInputType.number,
+                      prefixIcon: Icons.history_rounded,
+                    ),
+                    ModernTextField(
+                      label: 'المؤهلات والدورات الحاصل عليها',
+                      controller: _qualificationsController,
+                      maxLines: 2,
+                      prefixIcon: Icons.school_rounded,
+                    ),
+                  ],
+                ),
+              ),
+
+              ModernSectionCard(
+                title: 'معلومات التواصل والإقامة',
+                icon: Icons.contact_page_rounded,
+                child: Column(
+                  children: [
+                    ModernTextField(
+                      label: 'رقم الهاتف',
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      prefixIcon: Icons.phone_rounded,
+                    ),
+                    ModernTextField(
+                      label: 'مكان الإقامة الحالي',
+                      controller: _residenceController,
+                      prefixIcon: Icons.location_on_rounded,
+                    ),
+                    ModernTextField(
+                      label: 'ملاحظات إضافية',
+                      controller: _notesController,
+                      maxLines: 3,
+                      prefixIcon: Icons.note_rounded,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+              ModernGradientButton(
+                text: _isLoading ? 'جاري الحفظ...' : 'حفظ البيانات',
+                onPressed: _isLoading ? () {} : _saveInstructor,
+                icon: Icons.save_rounded,
+                isLoading: _isLoading,
+                height: 60,
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.tajawal(
+                    color: AppColors.slate500,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _saveInstructor() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      setState(() {
-        _isLoading = true;
-      });
-
+      setState(() => _isLoading = true);
       try {
+        final data = {
+          ..._instructor,
+          'name': _nameController.text,
+          'military_number': _militaryNoController
+              .text, // Keep as is if API supports it or ignore
+          'unit': _unitController.text,
+          'phone_number': _phoneController.text,
+          'residence': _residenceController.text,
+          'experience_years': int.tryParse(_experienceController.text) ?? 0,
+          'qualifications': _qualificationsController.text,
+          'notes': _notesController.text,
+        };
+
         if (_isEditMode) {
-          await TrainingApi.updateInstructor(_instructorData['id'], _instructorData);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('تم تحديث بيانات المدرب بنجاح'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          await TrainingApi.updateInstructor(data['id'], data);
         } else {
-          await TrainingApi.createInstructor(_instructorData);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('تم إضافة المدرب بنجاح'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          await TrainingApi.createInstructor(data);
         }
         Navigator.pop(context, true);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('خطأ: $e'),
-            backgroundColor: Colors.red,
+            content: Text('خطأ في الحفظ: $e'),
+            backgroundColor: AppColors.error,
           ),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
-  }
-
-  Widget _buildPersonalInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.person, color: Colors.blue),
-                SizedBox(width: 8),
-                Text(
-                  'المعلومات الشخصية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'الاسم الكامل',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['full_name'],
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال الاسم الكامل';
-                }
-                return null;
-              },
-              onSaved: (value) => _instructorData['full_name'] = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'رقم الهوية الوطنية',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['national_id'],
-              keyboardType: TextInputType.number,
-              onSaved: (value) => _instructorData['national_id'] = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'رقم الهاتف',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['phone_number'],
-              keyboardType: TextInputType.phone,
-              onSaved: (value) => _instructorData['phone_number'] = value,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfessionalInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.work, color: Colors.green),
-                SizedBox(width: 8),
-                Text(
-                  'المعلومات المهنية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'الرتبة العسكرية',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              value: _instructorData['military_rank'],
-              items: _militaryRanks.map((rank) {
-                return DropdownMenuItem(
-                  value: rank,
-                  child: Text(rank),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _instructorData['military_rank'] = value;
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى اختيار الرتبة العسكرية';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'التخصص',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              value: _instructorData['specialty'],
-              items: _specialties.map((specialty) {
-                return DropdownMenuItem(
-                  value: specialty,
-                  child: Text(specialty),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _instructorData['specialty'] = value;
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى اختيار التخصص';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'الوحدة',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['unit'],
-              onSaved: (value) => _instructorData['unit'] = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'سنوات الخبرة',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['experience_years']?.toString(),
-              keyboardType: TextInputType.number,
-              onSaved: (value) => _instructorData['experience_years'] = int.tryParse(value ?? '0'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.orange),
-                SizedBox(width: 8),
-                Text(
-                  'المعلومات الجغرافية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'مكان الإقامة الحالي',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['current_residence'],
-              onSaved: (value) => _instructorData['current_residence'] = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'العنوان التفصيلي',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['address'],
-              maxLines: 2,
-              onSaved: (value) => _instructorData['address'] = value,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info, color: Colors.purple),
-                SizedBox(width: 8),
-                Text(
-                  'معلومات إضافية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'المؤهلات العلمية',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['qualifications'],
-              maxLines: 2,
-              onSaved: (value) => _instructorData['qualifications'] = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'الدورات الخاصة',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['special_courses'],
-              maxLines: 2,
-              onSaved: (value) => _instructorData['special_courses'] = value,
-            ),
-            SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'ملاحظات',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              initialValue: _instructorData['notes'],
-              maxLines: 3,
-              onSaved: (value) => _instructorData['notes'] = value,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              icon: _isLoading ? SizedBox() : Icon(Icons.save),
-              label: _isLoading 
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text(_isEditMode ? 'تحديث البيانات' : 'حفظ المدرب'),
-              onPressed: _isLoading ? null : _saveInstructor,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 15),
-                backgroundColor: Colors.blue,
-              ),
-            ),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: OutlinedButton.icon(
-              icon: Icon(Icons.cancel),
-              label: Text('إلغاء'),
-              onPressed: _isLoading ? null : () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 15),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditMode ? 'تعديل بيانات المدرب' : 'إضافة مدرب جديد'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-      ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: ListView(
-            children: [
-              _buildPersonalInfoSection(),
-              SizedBox(height: 16),
-              _buildProfessionalInfoSection(),
-              SizedBox(height: 16),
-              _buildLocationInfoSection(),
-              SizedBox(height: 16),
-              _buildAdditionalInfoSection(),
-              SizedBox(height: 20),
-              _buildActionButtons(),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

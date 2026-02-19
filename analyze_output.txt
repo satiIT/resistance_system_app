@@ -1,0 +1,61 @@
+Analyzing 5 items...                                            
+
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\finance\finance_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\finance\finance_screen.dart:14:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:108:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:147:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:255:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:305:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:308:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:502:28 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\medicine\medicine_detail_screen.dart:10:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_detail_screen.dart:52:22 - deprecated_member_use
+  error - The getter 'notes' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_detail_screen.dart:350:56 - undefined_getter
+warning - The value of the local variable 'shareText' isn't used - lib\presentation\pages\medicine\medicine_detail_screen.dart:489:18 - unused_local_variable
+  error - The getter 'notes' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_detail_screen.dart:498:34 - undefined_getter
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\medicine\medicine_form_screen.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\medicine\medicine_form_screen.dart:15:3 - library_private_types_in_public_api
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:162:15 - deprecated_member_use
+  error - The getter 'requiredField' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:177:31 - undefined_getter
+  error - The getter 'enterMedicineName' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:222:32 - undefined_getter
+  error - The getter 'requiredField' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:231:59 - undefined_getter
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:248:15 - deprecated_member_use
+  error - The getter 'supplierName' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:265:28 - undefined_getter
+  error - The getter 'recipientName' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:266:28 - undefined_getter
+  error - The getter 'requiredField' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:275:59 - undefined_getter
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\medicine\medicine_form_screen.dart:333:25 - curly_braces_in_flow_control_structures
+  error - The getter 'requiredField' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:333:37 - undefined_getter
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\medicine\medicine_form_screen.dart:335:25 - curly_braces_in_flow_control_structures
+  error - The getter 'invalidNumber' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:335:37 - undefined_getter
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:360:21 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:387:15 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:414:15 - deprecated_member_use
+  error - The getter 'notes' isn't defined for the type 'AppLocalizations' - lib\presentation\pages\medicine\medicine_form_screen.dart:512:33 - undefined_getter
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\medicine\medicine_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\medicine\medicine_screen.dart:14:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:118:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:161:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:185:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:295:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:352:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:355:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:557:28 - deprecated_member_use
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\medicine\medicine_screen.dart:847:9 - sort_child_properties_last
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_list_screen.dart:13:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_list_screen.dart:16:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_list_screen.dart:50:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_list_screen.dart:54:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_list_screen.dart:58:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_list_screen.dart:65:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_list_screen.dart:89:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_list_screen.dart:92:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_list_screen.dart:100:7 - avoid_print
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:302:23 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:323:23 - curly_braces_in_flow_control_structures
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_list_screen.dart:665:15 - sized_box_for_whitespace
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_list_screen.dart:743:13 - deprecated_member_use
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_list_screen.dart:877:15 - sort_child_properties_last
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_list_screen.dart:923:18 - sized_box_for_whitespace
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:934:25 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:951:25 - curly_braces_in_flow_control_structures
+

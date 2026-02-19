@@ -1,286 +1,291 @@
 // lib/presentation/pages/login_screen.dart
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:resistance_system_app/core/theme/app_theme.dart';
+import 'package:resistance_system_app/presentation/widgets/modern_widgets.dart';
 import 'package:universal_platform/universal_platform.dart';
-import '../../core/responsive/responsive_layout.dart';
 import 'main_dashboard.dart';
 import 'intelligence/intelligence_login_screen.dart';
 
-class LoginScreen extends StatelessWidget {
-  final TextEditingController _usernameController = TextEditingController();
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen>
+    with TickerProviderStateMixin {
+  final TextEditingController _militaryIdController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+  late AnimationController _fadeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _militaryIdController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final bool isWeb = UniversalPlatform.isWeb;
-    final bool isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
-      appBar: isWeb ? null : _buildAppBar(isMobile),
       body: Container(
         width: double.infinity,
-        decoration: isWeb ? _buildWebBackground() : null,
-        child: isWeb
-            ? _buildWebLayout(context, isMobile)
-            : _buildMobileLayout(context, isMobile),
-      ),
-    );
-  }
-
-  AppBar _buildAppBar(bool isMobile) {
-    return AppBar(
-      title: Text(
-        'تسجيل الدخول',
-        style: TextStyle(fontSize: isMobile ? 18 : 20),
-      ),
-      centerTitle: true,
-    );
-  }
-
-  BoxDecoration _buildWebBackground() {
-    return BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-        colors: [Color(0xFF764ba2), Color(0xFF667eea)],
-      ),
-    );
-  }
-
-  Widget _buildWebLayout(BuildContext context, bool isMobile) {
-    return Center(
-      child: SingleChildScrollView(
-        child: Container(
-          width: isMobile ? 350 : 400,
-          margin: EdgeInsets.all(20),
-          child: Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(isMobile ? 24 : 32),
-              child: _buildLoginForm(context, isWeb: true, isMobile: isMobile),
-            ),
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isWeb
+                ? [AppColors.slate900, AppColors.slate800]
+                : [AppColors.primary, AppColors.primaryDark],
           ),
+        ),
+        child: Stack(
+          children: [
+            // Decorative background elements
+            _buildDecorationBlob(
+              top: -100,
+              right: -100,
+              color: AppColors.primary.withOpacity(0.2),
+            ),
+            _buildDecorationBlob(
+              bottom: -150,
+              left: -150,
+              color: AppColors.secondary.withOpacity(0.15),
+            ),
+
+            Center(
+              child: FadeTransition(
+                opacity: _fadeController,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 450),
+                    child: GlassContainer(
+                      blur: 15,
+                      opacity: 0.1,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 48,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // App Logo & Title
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.security,
+                                size: 64,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'نظام الإسناد المقاوم',
+                              style: GoogleFonts.tajawal(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'نظام إدارة الموارد واللوجستيات',
+                              style: GoogleFonts.tajawal(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                            const SizedBox(height: 48),
+
+                            // Form Fields
+                            _buildTextField(
+                              controller: _militaryIdController,
+                              label: 'الرقم العسكري',
+                              icon: Icons.badge_rounded,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildTextField(
+                              controller: _passwordController,
+                              label: 'كلمة المرور',
+                              icon: Icons.lock_rounded,
+                              isPassword: true,
+                            ),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                onPressed: () {},
+                                child: Text(
+                                  'نسيت كلمة المرور؟',
+                                  style: GoogleFonts.tajawal(
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Login Button
+                            ModernGradientButton(
+                              text: 'تسجيل الدخول',
+                              icon: Icons.login_rounded,
+                              onPressed: () => _handleLogin(context),
+                            ),
+
+                            const SizedBox(height: 24),
+                            const Divider(color: Colors.white24),
+                            const SizedBox(height: 24),
+
+                            // Intelligence Access
+                            TextButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const IntelligenceLoginScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.admin_panel_settings_rounded,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                'دخول ضباط الاستخبارات',
+                                style: GoogleFonts.tajawal(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, bool isMobile) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(16),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height - 100,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLoginForm(context, isWeb: false, isMobile: isMobile),
-            ],
-          ),
-        ),
+  Widget _buildDecorationBlob({
+    double? top,
+    double? bottom,
+    double? left,
+    double? right,
+    required Color color,
+  }) {
+    return Positioned(
+      top: top,
+      bottom: bottom,
+      left: left,
+      right: right,
+      child: Container(
+        width: 400,
+        height: 400,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }
 
-  Widget _buildLoginForm(
-    BuildContext context, {
-    required bool isWeb,
-    required bool isMobile,
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
   }) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // الشعار
-        if (isWeb) ...[
-          Icon(
-            Icons.security,
-            size: isMobile ? 60 : 80,
-            color: isWeb ? Colors.white : Theme.of(context).colorScheme.primary,
-          ),
-          SizedBox(height: isMobile ? 15 : 20),
-        ],
-
-        // العنوان
         Text(
-          'نظام إدارة موارد المقاومة الشعبية',
-          style: TextStyle(
-            fontSize: isMobile ? 18 : (isWeb ? 24 : 20),
-            fontWeight: FontWeight.bold,
-            color: isWeb ? Colors.white : Theme.of(context).colorScheme.primary,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: isMobile ? 20 : 30),
-
-        // حقل اسم المستخدم
-        TextFormField(
-          controller: _usernameController,
-          decoration: InputDecoration(
-            labelText: 'اسم المستخدم',
-            prefixIcon: Icon(Icons.person),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: isWeb
-                ? EdgeInsets.symmetric(
-                    vertical: isMobile ? 14 : 16,
-                    horizontal: 12,
-                  )
-                : EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          label,
+          style: GoogleFonts.tajawal(
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
           ),
         ),
-        SizedBox(height: isMobile ? 12 : 16),
-
-        // حقل كلمة المرور
-        TextFormField(
-          controller: _passwordController,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: 'كلمة المرور',
-            prefixIcon: Icon(Icons.lock),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: isWeb
-                ? EdgeInsets.symmetric(
-                    vertical: isMobile ? 14 : 16,
-                    horizontal: 12,
-                  )
-                : EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
-        ),
-        SizedBox(height: isMobile ? 20 : 24),
-
-        // زر تسجيل الدخول
-        SizedBox(
-          width: isWeb ? double.infinity : null,
-          child: ElevatedButton(
-            onPressed: () => _login(context),
-            child: Text(
-              'تسجيل الدخول',
-              style: TextStyle(fontSize: isMobile ? 14 : (isWeb ? 18 : 16)),
-            ),
-            style: ElevatedButton.styleFrom(
-              padding: isWeb
-                  ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16)
-                  : EdgeInsets.symmetric(
-                      vertical: isMobile ? 12 : 14,
-                      horizontal: 24,
-                    ),
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword && _obscurePassword,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    )
+                  : null,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ),
-        SizedBox(height: isMobile ? 12 : 16),
-
-        // زر الدخول للاستخبارات
-        SizedBox(
-          width: isWeb ? double.infinity : null,
-          child: OutlinedButton(
-            onPressed: () => _navigateToIntelligence(context),
-            child: Text(
-              'الدخول إلى نظام الاستخبارات',
-              style: TextStyle(fontSize: isMobile ? 12 : 14),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: isWeb
-                  ? Colors.white
-                  : Theme.of(context).colorScheme.primary,
-              side: BorderSide(
-                color: isWeb
-                    ? Colors.white
-                    : Theme.of(context).colorScheme.primary,
-              ),
-              padding: isWeb
-                  ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16)
-                  : EdgeInsets.symmetric(
-                      vertical: isMobile ? 10 : 12,
-                      horizontal: 20,
-                    ),
-            ),
-          ),
-        ),
-
-        // معلومات إضافية للويب
-        if (isWeb) ...[
-          SizedBox(height: isMobile ? 20 : 30),
-          Divider(color: Colors.white70),
-          SizedBox(height: isMobile ? 12 : 16),
-          Text(
-            'يدعم جميع المتصفحات الحديثة',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: isMobile ? 12 : 14,
-            ),
-          ),
-          SizedBox(height: isMobile ? 8 : 12),
-          Text(
-            'لجنة الإسناد خريجي جامعة الخرطوم الثمانينات',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: isMobile ? 10 : 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-
-        // معلومات إضافية للجوال
-        if (!isWeb) ...[
-          SizedBox(height: isMobile ? 20 : 30),
-          Divider(),
-          SizedBox(height: isMobile ? 12 : 16),
-          Text(
-            'المقاومة الشعبية',
-            style: TextStyle(color: Colors.grey, fontSize: isMobile ? 12 : 14),
-          ),
-          Text(
-            'لجنة الإسناد خريجي جامعة الخرطوم الثمانينات',
-            style: TextStyle(color: Colors.grey, fontSize: isMobile ? 10 : 12),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ],
     );
   }
 
-  void _login(BuildContext context) {
-    final String username = _usernameController.text.trim();
-    final String password = _passwordController.text.trim();
-
-    // تحقق بسيط من البيانات
-    if (username.isEmpty || password.isEmpty) {
-      _showErrorDialog(context, 'يرجى ملء جميع الحقول');
+  void _handleLogin(BuildContext context) {
+    if (_militaryIdController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('يرجى ملء جميع الحقول', style: GoogleFonts.tajawal()),
+          backgroundColor: AppColors.error,
+        ),
+      );
       return;
     }
-
-    // مؤقتاً للانتقال للشاشة الرئيسية (سيتم استبدالها بالمصادقة الحقيقية)
+    // Simple mock login
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => MainDashboard()),
-    );
-  }
-
-  void _navigateToIntelligence(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => IntelligenceLoginScreen()),
-    );
-  }
-
-  void _showErrorDialog(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('خطأ', style: TextStyle(fontSize: 18)),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('موافق'),
-          ),
-        ],
-      ),
+      MaterialPageRoute(builder: (_) => const MainDashboard()),
     );
   }
 }

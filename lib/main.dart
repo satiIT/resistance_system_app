@@ -1,49 +1,66 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:resistance_system_app/core/theme/app_theme.dart';
+import 'package:resistance_system_app/l10n/app_localizations.dart';
 import 'package:resistance_system_app/presentation/pages/splash_screen.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // إعدادات خاصة بالويب
+
   if (UniversalPlatform.isWeb) {
-    // تحسين الأداء على الويب
     SystemChrome.setApplicationSwitcherDescription(
-      ApplicationSwitcherDescription(
+      const ApplicationSwitcherDescription(
         label: 'المقاومة الشعبية - نظام الإدارة',
         primaryColor: 0xFF764ba2,
       ),
     );
   }
-  
-  runApp(ResistanceSystemApp());
+
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => LocaleProvider())],
+      child: const ResistanceSystemApp(),
+    ),
+  );
+}
+
+class LocaleProvider extends ChangeNotifier {
+  Locale _locale = const Locale('ar');
+  Locale get locale => _locale;
+
+  void setLocale(Locale locale) {
+    _locale = locale;
+    notifyListeners();
+  }
 }
 
 class ResistanceSystemApp extends StatelessWidget {
+  const ResistanceSystemApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'المقاومة الشعبية',
-      theme: AppTheme.lightTheme,
-      home: SplashScreen(),
-      debugShowCheckedModeBanner: false,
-      
-      // إعدادات التصميم للويب
-      builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              // تحسين النص على الويب
-              textScaleFactor: UniversalPlatform.isWeb 
-                  ? MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2)
-                  : MediaQuery.of(context).textScaleFactor,
-            ),
-            child: child!,
-          ),
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, _) {
+        return MaterialApp(
+          title: 'المقاومة الشعبية',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: ThemeMode.system,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: localeProvider.locale,
+          home: const SplashScreen(),
+          debugShowCheckedModeBanner: false,
+          builder: (context, child) {
+            return Directionality(
+              textDirection: localeProvider.locale.languageCode == 'ar'
+                  ? TextDirection.rtl
+                  : TextDirection.ltr,
+              child: child!,
+            );
+          },
         );
       },
     );

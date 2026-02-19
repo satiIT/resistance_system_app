@@ -1,237 +1,208 @@
 // lib/presentation/pages/intelligence/intelligence_login_screen.dart
 import 'package:flutter/material.dart';
-import 'package:universal_platform/universal_platform.dart';
-import 'package:resistance_system_app/core/responsive/responsive_layout.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:resistance_system_app/presentation/widgets/modern_widgets.dart';
 import '../main_dashboard.dart';
 
-class IntelligenceLoginScreen extends StatelessWidget {
+class IntelligenceLoginScreen extends StatefulWidget {
+  const IntelligenceLoginScreen({Key? key}) : super(key: key);
+
+  @override
+  State<IntelligenceLoginScreen> createState() =>
+      _IntelligenceLoginScreenState();
+}
+
+class _IntelligenceLoginScreenState extends State<IntelligenceLoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
-    final bool isWeb = UniversalPlatform.isWeb;
-    final bool isMobile = ResponsiveLayout.isMobile(context);
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'نظام الاستخبارات',
-          style: TextStyle(
-            fontSize: isMobile ? 18 : 20,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.red[800],
-      ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: isWeb ? _buildWebBackground() : null,
-        child: isWeb ? _buildWebLayout(context, isMobile) : _buildMobileLayout(context, isMobile),
-      ),
-    );
-  }
-
-  BoxDecoration _buildWebBackground() {
-    return BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-        colors: [
-          Colors.red[800]!,
-          Colors.red[600]!,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWebLayout(BuildContext context, bool isMobile) {
-    return Center(
-      child: Container(
-        width: isMobile ? 350 : 400,
-        margin: EdgeInsets.all(20),
-        child: Card(
-          elevation: 8,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: EdgeInsets.all(isMobile ? 24 : 32),
-            child: _buildLoginForm(context, isWeb: true, isMobile: isMobile),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF450a0a), Color(0xFF7f1d1d)], // Very dark red
           ),
+        ),
+        child: Stack(
+          children: [
+            // Security patterns or icons in background
+            Opacity(
+              opacity: 0.05,
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                ),
+                itemBuilder: (context, index) =>
+                    const Icon(Icons.security, size: 50, color: Colors.white),
+              ),
+            ),
+
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  child: GlassContainer(
+                    blur: 20,
+                    opacity: 0.1,
+                    color: Colors.red.shade900,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 48,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.red.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.gpp_maybe_rounded,
+                              size: 64,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'نظام الاستخبارات العسكرية',
+                            style: GoogleFonts.tajawal(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade900.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'منطقة عالية السرية',
+                              style: GoogleFonts.tajawal(
+                                fontSize: 12,
+                                color: Colors.red.shade200,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 48),
+
+                          _buildPasswordField(),
+                          const SizedBox(height: 32),
+
+                          ModernGradientButton(
+                            text: 'تصريح بالدخول',
+                            icon: Icons.vpn_key_rounded,
+                            gradientColors: const [
+                              Color(0xFFef4444),
+                              Color(0xFFb91c1c),
+                            ],
+                            onPressed: () => _authenticate(context),
+                          ),
+                          const SizedBox(height: 16),
+
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'العودة للشاشة الرئيسية',
+                              style: GoogleFonts.tajawal(
+                                color: Colors.white.withOpacity(0.6),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, bool isMobile) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      child: _buildLoginForm(context, isWeb: false, isMobile: isMobile),
-    );
-  }
-
-  Widget _buildLoginForm(BuildContext context, {required bool isWeb, required bool isMobile}) {
+  Widget _buildPasswordField() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // شعار الاستخبارات
-        Icon(Icons.security, 
-          size: isMobile ? 60 : 80, 
-          color: isWeb ? Colors.white : Colors.red[800],
-        ),
-        SizedBox(height: isMobile ? 15 : 20),
-        
-        // العنوان
         Text(
-          'الدخول إلى نظام الاستخبارات العسكرية',
-          style: TextStyle(
-            fontSize: isMobile ? 18 : (isWeb ? 24 : 20),
-            fontWeight: FontWeight.bold,
-            color: isWeb ? Colors.white : Colors.red[800],
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: isMobile ? 10 : 15),
-        Text(
-          'مطلوب كلمة مرور خاصة للوصول',
-          style: TextStyle(
-            fontSize: isMobile ? 14 : 16,
-            color: isWeb ? Colors.white70 : Colors.grey,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: isMobile ? 20 : 30),
-
-        // حقل كلمة مرور الاستخبارات
-        TextFormField(
-          controller: _passwordController,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: 'كلمة مرور الاستخبارات',
-            prefixIcon: Icon(Icons.password),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: isWeb 
-                ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16, horizontal: 12)
-                : EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          'كلمة المرور الخاصة',
+          style: GoogleFonts.tajawal(
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: isMobile ? 20 : 24),
-
-        // زر المصادقة
-        SizedBox(
-          width: isWeb ? double.infinity : null,
-          child: ElevatedButton(
-            onPressed: () => _authenticate(context),
-            child: Text(
-              'الدخول إلى النظام الاستخباراتي',
-              style: TextStyle(fontSize: isMobile ? 14 : (isWeb ? 18 : 16)),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[800],
-              padding: isWeb 
-                  ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16)
-                  : EdgeInsets.symmetric(vertical: isMobile ? 12 : 14, horizontal: 24),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.red.withOpacity(0.3)),
+          ),
+          child: TextField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            style: const TextStyle(color: Colors.white, letterSpacing: 4),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(
+                Icons.lock_person_rounded,
+                color: Colors.red,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.white.withOpacity(0.5),
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ),
-        SizedBox(height: isMobile ? 12 : 16),
-
-        // زر العودة
-        SizedBox(
-          width: isWeb ? double.infinity : null,
-          child: OutlinedButton(
-            onPressed: () => _goBack(context),
-            child: Text(
-              'العودة للشاشة الرئيسية',
-              style: TextStyle(fontSize: isMobile ? 12 : 14),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: isWeb ? Colors.white : Colors.red[800],
-              side: BorderSide(color: isWeb ? Colors.white : Colors.red[800]!),
-              padding: isWeb 
-                  ? EdgeInsets.symmetric(vertical: isMobile ? 14 : 16)
-                  : EdgeInsets.symmetric(vertical: isMobile ? 10 : 12, horizontal: 20),
-            ),
-          ),
-        ),
-
-        // معلومات إضافية للويب
-        if (isWeb) ...[
-          SizedBox(height: isMobile ? 20 : 30),
-          Divider(color: Colors.white70),
-          SizedBox(height: isMobile ? 12 : 16),
-          Text(
-            'الوصول مقصور على ضباط الاستخبارات المصرح لهم',
-            style: TextStyle(
-              color: Colors.white70, 
-              fontSize: isMobile ? 12 : 14
-            ),
-          ),
-        ],
-
-        // معلومات إضافية للجوال
-        if (!isWeb) ...[
-          SizedBox(height: isMobile ? 20 : 30),
-          Divider(),
-          SizedBox(height: isMobile ? 12 : 16),
-          Text(
-            'نظام الاستخبارات العسكرية',
-            style: TextStyle(
-              color: Colors.grey, 
-              fontSize: isMobile ? 12 : 14
-            ),
-          ),
-          Text(
-            'الوصول مقصور على ضباط الاستخبارات المصرح لهم',
-            style: TextStyle(
-              color: Colors.grey, 
-              fontSize: isMobile ? 10 : 12
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ],
     );
   }
 
   void _authenticate(BuildContext context) {
-    String password = _passwordController.text.trim();
-    
-    if (password.isEmpty) {
-      _showErrorDialog(context, 'يجب إدخال كلمة المرور');
+    if (_passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('يجب إدخال كلمة المرور', style: GoogleFonts.tajawal()),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
-    
-    // مؤقتاً - قبول أي كلمة مرور للاختبار
-    // في التطبيق الحقيقي، سيتم الاتصال بـ API المصادقة
     Navigator.pushReplacement(
-      context, 
-      MaterialPageRoute(builder: (_) => MainDashboard())
-    );
-  }
-
-  void _goBack(BuildContext context) {
-    Navigator.pop(context);
-  }
-
-  void _showErrorDialog(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'خطأ في المصادقة',
-          style: TextStyle(fontSize: 18),
-        ),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('موافق'),
-          ),
-        ],
-      ),
+      context,
+      MaterialPageRoute(builder: (_) => const MainDashboard()),
     );
   }
 }

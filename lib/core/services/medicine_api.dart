@@ -6,27 +6,40 @@ import '../models/medicine_item.dart';
 class MedicineApi {
   static const String baseUrl = 'http://localhost:5000/api/medicine';
 
+  static Map<String, String> get headers {
+    return {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Accept': 'application/json; charset=utf-8',
+    };
+  }
+
   // جلب جميع حركات الأدوية
   static Future<List<MedicineItem>> getMedicineItems() async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/movements'),
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
       );
 
+      final decodedBody = utf8.decode(response.bodyBytes);
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> responseData = json.decode(decodedBody);
         if (responseData['success'] == true) {
           final List<dynamic> data = responseData['data'];
           return data.map((json) => MedicineItem.fromJson(json)).toList();
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات الأدوية');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل بيانات الأدوية',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل البيانات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل البيانات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('خطأ في getMedicineItems: $e');
+      print('❌ خطأ في getMedicineItems: $e');
       rethrow;
     }
   }
@@ -34,25 +47,33 @@ class MedicineApi {
   // إنشاء حركة دواء جديدة
   static Future<MedicineItem> createMedicineItem(MedicineItem item) async {
     try {
+      final jsonData = item.toJson();
       final response = await http.post(
         Uri.parse('$baseUrl/movements'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(item.toJson()),
+        headers: headers,
+        body: utf8.encode(json.encode(jsonData)),
       );
 
+      final decodedBody = utf8.decode(response.bodyBytes);
+
       if (response.statusCode == 201) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> responseData = json.decode(decodedBody);
         if (responseData['success'] == true) {
           return MedicineItem.fromJson(responseData['data']);
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في إنشاء حركة الدواء');
+          throw Exception(
+            responseData['message'] ?? 'فشل في إنشاء حركة الدواء',
+          );
         }
       } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء الحركة - رمز الخطأ: ${response.statusCode}');
+        final errorData = json.decode(decodedBody);
+        throw Exception(
+          errorData['message'] ??
+              'فشل في إنشاء الحركة - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('خطأ في createMedicineItem: $e');
+      print('❌ خطأ في createMedicineItem: $e');
       rethrow;
     }
   }
@@ -62,23 +83,30 @@ class MedicineApi {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/movements/${item.id}'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(item.toJson()),
+        headers: headers,
+        body: utf8.encode(json.encode(item.toJson())),
       );
 
+      final decodedBody = utf8.decode(response.bodyBytes);
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> responseData = json.decode(decodedBody);
         if (responseData['success'] == true) {
           return MedicineItem.fromJson(responseData['data']);
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحديث حركة الدواء');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحديث حركة الدواء',
+          );
         }
       } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في التحديث - رمز الخطأ: ${response.statusCode}');
+        final errorData = json.decode(decodedBody);
+        throw Exception(
+          errorData['message'] ??
+              'فشل في التحديث - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('خطأ في updateMedicineItem: $e');
+      print('❌ خطأ في updateMedicineItem: $e');
       rethrow;
     }
   }
@@ -88,14 +116,19 @@ class MedicineApi {
     try {
       final response = await http.delete(
         Uri.parse('$baseUrl/movements/$id'),
+        headers: headers,
       );
 
       if (response.statusCode != 200) {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في الحذف - رمز الخطأ: ${response.statusCode}');
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final errorData = json.decode(decodedBody);
+        throw Exception(
+          errorData['message'] ??
+              'فشل في الحذف - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('خطأ في deleteMedicineItem: $e');
+      print('❌ خطأ في deleteMedicineItem: $e');
       rethrow;
     }
   }
@@ -103,20 +136,27 @@ class MedicineApi {
   // جلب إحصائيات الأدوية
   static Future<Map<String, dynamic>> getMedicineStats() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/stats'));
-      
+      final response = await http.get(
+        Uri.parse('$baseUrl/stats'),
+        headers: headers,
+      );
+
+      final decodedBody = utf8.decode(response.bodyBytes);
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> responseData = json.decode(decodedBody);
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
           throw Exception(responseData['message'] ?? 'فشل في تحميل الإحصائيات');
         }
       } else {
-        throw Exception('فشل في تحميل الإحصائيات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل الإحصائيات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('خطأ في getMedicineStats: $e');
+      print('❌ خطأ في getMedicineStats: $e');
       rethrow;
     }
   }
@@ -124,21 +164,30 @@ class MedicineApi {
   // جلب الأدوية المنتهية الصلاحية
   static Future<List<MedicineItem>> getExpiringMedicines() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/alerts'));
-      
+      final response = await http.get(
+        Uri.parse('$baseUrl/alerts'),
+        headers: headers,
+      );
+
+      final decodedBody = utf8.decode(response.bodyBytes);
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> responseData = json.decode(decodedBody);
         if (responseData['success'] == true) {
           final List<dynamic> data = responseData['data']['expired'];
           return data.map((json) => MedicineItem.fromJson(json)).toList();
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل الأدوية المنتهية');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل الأدوية المنتهية',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل الأدوية المنتهية - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل الأدوية المنتهية - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('خطأ في getExpiringMedicines: $e');
+      print('❌ خطأ في getExpiringMedicines: $e');
       rethrow;
     }
   }
@@ -146,21 +195,30 @@ class MedicineApi {
   // جلب الأدوية قريبة الانتهاء
   static Future<List<MedicineItem>> getNearExpiryMedicines() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/alerts'));
-      
+      final response = await http.get(
+        Uri.parse('$baseUrl/alerts'),
+        headers: headers,
+      );
+
+      final decodedBody = utf8.decode(response.bodyBytes);
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> responseData = json.decode(decodedBody);
         if (responseData['success'] == true) {
           final List<dynamic> data = responseData['data']['near_expiry'];
           return data.map((json) => MedicineItem.fromJson(json)).toList();
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل الأدوية قريبة الانتهاء');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل الأدوية قريبة الانتهاء',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل الأدوية قريبة الانتهاء - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل الأدوية قريبة الانتهاء - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('خطأ في getNearExpiryMedicines: $e');
+      print('❌ خطأ في getNearExpiryMedicines: $e');
       rethrow;
     }
   }

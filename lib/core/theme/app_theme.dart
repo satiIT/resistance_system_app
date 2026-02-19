@@ -1,110 +1,152 @@
 // lib/core/theme/app_theme.dart
 import 'package:flutter/material.dart';
 import 'package:universal_platform/universal_platform.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class AppColors {
+  static const Color primary = Color(0xFF6366F1); // Indigo
+  static const Color primaryDark = Color(0xFF4F46E5);
+  static const Color secondary = Color(0xFF10B981); // Emerald
+  static const Color accent = Color(0xFFF59E0B); // Amber
+  static const Color background = Color(0xFFF8FAFC);
+  static const Color surface = Colors.white;
+  static const Color error = Color(0xFFEF4444);
+
+  static const Color darkPrimary = Color(0xFF818CF8);
+  static const Color darkBackground = Color(0xFF0F172A);
+  static const Color darkSurface = Color(0xFF1E293B);
+
+  // Slate scale for neutrals
+  static const Color slate50 = Color(0xFFF8FAFC);
+  static const Color slate100 = Color(0xFFF1F5F9);
+  static const Color slate200 = Color(0xFFE2E8F0);
+  static const Color slate300 = Color(0xFFCBD5E1);
+  static const Color slate400 = Color(0xFF94A3B8);
+  static const Color slate500 = Color(0xFF64748B);
+  static const Color slate600 = Color(0xFF475569);
+  static const Color slate700 = Color(0xFF334155);
+  static const Color slate800 = Color(0xFF1E293B);
+  static const Color slate900 = Color(0xFF0F172A);
+}
 
 class AppTheme {
   static bool get isWeb => UniversalPlatform.isWeb;
-  static bool get isMobile => UniversalPlatform.isAndroid || UniversalPlatform.isIOS;
-  static bool get isDesktop => UniversalPlatform.isWindows || UniversalPlatform.isMacOS || UniversalPlatform.isLinux;
+  static bool get isMobile =>
+      UniversalPlatform.isAndroid || UniversalPlatform.isIOS;
+  static bool get isDesktop =>
+      UniversalPlatform.isWindows ||
+      UniversalPlatform.isMacOS ||
+      UniversalPlatform.isLinux;
 
   static ThemeData get lightTheme {
-    final ThemeData base = ThemeData.light();
-    
-    return base.copyWith(
-      // الألوان الأساسية
-      colorScheme: ColorScheme.light(
-        primary: Color(0xFF764ba2),
-        primaryContainer: Color(0xFF5a397c),
-        secondary: Color(0xFF667eea),
-        secondaryContainer: Color(0xFF556cd8),
-        surface: Colors.white,
-        background: Color(0xFFf8f9fa),
-        error: Colors.red,
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        surface: AppColors.surface,
+        background: AppColors.background,
+        error: AppColors.error,
+        brightness: Brightness.light,
       ),
-      
-      // استخدام TextTheme الحديث
-      textTheme: _buildTextTheme(base.textTheme),
-      appBarTheme: _buildAppBarTheme(),
+      textTheme: _buildTextTheme(Brightness.light),
+      appBarTheme: _buildAppBarTheme(Brightness.light),
       elevatedButtonTheme: _buildElevatedButtonTheme(),
-      cardTheme: _buildCardTheme(),
-      inputDecorationTheme: _buildInputDecorationTheme(),
+      outlinedButtonTheme: _buildOutlinedButtonTheme(),
+      cardTheme: _buildCardTheme(Brightness.light),
+      inputDecorationTheme: _buildInputDecorationTheme(Brightness.light),
+      iconTheme: const IconThemeData(color: AppColors.primary, size: 24),
     );
   }
 
-  static TextTheme _buildTextTheme(TextTheme base) {
-    // أحجام خطوط متجاوبة حسب المنصة
-    double scaleFactor = isWeb ? 1.2 : 1.0;
-    
-    return base.copyWith(
-      // Flutter 3.x استخدام الأسماء الجديدة
-      displayLarge: TextStyle(
-        fontSize: (24 * scaleFactor).clamp(24, 32).toDouble(),
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        primary: AppColors.darkPrimary,
+        secondary: AppColors.secondary,
+        surface: AppColors.darkSurface,
+        background: AppColors.darkBackground,
+        error: AppColors.error,
+        brightness: Brightness.dark,
+      ),
+      textTheme: _buildTextTheme(Brightness.dark),
+      appBarTheme: _buildAppBarTheme(Brightness.dark),
+      elevatedButtonTheme: _buildElevatedButtonTheme(),
+      outlinedButtonTheme: _buildOutlinedButtonTheme(),
+      cardTheme: _buildCardTheme(Brightness.dark),
+      inputDecorationTheme: _buildInputDecorationTheme(Brightness.dark),
+      iconTheme: const IconThemeData(color: AppColors.darkPrimary, size: 24),
+    );
+  }
+
+  static TextTheme _buildTextTheme(Brightness brightness) {
+    final Color textColor = brightness == Brightness.light
+        ? Colors.black
+        : Colors.white;
+
+    return GoogleFonts.tajawalTextTheme().copyWith(
+      displayLarge: GoogleFonts.tajawal(
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
+        color: textColor,
+      ),
+      displayMedium: GoogleFonts.tajawal(
+        fontSize: 28,
         fontWeight: FontWeight.bold,
-        color: Colors.black87,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+        color: textColor,
       ),
-      displayMedium: TextStyle(
-        fontSize: (20 * scaleFactor).clamp(20, 28).toDouble(),
+      displaySmall: GoogleFonts.tajawal(
+        fontSize: 24,
         fontWeight: FontWeight.w600,
-        color: Colors.black87,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+        color: textColor,
       ),
-      displaySmall: TextStyle(
-        fontSize: (18 * scaleFactor).clamp(18, 24).toDouble(),
+      headlineMedium: GoogleFonts.tajawal(
+        fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: Colors.black87,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+        color: textColor,
       ),
-      bodyLarge: TextStyle(
-        fontSize: (16 * scaleFactor).clamp(16, 18).toDouble(),
-        fontWeight: FontWeight.normal,
-        color: Colors.black87,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
-      ),
-      bodyMedium: TextStyle(
-        fontSize: (14 * scaleFactor).clamp(14, 16).toDouble(),
-        fontWeight: FontWeight.normal,
-        color: Colors.black54,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
-      ),
-      bodySmall: TextStyle(
-        fontSize: (12 * scaleFactor).clamp(12, 14).toDouble(),
-        fontWeight: FontWeight.normal,
-        color: Colors.black45,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
-      ),
-      titleLarge: TextStyle(
-        fontSize: (18 * scaleFactor).clamp(18, 22).toDouble(),
+      titleLarge: GoogleFonts.tajawal(
+        fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: Colors.black87,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+        color: textColor,
       ),
-      titleMedium: TextStyle(
-        fontSize: (16 * scaleFactor).clamp(16, 20).toDouble(),
+      titleMedium: GoogleFonts.tajawal(
+        fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Colors.black87,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+        color: textColor,
       ),
-      titleSmall: TextStyle(
-        fontSize: (14 * scaleFactor).clamp(14, 16).toDouble(),
+      bodyLarge: GoogleFonts.tajawal(
+        fontSize: 16,
+        color: textColor,
         fontWeight: FontWeight.w500,
-        color: Colors.black87,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+      ),
+      bodyMedium: GoogleFonts.tajawal(
+        fontSize: 14,
+        color: textColor.withOpacity(0.9),
+        fontWeight: FontWeight.w500,
+      ),
+      labelLarge: GoogleFonts.tajawal(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: textColor,
       ),
     );
   }
 
-  static AppBarTheme _buildAppBarTheme() {
+  static AppBarTheme _buildAppBarTheme(Brightness brightness) {
+    final isLight = brightness == Brightness.light;
     return AppBarTheme(
-      backgroundColor: Color(0xFF764ba2),
-      foregroundColor: Colors.white,
-      elevation: isWeb ? 2 : 4,
+      backgroundColor: isLight ? Colors.white : AppColors.darkSurface,
+      foregroundColor: isLight ? AppColors.slate900 : Colors.white,
+      elevation: 0,
       centerTitle: true,
-      toolbarHeight: isWeb ? 70 : 56,
-      titleTextStyle: TextStyle(
-        fontSize: isWeb ? 20 : 18,
+      titleTextStyle: GoogleFonts.tajawal(
+        fontSize: 20,
         fontWeight: FontWeight.bold,
-        fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+        color: isLight ? AppColors.slate900 : Colors.white,
       ),
     );
   }
@@ -113,90 +155,86 @@ class AppTheme {
     return ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         foregroundColor: Colors.white,
-        backgroundColor: Color(0xFF764ba2),
-        padding: isWeb 
-            ? EdgeInsets.symmetric(horizontal: 24, vertical: 16)
-            : EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: TextStyle(
-          fontSize: isWeb ? 16 : 14,
-          fontWeight: FontWeight.w600,
-          fontFamily: isWeb ? 'Tajawal, Arial, sans-serif' : 'Tajawal',
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: GoogleFonts.tajawal(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  // ✅ التصحيح: استخدام CardThemeData بدلاً من CardTheme
-  static CardThemeData _buildCardTheme() {
+  static OutlinedButtonThemeData _buildOutlinedButtonTheme() {
+    return OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        side: const BorderSide(color: AppColors.primary, width: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: GoogleFonts.tajawal(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  static CardThemeData _buildCardTheme(Brightness brightness) {
+    final isLight = brightness == Brightness.light;
     return CardThemeData(
-      elevation: isWeb ? 2 : 4,
-      margin: isWeb ? EdgeInsets.all(16) : EdgeInsets.all(8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.1),
+      elevation: 0,
+      margin: const EdgeInsets.all(8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isLight ? AppColors.slate200 : AppColors.slate700,
+          width: 1,
+        ),
+      ),
+      color: isLight ? Colors.white : AppColors.darkSurface,
       surfaceTintColor: Colors.transparent,
     );
   }
 
-  static InputDecorationTheme _buildInputDecorationTheme() {
+  static InputDecorationTheme _buildInputDecorationTheme(
+    Brightness brightness,
+  ) {
+    final isLight = brightness == Brightness.light;
     return InputDecorationTheme(
+      filled: true,
+      fillColor: isLight ? Colors.white : AppColors.slate800.withOpacity(0.5),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(16), // More rounded
+        borderSide: BorderSide(
+          color: isLight ? AppColors.slate200 : Colors.white12,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: isLight ? AppColors.slate200 : Colors.white12,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Color(0xFF764ba2), width: 2),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
-      contentPadding: isWeb 
-          ? EdgeInsets.symmetric(vertical: 16, horizontal: 12)
-          : EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+      labelStyle: TextStyle(
+        color: isLight ? AppColors.slate600 : AppColors.slate300,
+        fontWeight: FontWeight.w500,
+      ),
+      hintStyle: TextStyle(
+        color: isLight ? AppColors.slate400 : AppColors.slate500,
+        fontWeight: FontWeight.w400,
+      ),
     );
   }
-}
-
-// دالة مساعدة للوصول السهل للنصوص
-class AppTextStyles {
-  static TextStyle get displayLarge => TextStyle(
-    fontSize: AppTheme.isWeb ? 32 : 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.black87,
-  );
-
-  static TextStyle get displayMedium => TextStyle(
-    fontSize: AppTheme.isWeb ? 28 : 20,
-    fontWeight: FontWeight.w600,
-    color: Colors.black87,
-  );
-
-  static TextStyle get displaySmall => TextStyle(
-    fontSize: AppTheme.isWeb ? 24 : 18,
-    fontWeight: FontWeight.w600,
-    color: Colors.black87,
-  );
-
-  static TextStyle get bodyLarge => TextStyle(
-    fontSize: AppTheme.isWeb ? 18 : 16,
-    fontWeight: FontWeight.normal,
-    color: Colors.black87,
-  );
-
-  static TextStyle get bodyMedium => TextStyle(
-    fontSize: AppTheme.isWeb ? 16 : 14,
-    fontWeight: FontWeight.normal,
-    color: Colors.black54,
-  );
-
-  static TextStyle get titleLarge => TextStyle(
-    fontSize: AppTheme.isWeb ? 22 : 18,
-    fontWeight: FontWeight.bold,
-    color: Colors.black87,
-  );
-
-  static TextStyle get titleMedium => TextStyle(
-    fontSize: AppTheme.isWeb ? 20 : 16,
-    fontWeight: FontWeight.w600,
-    color: Colors.black87,
-  );
 }

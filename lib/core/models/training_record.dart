@@ -1,7 +1,7 @@
 class TrainingRecord {
   int? id;
-  int personnelId;
-  int courseId;
+  int? personnelId;
+  int? courseId;
   String? attendanceStatus;
   int? evaluationScore;
   bool? certificateReceived;
@@ -26,8 +26,8 @@ class TrainingRecord {
 
   TrainingRecord({
     this.id,
-    required this.personnelId,
-    required this.courseId,
+    this.personnelId,
+    this.courseId,
     this.attendanceStatus,
     this.evaluationScore,
     this.certificateReceived,
@@ -50,6 +50,8 @@ class TrainingRecord {
   });
 
   factory TrainingRecord.fromJson(Map<String, dynamic> json) {
+    print('🔍 تحويل JSON إلى TrainingRecord: ${json.keys}');
+    
     return TrainingRecord(
       id: json['id'],
       personnelId: json['personnel_id'],
@@ -65,16 +67,28 @@ class TrainingRecord {
       trainingCampName: json['training_camp_name'],
       specializedCourseType: json['specialized_course_type'],
       weaponTrainingType: json['weapon_training_type'],
-      personnelName: json['personnel_name'],
-      militaryNumber: json['military_number'],
-      courseName: json['course_name'],
-      courseType: json['course_type'],
-      courseLocation: json['course_location'],
+      personnelName: _safeString(json['personnel_name']),
+      militaryNumber: _safeString(json['military_number']),
+      courseName: _safeString(json['course_name']),
+      courseType: _safeString(json['course_type']),
+      courseLocation: _safeString(json['course_location']),
       courseStartDate: json['course_start_date'] != null ? DateTime.parse(json['course_start_date']) : null,
       courseEndDate: json['course_end_date'] != null ? DateTime.parse(json['course_end_date']) : null,
       courseDurationDays: json['course_duration_days'],
-      
     );
+  }
+
+  static String _safeString(dynamic value, [String defaultValue = '']) {
+    if (value == null) return defaultValue;
+    if (value is String) {
+      if (value.isEmpty || 
+          value.toLowerCase() == 'null' || 
+          value.toLowerCase() == 'undefined') {
+        return defaultValue;
+      }
+      return value;
+    }
+    return value.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -92,20 +106,6 @@ class TrainingRecord {
       'training_camp_name': trainingCampName,
       'specialized_course_type': specializedCourseType,
       'weapon_training_type': weaponTrainingType,
-      
     };
   }
-  
-static String _safeString(dynamic value, String defaultValue) {
-  if (value == null) return defaultValue;
-  if (value is String) {
-    if (value.isEmpty || 
-        value.toLowerCase() == 'null' || 
-        value.toLowerCase() == 'undefined') {
-      return defaultValue;
-    }
-    return value;
-  }
-  return value.toString();
-}
 }

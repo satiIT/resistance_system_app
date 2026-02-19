@@ -1,15 +1,24 @@
-// screens/medicine/medicine_detail_screen.dart - الجزء المكمل
+// lib/presentation/pages/medicine/medicine_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:resistance_system_app/l10n/app_localizations.dart';
+import 'package:resistance_system_app/core/theme/app_theme.dart';
 import '../../../core/models/medicine_item.dart';
 
 class MedicineDetailScreen extends StatelessWidget {
   final MedicineItem item;
 
-  MedicineDetailScreen({required this.item});
+  const MedicineDetailScreen({Key? key, required this.item}) : super(key: key);
 
-  Widget _buildDetailItem(String label, String? value, {bool isImportant = false, Color? valueColor}) {
+  Widget _buildDetailItem(
+    BuildContext context,
+    String label,
+    String? value, {
+    bool isImportant = false,
+    Color? valueColor,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -17,14 +26,17 @@ class MedicineDetailScreen extends StatelessWidget {
             '$label: ',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isImportant ? Colors.red : Colors.black87,
+              color: isImportant
+                  ? AppColors.error
+                  : (isDark ? AppColors.slate300 : AppColors.slate700),
             ),
           ),
           Expanded(
             child: Text(
-              value ?? 'غير محدد',
+              value ?? AppLocalizations.of(context)!.noDataFound,
               style: TextStyle(
-                color: valueColor ?? (isImportant ? Colors.red : Colors.grey[700]),
+                color:
+                    valueColor ?? (isDark ? Colors.white : AppColors.slate900),
               ),
             ),
           ),
@@ -35,7 +47,7 @@ class MedicineDetailScreen extends StatelessWidget {
 
   Widget _buildStatusIndicator(String status, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
@@ -52,29 +64,33 @@ class MedicineDetailScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime? date) {
-    if (date == null) return 'غير محدد';
+  String _formatDate(BuildContext context, DateTime? date) {
+    if (date == null) return AppLocalizations.of(context)!.noDataFound;
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('تفاصيل سجل الدواء'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
-      ),
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      appBar: AppBar(title: Text(l10n.viewDetails), elevation: 0),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // بطاقة المعلومات الأساسية
             Card(
-              elevation: 4,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: isDark ? AppColors.darkSurface : Colors.white,
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -84,20 +100,27 @@ class MedicineDetailScreen extends StatelessWidget {
                           backgroundColor: item.typeColor,
                           child: Icon(item.typeIcon, color: Colors.white),
                         ),
-                        SizedBox(width: 16),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                item.itemName ?? 'غير محدد',
+                                item.itemName ?? l10n.noDataFound,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.slate900,
                                 ),
                               ),
                               Text(
-                                item.movementType,
+                                item.movementType == 'وارد'
+                                    ? l10n.incoming
+                                    : (item.movementType == 'منصرف'
+                                          ? l10n.outgoing
+                                          : item.movementType),
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: item.typeColor,
@@ -109,15 +132,26 @@ class MedicineDetailScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
-                    Row(
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        _buildStatusIndicator(item.movementType, item.typeColor),
-                        SizedBox(width: 8),
+                        _buildStatusIndicator(
+                          item.movementType == 'وارد'
+                              ? l10n.incoming
+                              : (item.movementType == 'منصرف'
+                                    ? l10n.outgoing
+                                    : item.movementType),
+                          item.typeColor,
+                        ),
                         if (item.isExpired)
-                          _buildStatusIndicator('منتهي الصلاحية', Colors.red),
+                          _buildStatusIndicator(l10n.expired, Colors.red),
                         if (!item.isExpired && item.expiryDate != null)
-                          _buildStatusIndicator(item.expiryStatus, item.expiryColor),
+                          _buildStatusIndicator(
+                            item.expiryStatus,
+                            item.expiryColor,
+                          ),
                       ],
                     ),
                   ],
@@ -125,64 +159,100 @@ class MedicineDetailScreen extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // معلومات الدواء
             Card(
-              elevation: 4,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: isDark ? AppColors.darkSurface : Colors.white,
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'معلومات الدواء',
-                      style: TextStyle(
+                      l10n.medicineDetails,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: AppColors.primary,
                       ),
                     ),
-                    SizedBox(height: 12),
-                    _buildDetailItem('اسم الدواء', item.itemName),
-                    _buildDetailItem('نوع الدواء', item.medicineType),
-                    _buildDetailItem('شكل الجرعة', item.dosageForm),
-                    _buildDetailItem('التركيز', item.strength),
-                    _buildDetailItem('نوع الحركة', item.movementType),
-                    _buildDetailItem('الكمية', '${item.quantity} ${item.unit ?? ""}'),
-                    _buildDetailItem('التاريخ', _formatDate(item.movementDate)),
+                    const SizedBox(height: 12),
+                    _buildDetailItem(context, l10n.itemName, item.itemName),
+                    _buildDetailItem(
+                      context,
+                      l10n.medicineType,
+                      item.medicineType,
+                    ),
+                    _buildDetailItem(context, l10n.dosageForm, item.dosageForm),
+                    _buildDetailItem(context, l10n.strength, item.strength),
+                    _buildDetailItem(
+                      context,
+                      l10n.movementType,
+                      item.movementType == 'وارد'
+                          ? l10n.incoming
+                          : (item.movementType == 'منصرف'
+                                ? l10n.outgoing
+                                : item.movementType),
+                    ),
+                    _buildDetailItem(
+                      context,
+                      l10n.quantity,
+                      '${item.quantity} ${item.unit ?? ""}',
+                    ),
+                    _buildDetailItem(
+                      context,
+                      l10n.date,
+                      _formatDate(context, item.movementDate),
+                    ),
                   ],
                 ),
               ),
             ),
 
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // معلومات التعبئة والجهة
             Card(
-              elevation: 4,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: isDark ? AppColors.darkSurface : Colors.white,
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'معلومات التعبئة والجهة',
-                      style: TextStyle(
+                      l10n.quantityAndPackaging,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
                     ),
-                    SizedBox(height: 12),
-                    _buildDetailItem('نوع العبوة', item.packaging),
-                    _buildDetailItem('الوحدة', item.unit),
-                    if (item.movementType == 'وارد') 
-                      _buildDetailItem('المصدر', item.sourceOrRecipient),
-                    if (item.movementType == 'منصرف') 
-                      _buildDetailItem('المستلم', item.sourceOrRecipient),
+                    const SizedBox(height: 12),
+                    _buildDetailItem(context, l10n.packaging, item.packaging),
+                    _buildDetailItem(context, l10n.unit, item.unit),
+                    if (item.movementType == 'وارد')
+                      _buildDetailItem(
+                        context,
+                        l10n.source,
+                        item.sourceOrRecipient,
+                      ),
+                    if (item.movementType == 'منصرف')
+                      _buildDetailItem(
+                        context,
+                        l10n.recipient,
+                        item.sourceOrRecipient,
+                      ),
                     if (item.storeName != null)
-                      _buildDetailItem('المخزن', item.storeName),
+                      _buildDetailItem(context, l10n.store, item.storeName),
                   ],
                 ),
               ),
@@ -190,38 +260,45 @@ class MedicineDetailScreen extends StatelessWidget {
 
             // معلومات الصلاحية
             if (item.expiryDate != null) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Card(
-                elevation: 4,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                color: isDark ? AppColors.darkSurface : Colors.white,
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'معلومات الصلاحية',
-                        style: TextStyle(
+                        l10n.expiryDate,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.orange,
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       _buildDetailItem(
-                        'تاريخ انتهاء الصلاحية', 
-                        _formatDate(item.expiryDate),
+                        context,
+                        l10n.expiryDate,
+                        _formatDate(context, item.expiryDate),
                         valueColor: item.expiryColor,
                       ),
                       _buildDetailItem(
-                        'حالة الصلاحية',
+                        context,
+                        l10n.expiryStatus,
                         item.expiryStatus,
                         valueColor: item.expiryColor,
                       ),
                       _buildDetailItem(
-                        'الأيام المتبقية',
-                        item.expiryDate != null 
-                            ? '${item.expiryDate!.difference(DateTime.now()).inDays} يوم'
-                            : 'غير محدد',
+                        context,
+                        l10n.daysRemaining,
+                        item.expiryDate != null
+                            ? '${item.expiryDate!.difference(DateTime.now()).inDays} ${l10n.daysRemaining}'
+                            : l10n.noDataFound,
                         valueColor: item.expiryColor,
                       ),
                     ],
@@ -231,56 +308,74 @@ class MedicineDetailScreen extends StatelessWidget {
             ],
 
             // معلومات إضافية
-            if (item.notes != null || item.medicineCategory != null || item.itemCode != null) ...[
-              SizedBox(height: 16),
+            if (item.notes != null ||
+                item.medicineCategory != null ||
+                item.itemCode != null) ...[
+              const SizedBox(height: 16),
               Card(
-                elevation: 4,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                color: isDark ? AppColors.darkSurface : Colors.white,
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'معلومات إضافية',
-                        style: TextStyle(
+                        l10n.additionalInfo,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.purple,
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       if (item.itemCode != null)
-                        _buildDetailItem('كود الصنف', item.itemCode),
+                        _buildDetailItem(context, l10n.itemCode, item.itemCode),
                       if (item.medicineCategory != null)
-                        _buildDetailItem('فئة الدواء', item.medicineCategory),
+                        _buildDetailItem(
+                          context,
+                          l10n.medicineCategory,
+                          item.medicineCategory,
+                        ),
                       if (item.unitOfMeasure != null)
-                        _buildDetailItem('وحدة القياس', item.unitOfMeasure),
+                        _buildDetailItem(
+                          context,
+                          l10n.unitOfMeasure,
+                          item.unitOfMeasure,
+                        ),
                       if (item.notes != null)
-                        _buildDetailItem('ملاحظات', item.notes),
+                        _buildDetailItem(context, l10n.notes, item.notes),
                     ],
                   ),
                 ),
               ),
             ],
 
-            // معلومات المخزون والتحذيرات
-            SizedBox(height: 16),
+            // حالة الدواء
+            const SizedBox(height: 16),
             Card(
-              elevation: 4,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: isDark ? AppColors.darkSurface : Colors.white,
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'حالة الدواء',
-                      style: TextStyle(
+                      l10n.status,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.red,
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Icon(
@@ -288,12 +383,12 @@ class MedicineDetailScreen extends StatelessWidget {
                           color: item.isExpired ? Colors.red : Colors.green,
                           size: 24,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            item.isExpired 
-                                ? '⚠️ هذا الدواء منتهي الصلاحية'
-                                : '✅ هذا الدواء ساري الصلاحية',
+                            item.isExpired
+                                ? l10n.expiredWarning
+                                : l10n.validWarning,
                             style: TextStyle(
                               fontSize: 16,
                               color: item.isExpired ? Colors.red : Colors.green,
@@ -304,26 +399,29 @@ class MedicineDetailScreen extends StatelessWidget {
                       ],
                     ),
                     if (item.expiryDate != null && !item.isExpired) ...[
-                      SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       LinearProgressIndicator(
                         value: _calculateExpiryProgress(item.expiryDate!),
                         backgroundColor: Colors.grey[300],
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          _calculateExpiryProgress(item.expiryDate!) > 0.7 
-                              ? Colors.green 
-                              : _calculateExpiryProgress(item.expiryDate!) > 0.3 
-                                  ? Colors.orange 
-                                  : Colors.red,
+                          _calculateExpiryProgress(item.expiryDate!) > 0.7
+                              ? Colors.green
+                              : _calculateExpiryProgress(item.expiryDate!) > 0.3
+                              ? Colors.orange
+                              : Colors.red,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'متبقي ${item.expiryDate!.difference(DateTime.now()).inDays} يوم من الصلاحية',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          '${l10n.daysRemaining}: ${item.expiryDate!.difference(DateTime.now()).inDays}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.slate400
+                                : AppColors.slate600,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ],
                   ],
@@ -331,45 +429,39 @@ class MedicineDetailScreen extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // أزرار الإجراءات
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.edit),
-                      label: Text('تعديل السجل'),
-                      onPressed: () {
-                        // سيتم إضافة التنقل لشاشة التعديل لاحقاً
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                      ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.edit),
+                    label: Text(l10n.edit),
+                    onPressed: () {
+                      // Handled by parent or Navigator
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: Icon(Icons.share),
-                      label: Text('مشاركة'),
-                      onPressed: () {
-                        _shareMedicineInfo(context, item);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                      ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.share),
+                    label: Text(l10n.share),
+                    onPressed: () => _shareMedicineInfo(context, item),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-
-            SizedBox(height: 20),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -378,36 +470,41 @@ class MedicineDetailScreen extends StatelessWidget {
 
   double _calculateExpiryProgress(DateTime expiryDate) {
     final now = DateTime.now();
-    final totalDays = expiryDate.difference(DateTime(expiryDate.year - 1, expiryDate.month, expiryDate.day)).inDays.toDouble();
+    final totalDays = expiryDate
+        .difference(
+          DateTime(expiryDate.year - 1, expiryDate.month, expiryDate.day),
+        )
+        .inDays
+        .toDouble();
     final remainingDays = expiryDate.difference(now).inDays.toDouble();
-    
+
     if (remainingDays <= 0) return 0.0;
     if (remainingDays >= totalDays) return 1.0;
-    
+
     return remainingDays / totalDays;
   }
 
   void _shareMedicineInfo(BuildContext context, MedicineItem item) {
-    // محاكاة وظيفة المشاركة
-    final String shareText = '''
-💊 معلومات الدواء:
-• اسم الدواء: ${item.itemName ?? 'غير محدد'}
-• نوع الدواء: ${item.medicineType ?? 'غير محدد'}
-• الكمية: ${item.quantity} ${item.unit ?? ''}
-• نوع الحركة: ${item.movementType}
-• تاريخ الانتهاء: ${_formatDate(item.expiryDate)}
-• حالة الصلاحية: ${item.expiryStatus}
-${item.notes != null ? '• ملاحظات: ${item.notes}' : ''}
+    final l10n = AppLocalizations.of(context)!;
+    final String shareText =
+        '''
+${l10n.shareTextHeader}:
+• ${l10n.itemName}: ${item.itemName ?? l10n.noDataFound}
+• ${l10n.medicineType}: ${item.medicineType ?? l10n.noDataFound}
+• ${l10n.quantity}: ${item.quantity} ${item.unit ?? ''}
+• ${l10n.movementType}: ${item.movementType}
+• ${l10n.expiryDate}: ${_formatDate(context, item.expiryDate)}
+• ${l10n.expiryStatus}: ${item.expiryStatus}
+${item.notes != null ? '• ${l10n.notes}: ${item.notes}' : ''}
     ''';
-    
+
+    debugPrint('Sharing medicine info: $shareText');
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('تم نسخ معلومات الدواء للمشاركة'),
+        content: Text(l10n.copiedToClipboard),
         backgroundColor: Colors.green,
       ),
     );
-    
-    // في التطبيق الحقيقي، نستخدم حزمة المشاركة مثل: share_plus
-    // Share.share(shareText);
   }
 }

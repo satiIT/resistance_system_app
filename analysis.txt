@@ -1,0 +1,506 @@
+Analyzing resistance_system_app...                              
+
+   info - The file name 'Medicine_item.dart' isn't a lower_case_with_underscores identifier - lib\core\models\Medicine_item.dart:1:1 - file_names
+   info - Unnecessary 'this.' qualifier - lib\core\models\Medicine_item.dart:164:17 - unnecessary_this
+   info - Unnecessary 'this.' qualifier - lib\core\models\Medicine_item.dart:165:25 - unnecessary_this
+   info - Unnecessary 'this.' qualifier - lib\core\models\Medicine_item.dart:166:22 - unnecessary_this
+   info - Unnecessary 'this.' qualifier - lib\core\models\Medicine_item.dart:167:18 - unnecessary_this
+   info - Unnecessary 'this.' qualifier - lib\core\models\Medicine_item.dart:168:17 - unnecessary_this
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\core\models\training_course.dart:1:8 - unnecessary_import
+   info - Don't invoke 'print' in production code - lib\core\models\training_record.dart:53:5 - avoid_print
+   info - Parameter 'key' could be a super parameter - lib\core\responsive\responsive_layout.dart:42:9 - use_super_parameters
+   info - Don't invoke 'print' in production code - lib\core\services\casualty_api.dart:181:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:31:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:57:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:83:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:100:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:127:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:153:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:179:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:196:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:219:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:241:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\financial_api.dart:263:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:44:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:60:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:70:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:89:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:122:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:142:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:172:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:202:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:230:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:261:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\inventory_api.dart:292:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\medicine_api.dart:42:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\medicine_api.dart:76:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\medicine_api.dart:109:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\medicine_api.dart:131:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\medicine_api.dart:159:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\medicine_api.dart:190:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\medicine_api.dart:221:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:20:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:26:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:30:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:38:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:66:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:73:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:77:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\movements_service.dart:84:7 - avoid_print
+warning - Unused import: 'dart:io' - lib\core\services\personnel_service.dart:3:8 - unused_import
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:28:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:29:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:35:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:42:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:52:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:58:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:65:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:70:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:75:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:80:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:83:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:101:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:109:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:115:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:139:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:149:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:150:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:161:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:184:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:195:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:206:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:229:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:237:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:243:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:258:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:268:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:275:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:301:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:311:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:318:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:343:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:353:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:362:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:387:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:395:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:401:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:424:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:432:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:438:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:458:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:465:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:466:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:474:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:480:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:500:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:507:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:508:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:551:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:557:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:563:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:565:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:570:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:574:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:582:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:595:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:596:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:597:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:598:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:602:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\personnel_service.dart:606:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:20:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:26:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:32:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:33:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:39:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:51:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:52:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:56:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:63:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:67:5 - avoid_print
+warning - The declaration '_enrichRecordsWithNames' isn't referenced - lib\core\services\training_api.dart:72:39 - unused_element
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:81:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:88:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:110:7 - avoid_print
+warning - The declaration '_cleanTrainingRecordData' isn't referenced - lib\core\services\training_api.dart:116:29 - unused_element
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:422:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:441:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:581:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:582:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:583:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:587:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:590:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:592:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:596:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:601:15 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:607:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:610:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:619:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:631:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:637:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:644:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:649:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\services\training_api.dart:658:7 - avoid_print
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre - lib\core\theme\app_theme.dart:49:9 - deprecated_member_use
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre - lib\core\theme\app_theme.dart:71:9 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\theme\app_theme.dart:128:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\theme\app_theme.dart:208:62 - deprecated_member_use
+warning - Unused import: 'package:flutter/material.dart' - lib\core\utils\data_parser.dart:1:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\main.dart:40:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\casualties\casualties_screen.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\casualties\casualties_screen.dart:15:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualties_screen.dart:112:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualties_screen.dart:181:27 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualties_screen.dart:243:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualties_screen.dart:245:49 - deprecated_member_use
+   info - Unnecessary use of string interpolation - lib\presentation\pages\casualties\casualties_screen.dart:277:25 - unnecessary_string_interpolations
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualties_screen.dart:295:34 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\casualties\casualties_screen.dart:336:9 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualties_screen.dart:400:51 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\casualties\casualty_detail_screen.dart:9:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\casualties\casualty_detail_screen.dart:9:3 - prefer_const_constructors_in_immutables
+   info - Invalid use of a private type in a public API - lib\presentation\pages\casualties\casualty_detail_screen.dart:12:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code - lib\presentation\pages\casualties\casualty_detail_screen.dart:47:7 - avoid_print
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\casualties\casualty_form_screen.dart:12:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\casualties\casualty_form_screen.dart:12:3 - prefer_const_constructors_in_immutables
+   info - Invalid use of a private type in a public API - lib\presentation\pages\casualties\casualty_form_screen.dart:15:3 - library_private_types_in_public_api
+   info - The private field _personnelCache could be 'final' - lib\presentation\pages\casualties\casualty_form_screen.dart:34:34 - prefer_final_fields
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\casualties\casualty_form_screen.dart:124:23 - use_build_context_synchronously
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\casualties\casualty_form_screen.dart:178:15 - sort_child_properties_last
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualty_form_screen.dart:225:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\casualties\casualty_form_screen.dart:227:59 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\finance\finance_detail_screen.dart:8:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\finance\finance_detail_screen.dart:8:3 - prefer_const_constructors_in_immutables
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_detail_screen.dart:40:22 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\finance\finance_form_screen.dart:11:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\finance\finance_form_screen.dart:11:3 - prefer_const_constructors_in_immutables
+   info - Invalid use of a private type in a public API - lib\presentation\pages\finance\finance_form_screen.dart:14:3 - library_private_types_in_public_api
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\finance\finance_form_screen.dart:78:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\finance\finance_form_screen.dart:90:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\finance\finance_form_screen.dart:97:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\finance\finance_form_screen.dart:99:30 - use_build_context_synchronously
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\pages\finance\finance_form_screen.dart:167:25 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\pages\finance\finance_form_screen.dart:168:25 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\pages\finance\finance_form_screen.dart:181:25 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\pages\finance\finance_form_screen.dart:182:25 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\finance\finance_form_screen.dart:247:17 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\finance\finance_form_screen.dart:328:17 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\finance\finance_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\finance\finance_screen.dart:14:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:108:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:147:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:255:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:305:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:308:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:395:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:397:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\finance\finance_screen.dart:622:28 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\intelligence\intelligence_login_screen.dart:8:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:66:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:69:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:96:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:129:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:154:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:161:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:163:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\intelligence\intelligence_login_screen.dart:177:39 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\inventory\inventory_detail_screen.dart:7:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\inventory\inventory_detail_screen.dart:7:3 - prefer_const_constructors_in_immutables
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\inventory\inventory_detail_screen.dart:39:22 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\inventory\inventory_form_screen.dart:8:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\inventory\inventory_form_screen.dart:8:3 - prefer_const_constructors_in_immutables
+   info - Invalid use of a private type in a public API - lib\presentation\pages\inventory\inventory_form_screen.dart:11:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code - lib\presentation\pages\inventory\inventory_form_screen.dart:150:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\inventory\inventory_form_screen.dart:203:9 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\inventory\inventory_form_screen.dart:212:23 - use_build_context_synchronously
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\inventory\inventory_form_screen.dart:294:15 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\inventory\inventory_form_screen.dart:350:15 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\presentation\pages\inventory\inventory_form_screen.dart:358:20 - unnecessary_to_list_in_spreads
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\inventory\inventory_form_screen.dart:394:17 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\presentation\pages\inventory\inventory_form_screen.dart:402:22 - unnecessary_to_list_in_spreads
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\inventory\inventory_form_screen.dart:428:17 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\presentation\pages\inventory\inventory_form_screen.dart:436:22 - unnecessary_to_list_in_spreads
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\inventory\inventory_form_screen.dart:463:17 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\presentation\pages\inventory\inventory_form_screen.dart:471:22 - unnecessary_to_list_in_spreads
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\inventory\inventory_form_screen.dart:495:17 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\presentation\pages\inventory\inventory_form_screen.dart:503:22 - unnecessary_to_list_in_spreads
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\inventory\inventory_form_screen.dart:604:15 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\presentation\pages\inventory\inventory_form_screen.dart:615:20 - unnecessary_to_list_in_spreads
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\inventory\inventory_screen.dart:7:7 - use_key_in_widget_constructors
+   info - Invalid use of a private type in a public API - lib\presentation\pages\inventory\inventory_screen.dart:9:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\inventory\inventory_screen.dart:230:45 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\inventory\inventory_screen.dart:315:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\inventory\inventory_screen.dart:337:9 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\inventory\inventory_screen.dart:599:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\inventory\inventory_screen.dart:648:24 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\inventory\inventory_screen.dart:650:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\inventory\inventory_screen.dart:654:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\inventory\inventory_screen.dart:683:34 - deprecated_member_use
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\inventory\inventory_screen.dart:850:9 - sort_child_properties_last
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\inventory\inventory_screen.dart:862:9 - use_build_context_synchronously
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\inventory\inventory_screen.dart:871:20 - sized_box_for_whitespace
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\login_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\login_screen.dart:14:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:64:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:69:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:94:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:97:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:119:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:145:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:233:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:241:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:243:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:250:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\login_screen.dart:257:45 - deprecated_member_use
+   info - The prefix 'dashTraining' isn't a lower_case_with_underscores identifier - lib\presentation\pages\main_dashboard.dart:18:64 - library_prefixes
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\main_dashboard.dart:24:9 - use_super_parameters
+   info - Don't invoke 'print' in production code - lib\presentation\pages\main_dashboard.dart:81:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\main_dashboard.dart:195:46 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\presentation\pages\main_dashboard.dart:251:72 - unnecessary_to_list_in_spreads
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\main_dashboard.dart:343:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\main_dashboard.dart:428:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\main_dashboard.dart:467:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\main_dashboard.dart:511:37 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\medicine\medicine_detail_screen.dart:10:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_detail_screen.dart:52:22 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\medicine\medicine_form_screen.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\medicine\medicine_form_screen.dart:15:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code - lib\presentation\pages\medicine\medicine_form_screen.dart:60:7 - avoid_print
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:187:15 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:396:15 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\medicine\medicine_form_screen.dart:483:25 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\medicine\medicine_form_screen.dart:485:25 - curly_braces_in_flow_control_structures
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:510:21 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:537:15 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\medicine\medicine_form_screen.dart:564:15 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\medicine\medicine_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\medicine\medicine_screen.dart:14:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:118:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:161:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:185:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:295:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:352:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:355:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\medicine\medicine_screen.dart:557:28 - deprecated_member_use
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\medicine\medicine_screen.dart:847:9 - sort_child_properties_last
+warning - Unused import: 'dart:math' - lib\presentation\pages\movements\bulk_assignment_screen.dart:4:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\movements\bulk_assignment_screen.dart:10:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\movements\bulk_assignment_screen.dart:13:3 - library_private_types_in_public_api
+   info - The private field _assignmentData could be 'final' - lib\presentation\pages\movements\bulk_assignment_screen.dart:19:24 - prefer_final_fields
+   info - The private field _searchController could be 'final' - lib\presentation\pages\movements\bulk_assignment_screen.dart:29:25 - prefer_final_fields
+   info - Don't invoke 'print' in production code - lib\presentation\pages\movements\bulk_assignment_screen.dart:77:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\movements\bulk_assignment_screen.dart:79:7 - avoid_print
+warning - The value of the local variable 'isMobile' isn't used - lib\presentation\pages\movements\bulk_assignment_screen.dart:134:16 - unused_local_variable
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\movements\bulk_assignment_screen.dart:242:15 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\movements\bulk_assignment_screen.dart:287:15 - deprecated_member_use
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\movements\bulk_assignment_screen.dart:464:13 - sized_box_for_whitespace
+warning - Dead code - lib\presentation\pages\movements\bulk_assignment_screen.dart:590:68 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\presentation\pages\movements\bulk_assignment_screen.dart:590:71 - dead_null_aware_expression
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\movements\bulk_assignment_screen.dart:623:18 - sized_box_for_whitespace
+warning - The value of the local variable 'results' isn't used - lib\presentation\pages\movements\bulk_assignment_screen.dart:728:11 - unused_local_variable
+warning - Unused import: 'dart:math' - lib\presentation\pages\movements\dashboard_movements_screen.dart:3:8 - unused_import
+warning - Unused import: '../../../core/services/personnel_service.dart' - lib\presentation\pages\movements\dashboard_movements_screen.dart:8:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\movements\dashboard_movements_screen.dart:19:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\movements\dashboard_movements_screen.dart:22:3 - library_private_types_in_public_api
+warning - The value of the field '_allMovements' isn't used - lib\presentation\pages\movements\dashboard_movements_screen.dart:39:30 - unused_field
+warning - The value of the field '_selectedFilter' isn't used - lib\presentation\pages\movements\dashboard_movements_screen.dart:41:10 - unused_field
+   info - Don't invoke 'print' in production code - lib\presentation\pages\movements\dashboard_movements_screen.dart:63:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\movements\dashboard_movements_screen.dart:68:5 - avoid_print
+warning - The value of the local variable 'isMobile' isn't used - lib\presentation\pages\movements\dashboard_movements_screen.dart:208:16 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\movements\dashboard_movements_screen.dart:449:34 - deprecated_member_use
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\movements\dashboard_movements_screen.dart:503:13 - sized_box_for_whitespace
+   info - Unnecessary instance of 'Container' - lib\presentation\pages\movements\dashboard_movements_screen.dart:548:16 - avoid_unnecessary_containers
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\movements\dashboard_movements_screen.dart:567:13 - sized_box_for_whitespace
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\movements\dashboard_movements_screen.dart:614:13 - sized_box_for_whitespace
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\movements\dashboard_movements_screen.dart:798:24 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\movements\dashboard_movements_screen.dart:800:43 - deprecated_member_use
+warning - The declaration '_refreshData' isn't referenced - lib\presentation\pages\movements\dashboard_movements_screen.dart:829:8 - unused_element
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_detail_screen.dart:20:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_detail_screen.dart:24:3 - library_private_types_in_public_api
+warning - The operand can't be 'null', so the condition is always 'true' - lib\presentation\pages\personnel\personnel_detail_screen.dart:51:22 - unnecessary_null_comparison
+warning - Dead code - lib\presentation\pages\personnel\personnel_detail_screen.dart:53:18 - dead_code
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_detail_screen.dart:416:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_detail_screen.dart:418:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_detail_screen.dart:509:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_detail_screen.dart:517:49 - deprecated_member_use
+warning - The value of the local variable 'isMobile' isn't used - lib\presentation\pages\personnel\personnel_detail_screen.dart:730:16 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_detail_screen.dart:919:24 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_detail_screen.dart:921:43 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:14:3 - library_private_types_in_public_api
+warning - The value of the local variable 'isMobile' isn't used - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:76:16 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:230:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:232:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:272:20 - deprecated_member_use
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:432:33 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:433:31 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:434:31 - sort_child_properties_last
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:592:20 - sized_box_for_whitespace
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:599:21 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\personnel\personnel_entitlements_screen.dart:636:21 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_equipment_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_equipment_screen.dart:14:3 - library_private_types_in_public_api
+warning - The value of the local variable 'isMobile' isn't used - lib\presentation\pages\personnel\personnel_equipment_screen.dart:53:16 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_equipment_screen.dart:200:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_equipment_screen.dart:202:41 - deprecated_member_use
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_equipment_screen.dart:346:31 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_equipment_screen.dart:348:33 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_equipment_screen.dart:349:31 - sort_child_properties_last
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_equipment_screen.dart:440:18 - sized_box_for_whitespace
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\personnel\personnel_equipment_screen.dart:447:19 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_form_screen.dart:13:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_form_screen.dart:99:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\pages\personnel\personnel_form_screen.dart:119:7 - avoid_print
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\personnel\personnel_form_screen.dart:253:9 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_list_screen.dart:14:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_list_screen.dart:17:3 - library_private_types_in_public_api
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:132:13 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:134:13 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:136:13 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\personnel\personnel_list_screen.dart:138:13 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_list_screen.dart:207:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_list_screen.dart:542:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_list_screen.dart:543:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_list_screen.dart:549:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_list_screen.dart:642:46 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_movements_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_movements_screen.dart:14:3 - library_private_types_in_public_api
+warning - The value of the local variable 'isMobile' isn't used - lib\presentation\pages\personnel\personnel_movements_screen.dart:53:16 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_movements_screen.dart:187:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_movements_screen.dart:189:41 - deprecated_member_use
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_movements_screen.dart:344:33 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_movements_screen.dart:345:31 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_movements_screen.dart:346:31 - sort_child_properties_last
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_movements_screen.dart:509:18 - sized_box_for_whitespace
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\personnel\personnel_movements_screen.dart:516:19 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_reports_screen.dart:19:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_reports_screen.dart:26:3 - library_private_types_in_public_api
+warning - Unnecessary cast - lib\presentation\pages\personnel\personnel_reports_screen.dart:70:40 - unnecessary_cast
+warning - Unnecessary cast - lib\presentation\pages\personnel\personnel_reports_screen.dart:106:20 - unnecessary_cast
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_reports_screen.dart:280:36 - deprecated_member_use
+warning - The value of the local variable 'performance' isn't used - lib\presentation\pages\personnel\personnel_reports_screen.dart:374:11 - unused_local_variable
+warning - Unnecessary cast - lib\presentation\pages\personnel\personnel_reports_screen.dart:379:51 - unnecessary_cast
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_reports_screen.dart:406:13 - sized_box_for_whitespace
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_reports_screen.dart:466:13 - sized_box_for_whitespace
+warning - The value of the local variable 'training' isn't used - lib\presentation\pages\personnel\personnel_reports_screen.dart:514:11 - unused_local_variable
+warning - Unnecessary cast - lib\presentation\pages\personnel\personnel_reports_screen.dart:535:54 - unnecessary_cast
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_reports_screen.dart:747:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_reports_screen.dart:772:24 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_reports_screen.dart:774:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_reports_screen.dart:784:32 - deprecated_member_use
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_reports_screen.dart:885:18 - sized_box_for_whitespace
+warning - Unnecessary cast - lib\presentation\pages\personnel\personnel_reports_screen.dart:941:50 - unnecessary_cast
+warning - The value of the local variable 'fileUrl' isn't used - lib\presentation\pages\personnel\personnel_reports_screen.dart:1001:13 - unused_local_variable
+warning - The value of the local variable 'performance' isn't used - lib\presentation\pages\personnel\personnel_reports_screen.dart:1010:13 - unused_local_variable
+warning - Unnecessary cast - lib\presentation\pages\personnel\personnel_reports_screen.dart:1018:52 - unnecessary_cast
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_training_screen.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_training_screen.dart:15:3 - library_private_types_in_public_api
+warning - The value of the local variable 'isMobile' isn't used - lib\presentation\pages\personnel\personnel_training_screen.dart:54:16 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_training_screen.dart:194:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\personnel\personnel_training_screen.dart:196:41 - deprecated_member_use
+warning - Dead code - lib\presentation\pages\personnel\personnel_training_screen.dart:274:60 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\presentation\pages\personnel\personnel_training_screen.dart:274:63 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\presentation\pages\personnel\personnel_training_screen.dart:275:63 - dead_null_aware_expression
+warning - Dead code - lib\presentation\pages\personnel\personnel_training_screen.dart:324:48 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\presentation\pages\personnel\personnel_training_screen.dart:324:51 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\presentation\pages\personnel\personnel_training_screen.dart:324:87 - dead_null_aware_expression
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_training_screen.dart:345:31 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations - lib\presentation\pages\personnel\personnel_training_screen.dart:346:31 - sort_child_properties_last
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\presentation\pages\personnel\personnel_training_screen.dart:472:18 - sized_box_for_whitespace
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\personnel\personnel_update_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\personnel\personnel_update_screen.dart:18:3 - library_private_types_in_public_api
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\pages\personnel\personnel_update_screen.dart:407:9 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\personnel\personnel_update_screen.dart:521:13 - use_build_context_synchronously
+   info - Parameter 'key' could be a super parameter - lib\presentation\pages\splash_screen.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\presentation\pages\splash_screen.dart:12:3 - library_private_types_in_public_api
+   info - Missing type annotation - lib\presentation\pages\splash_screen.dart:53:3 - strict_top_level_inference
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\splash_screen.dart:100:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\splash_screen.dart:103:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\splash_screen.dart:128:45 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\training\instructor_form_screen.dart:10:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\training\instructor_form_screen.dart:10:3 - prefer_const_constructors_in_immutables
+   info - Invalid use of a private type in a public API - lib\presentation\pages\training\instructor_form_screen.dart:13:3 - library_private_types_in_public_api
+  error - The argument type 'Map<String, dynamic>' can't be assigned to the parameter type 'int'.  - lib\presentation\pages\training\instructor_form_screen.dart:252:46 - argument_type_not_assignable
+  error - 2 positional arguments expected by 'updateInstructor', but 1 found - lib\presentation\pages\training\instructor_form_screen.dart:252:50 - not_enough_positional_arguments
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\training\instructor_form_screen.dart:256:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\training\instructor_form_screen.dart:258:30 - use_build_context_synchronously
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\training\instructors_screen.dart:8:7 - use_key_in_widget_constructors
+   info - Invalid use of a private type in a public API - lib\presentation\pages\training\instructors_screen.dart:10:3 - library_private_types_in_public_api
+   info - The 'children' argument should be last in widget constructor invocations - lib\presentation\pages\training\instructors_screen.dart:83:7 - sort_child_properties_last
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:108:40 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\training\instructors_screen.dart:133:7 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:248:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:251:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:268:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:347:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:434:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:436:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\instructors_screen.dart:443:40 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\training\personnel_training_screen.dart:13:7 - use_key_in_widget_constructors
+   info - Invalid use of a private type in a public API - lib\presentation\pages\training\personnel_training_screen.dart:15:3 - library_private_types_in_public_api
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\training\personnel_training_screen.dart:109:7 - curly_braces_in_flow_control_structures
+   info - The 'children' argument should be last in widget constructor invocations - lib\presentation\pages\training\personnel_training_screen.dart:127:7 - sort_child_properties_last
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:159:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:298:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:303:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:308:46 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\training\personnel_training_screen.dart:329:7 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:476:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:480:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:549:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\personnel_training_screen.dart:551:41 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\training\training_course_form_screen.dart:11:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\training\training_course_form_screen.dart:11:3 - prefer_const_constructors_in_immutables
+   info - Invalid use of a private type in a public API - lib\presentation\pages\training\training_course_form_screen.dart:14:3 - library_private_types_in_public_api
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\training\training_course_form_screen.dart:314:23 - use_build_context_synchronously
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\training\training_courses_screen.dart:9:7 - use_key_in_widget_constructors
+   info - Invalid use of a private type in a public API - lib\presentation\pages\training\training_courses_screen.dart:11:3 - library_private_types_in_public_api
+   info - The 'children' argument should be last in widget constructor invocations - lib\presentation\pages\training\training_courses_screen.dart:74:7 - sort_child_properties_last
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_courses_screen.dart:99:42 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\presentation\pages\training\training_courses_screen.dart:124:7 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_courses_screen.dart:175:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_courses_screen.dart:244:22 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\training\training_detail_screen.dart:11:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\training\training_detail_screen.dart:11:3 - prefer_const_constructors_in_immutables
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_detail_screen.dart:110:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_detail_screen.dart:114:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_detail_screen.dart:144:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_detail_screen.dart:183:59 - deprecated_member_use
+   info - Constructors for public widgets should have a named 'key' parameter - lib\presentation\pages\training\training_form_screen.dart:13:3 - use_key_in_widget_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\presentation\pages\training\training_form_screen.dart:13:3 - prefer_const_constructors_in_immutables
+   info - Invalid use of a private type in a public API - lib\presentation\pages\training\training_form_screen.dart:16:3 - library_private_types_in_public_api
+   info - The private field _selectedPersonnel could be 'final' - lib\presentation\pages\training\training_form_screen.dart:43:30 - prefer_final_fields
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_form_screen.dart:330:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_form_screen.dart:332:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_form_screen.dart:340:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_form_screen.dart:393:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\pages\training\training_form_screen.dart:396:63 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\pages\training\training_form_screen.dart:455:23 - use_build_context_synchronously
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:17:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:40:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:53:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:59:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:60:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:67:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:70:30 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:89:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:146:42 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:175:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:206:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:233:33 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:285:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:315:42 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:350:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:367:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:374:56 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:395:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:407:56 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:439:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:452:37 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:487:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:543:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:600:43 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\modern_widgets.dart:650:9 - use_super_parameters
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\widgets\modern_widgets.dart:680:13 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\modern_widgets.dart:695:43 - deprecated_member_use
+
