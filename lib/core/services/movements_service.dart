@@ -1,17 +1,15 @@
 // lib/core/services/movements_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class MovementsService {
   // استخدام نفس إعدادات الـ Service الموجود
-  static const String baseUrl = 'http://localhost:5000/api';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api';
 
   // Headers مشتركة
   static Map<String, String> getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   // 🔹 جلب جميع التحركات - مطابق لـ API الخاص بك
@@ -24,7 +22,7 @@ class MovementsService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
         final decodedBody = json.decode(response.body);
         print('✅ تم جلب ${decodedBody['data']?.length ?? 0} حركة');
@@ -32,7 +30,9 @@ class MovementsService {
       } else if (response.statusCode == 404) {
         throw Exception('Endpoint التحركات غير موجود (404)');
       } else {
-        throw Exception('فشل في جلب التحركات: ${response.statusCode} - ${response.body}');
+        throw Exception(
+          'فشل في جلب التحركات: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -61,7 +61,9 @@ class MovementsService {
   }
 
   // 🔹 إنشاء حركة جديدة - مطابق لـ API الخاص بك
-  static Future<Map<String, dynamic>> createMovement(Map<String, dynamic> movementData) async {
+  static Future<Map<String, dynamic>> createMovement(
+    Map<String, dynamic> movementData,
+  ) async {
     try {
       print('🌐 جاري إنشاء حركة جديدة في: $baseUrl/personnel-movements');
       final response = await http.post(
@@ -71,14 +73,16 @@ class MovementsService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
-      
+
       if (response.statusCode == 201 || response.statusCode == 200) {
         final decodedBody = json.decode(response.body);
         print('✅ تم إنشاء الحركة بنجاح');
         return decodedBody;
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء الحركة: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ?? 'فشل في إنشاء الحركة: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -87,7 +91,10 @@ class MovementsService {
   }
 
   // 🔹 تحديث حركة
-  static Future<Map<String, dynamic>> updateMovement(String id, Map<String, dynamic> movementData) async {
+  static Future<Map<String, dynamic>> updateMovement(
+    String id,
+    Map<String, dynamic> movementData,
+  ) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/personnel-movements/$id'),
@@ -99,7 +106,9 @@ class MovementsService {
         return json.decode(response.body);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في تحديث الحركة: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ?? 'فشل في تحديث الحركة: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -118,7 +127,9 @@ class MovementsService {
         return json.decode(response.body);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في حذف الحركة: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ?? 'فشل في حذف الحركة: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -126,7 +137,9 @@ class MovementsService {
   }
 
   // 🔹 جلب حركات مستنفر معين
-  static Future<Map<String, dynamic>> getMovementsByPersonnelId(String personnelId) async {
+  static Future<Map<String, dynamic>> getMovementsByPersonnelId(
+    String personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-movements/personnel/$personnelId'),
@@ -144,7 +157,9 @@ class MovementsService {
   }
 
   // 🔹 إنشاء حركة كاملة
-  static Future<Map<String, dynamic>> createCompleteMovement(Map<String, dynamic> completeData) async {
+  static Future<Map<String, dynamic>> createCompleteMovement(
+    Map<String, dynamic> completeData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/personnel-movements/complete'),
@@ -156,7 +171,10 @@ class MovementsService {
         return json.decode(response.body);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء الحركة الكاملة: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في إنشاء الحركة الكاملة: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -164,7 +182,9 @@ class MovementsService {
   }
 
   // 🔹 إنشاء توزيع
-  static Future<Map<String, dynamic>> createDistribution(Map<String, dynamic> distributionData) async {
+  static Future<Map<String, dynamic>> createDistribution(
+    Map<String, dynamic> distributionData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/personnel-movements/distributions'),
@@ -176,7 +196,10 @@ class MovementsService {
         return json.decode(response.body);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء التوزيع: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في إنشاء التوزيع: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -184,7 +207,9 @@ class MovementsService {
   }
 
   // 🔹 جلب توزيعات مستنفر معين
-  static Future<Map<String, dynamic>> getDistributionsByPersonnelId(String personnelId) async {
+  static Future<Map<String, dynamic>> getDistributionsByPersonnelId(
+    String personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-movements/distributions/$personnelId'),
@@ -202,14 +227,16 @@ class MovementsService {
   }
 
   // 🔹 إنشاء إسناد جماعي
-  static Future<List<Map<String, dynamic>>> createBulkAssignments(List<Map<String, dynamic>> assignments) async {
+  static Future<List<Map<String, dynamic>>> createBulkAssignments(
+    List<Map<String, dynamic>> assignments,
+  ) async {
     try {
       List<Future<Map<String, dynamic>>> futures = [];
-      
+
       for (var assignment in assignments) {
         futures.add(createMovement(assignment));
       }
-      
+
       final results = await Future.wait(futures);
       return results;
     } catch (e) {

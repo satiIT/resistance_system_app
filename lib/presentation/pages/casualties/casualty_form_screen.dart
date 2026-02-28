@@ -67,7 +67,7 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
           );
         }
         _dateController.text =
-            '${_casualty.incidentDate!.year}-${_casualty.incidentDate!.month}-${_casualty.incidentDate!.day}';
+            '${_casualty.incidentDate!.year}-${_casualty.incidentDate!.month.toString().padLeft(2, '0')}-${_casualty.incidentDate!.day.toString().padLeft(2, '0')}';
         _isInitialized = true;
       });
     } catch (e) {
@@ -133,266 +133,229 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const ModernPageScaffold(
+        title: 'جاري التحميل...',
+        children: [
+          Center(child: CircularProgressIndicator(color: AppColors.error)),
+        ],
+      );
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          _isEditMode ? 'تعديل السجل' : 'إضافة سجل تضحية',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
+    return ModernPageScaffold(
+      title: _isEditMode ? 'تعديل السجل' : 'إضافة سجل تضحية',
+      children: [
+        const ModernScreenHeader(
+          title: 'بيانات الاستمارة',
+          subtitle:
+              'يرجى إكمال جميع الحقول المطلوبة لتوثيق الحالة بدقة في استمارة رقم (4).',
         ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const ModernScreenHeader(
-              title: 'بيانات الاستمارة',
-              subtitle: 'يرجى إكمال جميع الحقول المطلوبة لتوثيق الحالة بدقة.',
-            ),
-            const SizedBox(height: 24),
-
-            _buildPersonnelSection(),
-            _buildCaseTypeSection(),
-            _buildIncidentSection(),
-            _buildContactSection(),
-            if (_showCompensationFields) _buildCompensationSection(),
-
-            const SizedBox(height: 24),
-            ModernGradientButton(
-              text: _isEditMode ? 'تحديث السجل' : 'حفظ البيانات',
-              isLoading: _isLoading,
-              onPressed: _saveCasualty,
-              gradientColors: [AppColors.error, const Color(0xFFD32F2F)],
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                side: BorderSide(
-                  color: isDark ? Colors.white24 : AppColors.slate300,
-                ),
-                foregroundColor: isDark ? Colors.white : AppColors.slate700,
+        const SizedBox(height: 24),
+        Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildPersonnelSection(),
+              _buildCaseTypeSection(),
+              _buildIncidentSection(),
+              _buildContactSection(),
+              if (_showCompensationFields) _buildCompensationSection(),
+              const SizedBox(height: 24),
+              ModernGradientButton(
+                text: _isEditMode ? 'تحديث السجل' : 'حفظ البيانات',
+                isLoading: _isLoading,
+                onPressed: _saveCasualty,
+                gradientColors: [AppColors.error, const Color(0xFFD32F2F)],
+                icon: Icons.save_rounded,
+                width: double.infinity,
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  side: const BorderSide(color: Colors.white24),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.tajawal(color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildPersonnelSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const ModernSectionTitle(
-          title: 'المستنفر المعني',
-          icon: Icons.person_rounded,
-        ),
-        ModernDropdownField<int>(
-          label: 'اختر المستنفر',
-          value: _casualty.personnelId != 0 ? _casualty.personnelId : null,
-          items: _personnelList.map((person) {
-            return DropdownMenuItem<int>(
-              value: person['id'],
-              child: Text(person['full_name'] ?? 'بدون اسم'),
-            );
-          }).toList(),
-          onChanged: (val) {
-            if (val != null) {
-              setState(() => _casualty.personnelId = val);
-              _loadPersonnelData(val);
-            }
-          },
-          validator: (val) => val == null ? 'يرجى اختيار المستنفر' : null,
-          prefixIcon: Icons.search_rounded,
-        ),
-        if (_casualty.personnelId != 0)
-          Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.only(bottom: 24),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primary.withOpacity(0.1)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'الرقم العسكري: ${_casualty.militaryNumber ?? "-"}',
-                        style: GoogleFonts.tajawal(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        _casualty.fullName ?? '',
-                        style: GoogleFonts.tajawal(
-                          color: AppColors.slate500,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    return ModernSectionCard(
+      title: 'المستنفر المعني',
+      icon: Icons.person_rounded,
+      child: Column(
+        children: [
+          ModernDropdownField<int>(
+            label: 'اختر المستنفر',
+            value: _casualty.personnelId != 0 ? _casualty.personnelId : null,
+            items: _personnelList.map((person) {
+              return DropdownMenuItem<int>(
+                value: person['id'],
+                child: Text(person['full_name'] ?? 'بدون اسم'),
+              );
+            }).toList(),
+            onChanged: (val) {
+              if (val != null) {
+                setState(() => _casualty.personnelId = val);
+                _loadPersonnelData(val);
+              }
+            },
+            validator: (val) => val == null ? 'يرجى اختيار المستنفر' : null,
+            prefixIcon: Icons.search_rounded,
           ),
-      ],
+          if (_casualty.personnelId != 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+              child: ModernStatusBadge(
+                text: 'الرقم العسكري: ${_casualty.militaryNumber ?? "-"}',
+                color: AppColors.primary,
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildCaseTypeSection() {
-    return Column(
-      children: [
-        const ModernSectionTitle(
-          title: 'نوع الحالة',
-          icon: Icons.assignment_rounded,
-        ),
-        ModernDropdownField<String>(
-          label: 'نوع الاستمارة',
-          value: _casualty.caseType,
-          items: _caseTypes
-              .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-              .toList(),
-          onChanged: (val) {
-            setState(() {
-              _casualty.caseType = val!;
-              _showCompensationFields = val == 'شهيد';
-            });
-          },
-          prefixIcon: Icons.category_rounded,
-        ),
-      ],
+    return ModernSectionCard(
+      title: 'نوع الحالة',
+      icon: Icons.assignment_rounded,
+      child: ModernDropdownField<String>(
+        label: 'نوع الاستمارة',
+        value: _casualty.caseType,
+        items: _caseTypes
+            .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+            .toList(),
+        onChanged: (val) {
+          setState(() {
+            _casualty.caseType = val!;
+            _showCompensationFields = val == 'شهيد';
+          });
+        },
+        prefixIcon: Icons.category_rounded,
+      ),
     );
   }
 
   Widget _buildIncidentSection() {
-    return Column(
-      children: [
-        const ModernSectionTitle(
-          title: 'بيانات الحادث',
-          icon: Icons.event_note_rounded,
-        ),
-        ModernTextField(
-          label: 'تاريخ الواقعة',
-          readOnly: true,
-          onTap: () async {
-            final d = await showDatePicker(
-              context: context,
-              initialDate: _casualty.incidentDate!,
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now(),
-            );
-            if (d != null) {
-              setState(() {
-                _casualty.incidentDate = d;
-                _dateController.text = '${d.year}-${d.month}-${d.day}';
-              });
-            }
-          },
-          controller: _dateController,
-          prefixIcon: Icons.calendar_today_rounded,
-        ),
-        ModernTextField(
-          label: 'موقع الحادث',
-          initialValue: _casualty.incidentLocation,
-          onSaved: (v) => _casualty.incidentLocation = v!,
-          prefixIcon: Icons.location_on_rounded,
-          validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
-        ),
-        ModernTextField(
-          label: 'رقم الإشارة',
-          initialValue: _casualty.signalNumber,
-          onSaved: (v) => _casualty.signalNumber = v!,
-          prefixIcon: Icons.tag_rounded,
-        ),
-        if (_casualty.isInjured)
-          ModernDropdownField<String>(
-            label: 'حالة الإصابة',
-            value: _casualty.injurySeverity,
-            items: _injurySeverities
-                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                .toList(),
-            onChanged: (v) => setState(() => _casualty.injurySeverity = v!),
-            prefixIcon: Icons.health_and_safety_rounded,
+    return ModernSectionCard(
+      title: 'بيانات الحادث',
+      icon: Icons.event_note_rounded,
+      child: Column(
+        children: [
+          ModernTextField(
+            label: 'تاريخ الواقعة',
+            prefixIcon: Icons.calendar_today_rounded,
+            readOnly: true,
+            onTap: () async {
+              final d = await showDatePicker(
+                context: context,
+                initialDate: _casualty.incidentDate!,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (d != null) {
+                setState(() {
+                  _casualty.incidentDate = d;
+                  _dateController.text =
+                      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                });
+              }
+            },
+            controller: _dateController,
           ),
-      ],
+          ModernTextField(
+            label: 'موقع الحادث',
+            initialValue: _casualty.incidentLocation,
+            onSaved: (v) => _casualty.incidentLocation = v!,
+            prefixIcon: Icons.location_on_rounded,
+            validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
+          ),
+          ModernTextField(
+            label: 'رقم الإشارة',
+            initialValue: _casualty.signalNumber,
+            onSaved: (v) => _casualty.signalNumber = v!,
+            prefixIcon: Icons.tag_rounded,
+          ),
+          if (_casualty.isInjured)
+            ModernDropdownField<String>(
+              label: 'حالة الإصابة',
+              value: _casualty.injurySeverity,
+              items: _injurySeverities
+                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                  .toList(),
+              onChanged: (v) => setState(() => _casualty.injurySeverity = v!),
+              prefixIcon: Icons.health_and_safety_rounded,
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildContactSection() {
-    return Column(
-      children: [
-        const ModernSectionTitle(
-          title: 'بيانات التواصل ذوي القربى',
-          icon: Icons.contacts_rounded,
-        ),
-        ModernTextField(
-          label: 'اسم القريب',
-          initialValue: _casualty.nextOfKinName,
-          onSaved: (v) => _casualty.nextOfKinName = v,
-          prefixIcon: Icons.person_outline_rounded,
-        ),
-        ModernTextField(
-          label: 'رقم الهاتف',
-          initialValue: _casualty.nextOfKinPhone,
-          onSaved: (v) => _casualty.nextOfKinPhone = v,
-          keyboardType: TextInputType.phone,
-          prefixIcon: Icons.phone_rounded,
-        ),
-      ],
+    return ModernSectionCard(
+      title: 'بيانات التواصل ذوي القربى',
+      icon: Icons.contacts_rounded,
+      child: Column(
+        children: [
+          ModernTextField(
+            label: 'اسم القريب',
+            initialValue: _casualty.nextOfKinName,
+            onSaved: (v) => _casualty.nextOfKinName = v,
+            prefixIcon: Icons.person_outline_rounded,
+          ),
+          ModernTextField(
+            label: 'رقم الهاتف',
+            initialValue: _casualty.nextOfKinPhone,
+            onSaved: (v) => _casualty.nextOfKinPhone = v,
+            keyboardType: TextInputType.phone,
+            prefixIcon: Icons.phone_rounded,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildCompensationSection() {
-    return Column(
-      children: [
-        const ModernSectionTitle(
-          title: 'بيانات الخلافة',
-          icon: Icons.monetization_on_rounded,
-        ),
-        ModernTextField(
-          label: 'المبلغ المستحق',
-          initialValue: _casualty.compensationAmount?.toString(),
-          onSaved: (v) =>
-              _casualty.compensationAmount = double.tryParse(v ?? '0'),
-          keyboardType: TextInputType.number,
-          prefixIcon: Icons.money_rounded,
-        ),
-        ModernTextField(
-          label: 'الجهة الدافعة',
-          initialValue: _casualty.payingEntity,
-          onSaved: (v) => _casualty.payingEntity = v,
-          prefixIcon: Icons.business_rounded,
-        ),
-        ModernTextField(
-          label: 'المستلم',
-          initialValue: _casualty.compensationRecipient,
-          onSaved: (v) => _casualty.compensationRecipient = v,
-          prefixIcon: Icons.person_add_rounded,
-        ),
-      ],
+    return ModernSectionCard(
+      title: 'بيانات الخلافة والتعويض',
+      icon: Icons.monetization_on_rounded,
+      child: Column(
+        children: [
+          ModernTextField(
+            label: 'المبلغ المستحق',
+            initialValue: _casualty.compensationAmount?.toString(),
+            onSaved: (v) =>
+                _casualty.compensationAmount = double.tryParse(v ?? '0'),
+            keyboardType: TextInputType.number,
+            prefixIcon: Icons.money_rounded,
+          ),
+          ModernTextField(
+            label: 'الجهة الدافعة',
+            initialValue: _casualty.payingEntity,
+            onSaved: (v) => _casualty.payingEntity = v,
+            prefixIcon: Icons.business_rounded,
+          ),
+          ModernTextField(
+            label: 'المستلم',
+            initialValue: _casualty.compensationRecipient,
+            onSaved: (v) => _casualty.compensationRecipient = v,
+            prefixIcon: Icons.person_add_rounded,
+          ),
+        ],
+      ),
     );
   }
 }

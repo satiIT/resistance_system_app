@@ -2,21 +2,21 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class ReportsApi {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api';
 
   // Headers مشتركة
   static Map<String, String> getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   // === دوال التقارير الأساسية ===
 
-  static Future<Map<String, dynamic>> getPersonnelReport(int personnelId) async {
+  static Future<Map<String, dynamic>> getPersonnelReport(
+    int personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-reports/personnel/$personnelId'),
@@ -28,17 +28,23 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل تقرير المستنفر');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل تقرير المستنفر',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل تقرير المستنفر - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل تقرير المستنفر - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> getPerformanceReport(int personnelId) async {
+  static Future<Map<String, dynamic>> getPerformanceReport(
+    int personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-reports/performance/$personnelId'),
@@ -50,10 +56,14 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل تقرير الأداء');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل تقرير الأداء',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل تقرير الأداء - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل تقرير الأداء - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -72,17 +82,23 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل تقرير التدريب');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل تقرير التدريب',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل تقرير التدريب - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل تقرير التدريب - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> getAttendanceReport(int personnelId) async {
+  static Future<Map<String, dynamic>> getAttendanceReport(
+    int personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-reports/attendance/$personnelId'),
@@ -94,17 +110,23 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل تقرير الحضور');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل تقرير الحضور',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل تقرير الحضور - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل تقرير الحضور - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> getFinancialReport(int personnelId) async {
+  static Future<Map<String, dynamic>> getFinancialReport(
+    int personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-reports/financial/$personnelId'),
@@ -116,17 +138,23 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل التقرير المالي');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل التقرير المالي',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل التقرير المالي - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل التقرير المالي - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> getEquipmentReport(int personnelId) async {
+  static Future<Map<String, dynamic>> getEquipmentReport(
+    int personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-reports/equipment/$personnelId'),
@@ -138,10 +166,14 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل تقرير المعدات');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل تقرير المعدات',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل تقرير المعدات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل تقرير المعدات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -162,10 +194,14 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل إحصائيات المستنفر');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل إحصائيات المستنفر',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل إحصائيات المستنفر - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل إحصائيات المستنفر - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -174,7 +210,10 @@ class ReportsApi {
 
   // === دوال التصدير ===
 
-  static Future<String> generatePdfReport(int personnelId, String reportType) async {
+  static Future<String> generatePdfReport(
+    int personnelId,
+    String reportType,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/personnel-reports/export/pdf'),
@@ -190,17 +229,24 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data']['file_url'] ?? '';
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في إنشاء التقرير PDF');
+          throw Exception(
+            responseData['message'] ?? 'فشل في إنشاء التقرير PDF',
+          );
         }
       } else {
-        throw Exception('فشل في إنشاء التقرير PDF - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في إنشاء التقرير PDF - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<String> generateCsvReport(int personnelId, String reportType) async {
+  static Future<String> generateCsvReport(
+    int personnelId,
+    String reportType,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/personnel-reports/export/csv'),
@@ -216,10 +262,14 @@ class ReportsApi {
         if (responseData['success'] == true) {
           return responseData['data']['file_url'] ?? '';
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في إنشاء التقرير CSV');
+          throw Exception(
+            responseData['message'] ?? 'فشل في إنشاء التقرير CSV',
+          );
         }
       } else {
-        throw Exception('فشل في إنشاء التقرير CSV - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في إنشاء التقرير CSV - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');

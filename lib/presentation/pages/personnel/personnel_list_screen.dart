@@ -504,13 +504,17 @@ class _PersonnelListScreenState extends State<PersonnelListScreen> {
                       size: 14,
                       color: AppColors.slate500,
                     ),
-                    SizedBox(width: 4),
-                    Text(
-                      '${l10n.militaryId}: $militaryId',
-                      style: const TextStyle(
-                        color: AppColors.slate500,
-                        fontSize: 13,
-                        fontFamily: 'Roboto', // Numbers look better in Roboto
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '${l10n.militaryId}: $militaryId',
+                        style: const TextStyle(
+                          color: AppColors.slate500,
+                          fontSize: 13,
+                          fontFamily: 'Roboto',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Resistance Support System';
+  String get appTitle => 'Tech_unit_system';
 
   @override
   String get dashboardTitle => 'Digital Control Panel';

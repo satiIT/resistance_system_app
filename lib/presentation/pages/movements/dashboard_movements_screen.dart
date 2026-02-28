@@ -48,34 +48,37 @@ class _DashboardMovementsScreenState extends State<DashboardMovementsScreen> {
   }
 
   // في ملف dashboard_movements_screen.dart - استبدال دالة _loadMovementsData
-Future<void> _loadMovementsData() async {
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    final response = await MovementsService.getAllMovements();
-    
-    if (response['success'] == true) {
-      final movements = List<Map<String, dynamic>>.from(response['data'] ?? []);
-      _allMovements = movements;
-      _calculateStatistics(movements);
-      print('✅ تم تحميل ${movements.length} حركة من API');
-    } else {
-      throw Exception(response['message'] ?? 'فشل في جلب البيانات');
-    }
-  } catch (e) {
-    print('❌ خطأ في تحميل البيانات من API: $e');
-    _showError('فشل في تحميل البيانات: $e');
-    
-    // استخدام بيانات وهمية كبديل فقط للعرض
-    _calculateStatistics(_getMockMovementsData());
-  } finally {
+  Future<void> _loadMovementsData() async {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
+
+    try {
+      final response = await MovementsService.getAllMovements();
+
+      if (response['success'] == true) {
+        final movements = List<Map<String, dynamic>>.from(
+          response['data'] ?? [],
+        );
+        _allMovements = movements;
+        _calculateStatistics(movements);
+        print('✅ تم تحميل ${movements.length} حركة من API');
+      } else {
+        throw Exception(response['message'] ?? 'فشل في جلب البيانات');
+      }
+    } catch (e) {
+      print('❌ خطأ في تحميل البيانات من API: $e');
+      _showError('فشل في تحميل البيانات: $e');
+
+      // استخدام بيانات وهمية كبديل فقط للعرض
+      _calculateStatistics(_getMockMovementsData());
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
+
   // بيانات وهمية للتحركات (ستستبدل بالبيانات الحقيقية من API)
   List<Map<String, dynamic>> _getMockMovementsData() {
     return [
@@ -128,65 +131,71 @@ Future<void> _loadMovementsData() async {
   }
 
   void _calculateStatistics(List<Map<String, dynamic>> movements) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  
-  // إحصائيات أساسية
-  final total = movements.length;
-  final todayMovements = movements.where((movement) {
-    final movementDate = DateTime.tryParse(movement['movement_date'] ?? '');
-    return movementDate != null && 
-           movementDate.year == today.year &&
-           movementDate.month == today.month &&
-           movementDate.day == today.day;
-  }).length;
-  
-  final pendingMovements = movements.where((movement) => 
-      (movement['status'] ?? '') == 'نشط' || 
-      (movement['status'] ?? '') == 'قيد التنفيذ').length;
-  
-  final completedMovements = movements.where((movement) => 
-      (movement['status'] ?? '') == 'مكتمل').length;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
-  // التوزيع حسب النوع
-  final movementsByType = <String, int>{};
-  for (var movement in movements) {
-    final type = movement['movement_type'] ?? 'غير محدد';
-    movementsByType[type] = (movementsByType[type] ?? 0) + 1;
+    // إحصائيات أساسية
+    final total = movements.length;
+    final todayMovements = movements.where((movement) {
+      final movementDate = DateTime.tryParse(movement['movement_date'] ?? '');
+      return movementDate != null &&
+          movementDate.year == today.year &&
+          movementDate.month == today.month &&
+          movementDate.day == today.day;
+    }).length;
+
+    final pendingMovements = movements
+        .where(
+          (movement) =>
+              (movement['status'] ?? '') == 'نشط' ||
+              (movement['status'] ?? '') == 'قيد التنفيذ',
+        )
+        .length;
+
+    final completedMovements = movements
+        .where((movement) => (movement['status'] ?? '') == 'مكتمل')
+        .length;
+
+    // التوزيع حسب النوع
+    final movementsByType = <String, int>{};
+    for (var movement in movements) {
+      final type = movement['movement_type'] ?? 'غير محدد';
+      movementsByType[type] = (movementsByType[type] ?? 0) + 1;
+    }
+
+    // التوزيع حسب الحالة
+    final movementsByStatus = <String, int>{};
+    for (var movement in movements) {
+      final status = movement['status'] ?? 'غير محدد';
+      movementsByStatus[status] = (movementsByStatus[status] ?? 0) + 1;
+    }
+
+    // التوزيع الجغرافي
+    final geographicalDistribution = <String, int>{};
+    for (var movement in movements) {
+      final location = movement['to_location'] ?? 'غير محدد';
+      geographicalDistribution[location] =
+          (geographicalDistribution[location] ?? 0) + 1;
+    }
+
+    // أحدث التحركات (آخر 5 تحركات)
+    final recentMovements = movements.take(5).toList();
+
+    setState(() {
+      _statsData = {
+        'total_movements': total,
+        'today_movements': todayMovements,
+        'pending_movements': pendingMovements,
+        'completed_movements': completedMovements,
+        'movements_by_type': movementsByType,
+        'movements_by_status': movementsByStatus,
+        'recent_movements': recentMovements,
+        'geographical_distribution': geographicalDistribution.entries
+            .map((e) => {'region': e.key, 'count': e.value})
+            .toList(),
+      };
+    });
   }
-
-  // التوزيع حسب الحالة
-  final movementsByStatus = <String, int>{};
-  for (var movement in movements) {
-    final status = movement['status'] ?? 'غير محدد';
-    movementsByStatus[status] = (movementsByStatus[status] ?? 0) + 1;
-  }
-
-  // التوزيع الجغرافي
-  final geographicalDistribution = <String, int>{};
-  for (var movement in movements) {
-    final location = movement['to_location'] ?? 'غير محدد';
-    geographicalDistribution[location] = (geographicalDistribution[location] ?? 0) + 1;
-  }
-
-  // أحدث التحركات (آخر 5 تحركات)
-  final recentMovements = movements.take(5).toList();
-
-  setState(() {
-    _statsData = {
-      'total_movements': total,
-      'today_movements': todayMovements,
-      'pending_movements': pendingMovements,
-      'completed_movements': completedMovements,
-      'movements_by_type': movementsByType,
-      'movements_by_status': movementsByStatus,
-      'recent_movements': recentMovements,
-      'geographical_distribution': geographicalDistribution.entries
-          .map((e) => {'region': e.key, 'count': e.value})
-          .toList(),
-    };
-  });
-}
 
   // دالة لتحويل البيانات للرسوم البيانية
   List<ChartData> _getChartData(Map<String, int> dataMap) {
@@ -228,7 +237,7 @@ Future<void> _loadMovementsData() async {
             icon: Icon(Icons.filter_list),
           ),
           IconButton(
-            icon: Icon(Icons.refresh), 
+            icon: Icon(Icons.refresh),
             onPressed: _isLoading ? null : _loadMovementsData,
           ),
         ],
@@ -247,7 +256,9 @@ Future<void> _loadMovementsData() async {
           : SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  return isWeb ? _buildWebLayout(constraints) : _buildMobileLayout(constraints);
+                  return isWeb
+                      ? _buildWebLayout(constraints)
+                      : _buildMobileLayout(constraints);
                 },
               ),
             ),
@@ -264,9 +275,7 @@ Future<void> _loadMovementsData() async {
     return SingleChildScrollView(
       physics: AlwaysScrollableScrollPhysics(),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: constraints.maxHeight,
-        ),
+        constraints: BoxConstraints(minHeight: constraints.maxHeight),
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Column(
@@ -291,9 +300,7 @@ Future<void> _loadMovementsData() async {
     return SingleChildScrollView(
       physics: AlwaysScrollableScrollPhysics(),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: constraints.maxHeight,
-        ),
+        constraints: BoxConstraints(minHeight: constraints.maxHeight),
         child: Padding(
           padding: EdgeInsets.all(12),
           child: Column(
@@ -318,9 +325,7 @@ Future<void> _loadMovementsData() async {
   // ✅ الدالة المفقودة تم إضافتها هنا
   Widget _buildChartsSection(BoxConstraints constraints) {
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: constraints.maxHeight * 0.6,
-      ),
+      constraints: BoxConstraints(minHeight: constraints.maxHeight * 0.6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -335,10 +340,7 @@ Future<void> _loadMovementsData() async {
             ),
           ),
           SizedBox(width: 16),
-          Expanded(
-            flex: 1,
-            child: _buildRecentMovementsPanel(),
-          ),
+          Expanded(flex: 1, child: _buildRecentMovementsPanel()),
         ],
       ),
     );
@@ -500,10 +502,7 @@ Future<void> _loadMovementsData() async {
               ],
             ),
             SizedBox(height: 12),
-            Container(
-              height: 250,
-              child: _buildChart(),
-            ),
+            Container(height: 250, child: _buildChart()),
           ],
         ),
       ),
@@ -529,7 +528,9 @@ Future<void> _loadMovementsData() async {
           ],
         );
       case 'حالة التحرك':
-        final chartData = _getChartData(_statsData['movements_by_status'] ?? {});
+        final chartData = _getChartData(
+          _statsData['movements_by_status'] ?? {},
+        );
         if (chartData.isEmpty) {
           return Center(child: Text('لا توجد بيانات'));
         }
@@ -545,15 +546,13 @@ Future<void> _loadMovementsData() async {
           ],
         );
       default:
-        return Container(
-          child: Center(child: Text('لا توجد بيانات')),
-        );
+        return Container(child: Center(child: Text('لا توجد بيانات')));
     }
   }
 
   Widget _buildGeographicalChart() {
     final chartData = _getGeographicalData();
-    
+
     return Card(
       child: Padding(
         padding: EdgeInsets.all(12),
@@ -649,16 +648,23 @@ Future<void> _loadMovementsData() async {
       child: ListTile(
         leading: _getMovementIcon(movement['movement_type']),
         title: Text(
-          movement['personnel_name'] ?? 'غير معروف',
+          movement['personnel_name'] ??
+              movement['personnelName'] ??
+              movement['name'] ??
+              'غير معروف',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${movement['movement_type']} - ${movement['movement_date']}', 
-                style: TextStyle(fontSize: 12)),
-            Text('من ${movement['from_location']} إلى ${movement['to_location']}', 
-                style: TextStyle(fontSize: 12)),
+            Text(
+              '${movement['movement_type']} - ${movement['movement_date']}',
+              style: TextStyle(fontSize: 12),
+            ),
+            Text(
+              'من ${movement['from_location']} إلى ${movement['to_location']}',
+              style: TextStyle(fontSize: 12),
+            ),
           ],
         ),
         trailing: Chip(
@@ -666,7 +672,8 @@ Future<void> _loadMovementsData() async {
             movement['status'] ?? 'غير محدد',
             style: TextStyle(color: Colors.white, fontSize: 10),
           ),
-          backgroundColor: (movement['status'] == 'مكتمل' || movement['status'] == 'مكتملة')
+          backgroundColor:
+              (movement['status'] == 'مكتمل' || movement['status'] == 'مكتملة')
               ? Colors.green
               : Colors.orange,
         ),
@@ -712,7 +719,10 @@ Future<void> _loadMovementsData() async {
                     ElevatedButton.icon(
                       onPressed: () => _showMapInfo(context),
                       icon: Icon(Icons.info, size: 16),
-                      label: Text('معلومات الخريطة', style: TextStyle(fontSize: 12)),
+                      label: Text(
+                        'معلومات الخريطة',
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ),
                   ],
                 ),
@@ -855,7 +865,7 @@ Future<void> _loadMovementsData() async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'المستنفر: ${movement['personnel_name'] ?? 'غير معروف'}',
+              'المستنفر: ${movement['personnel_name'] ?? movement['personnelName'] ?? movement['name'] ?? 'غير معروف'}',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -923,10 +933,7 @@ Future<void> _loadMovementsData() async {
 
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 

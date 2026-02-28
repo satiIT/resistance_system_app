@@ -4,11 +4,12 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
 class PersonnelMovementsService {
-  static final PersonnelMovementsService _instance = PersonnelMovementsService._internal();
+  static final PersonnelMovementsService _instance =
+      PersonnelMovementsService._internal();
   factory PersonnelMovementsService() => _instance;
   PersonnelMovementsService._internal();
 
-  final String _baseUrl = ApiConfig.baseUrl;
+  String get _baseUrl => ApiConfig.baseUrl;
 
   // Get all personnel movements
   Future<Map<String, dynamic>> getAllMovements() async {
@@ -47,7 +48,9 @@ class PersonnelMovementsService {
   }
 
   // Create new movement
-  Future<Map<String, dynamic>> createMovement(Map<String, dynamic> movementData) async {
+  Future<Map<String, dynamic>> createMovement(
+    Map<String, dynamic> movementData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/api/personnel-movements'),
@@ -67,7 +70,10 @@ class PersonnelMovementsService {
   }
 
   // Update movement
-  Future<Map<String, dynamic>> updateMovement(String id, Map<String, dynamic> movementData) async {
+  Future<Map<String, dynamic>> updateMovement(
+    String id,
+    Map<String, dynamic> movementData,
+  ) async {
     try {
       final response = await http.put(
         Uri.parse('$_baseUrl/api/personnel-movements/$id'),
@@ -106,7 +112,9 @@ class PersonnelMovementsService {
   }
 
   // Get movements by personnel ID
-  Future<Map<String, dynamic>> getMovementsByPersonnelId(String personnelId) async {
+  Future<Map<String, dynamic>> getMovementsByPersonnelId(
+    String personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/api/personnel-movements/personnel/$personnelId'),
@@ -124,16 +132,18 @@ class PersonnelMovementsService {
   }
 
   // Create bulk assignment
-  Future<Map<String, dynamic>> createBulkAssignment(List<Map<String, dynamic>> assignments) async {
+  Future<Map<String, dynamic>> createBulkAssignment(
+    List<Map<String, dynamic>> assignments,
+  ) async {
     try {
       List<Future<Map<String, dynamic>>> futures = [];
-      
+
       for (var assignment in assignments) {
         futures.add(createMovement(assignment));
       }
-      
+
       final results = await Future.wait(futures);
-      
+
       return {
         'success': true,
         'message': 'تم إسناد المهمة بنجاح إلى ${assignments.length} مستنفر',
@@ -145,7 +155,9 @@ class PersonnelMovementsService {
   }
 
   // Create complete movement
-  Future<Map<String, dynamic>> createCompleteMovement(Map<String, dynamic> completeData) async {
+  Future<Map<String, dynamic>> createCompleteMovement(
+    Map<String, dynamic> completeData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/api/personnel-movements/complete'),
@@ -165,7 +177,9 @@ class PersonnelMovementsService {
   }
 
   // Create distribution
-  Future<Map<String, dynamic>> createDistribution(Map<String, dynamic> distributionData) async {
+  Future<Map<String, dynamic>> createDistribution(
+    Map<String, dynamic> distributionData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/api/personnel-movements/distributions'),
@@ -185,10 +199,14 @@ class PersonnelMovementsService {
   }
 
   // Get distributions by personnel ID
-  Future<Map<String, dynamic>> getDistributionsByPersonnelId(String personnelId) async {
+  Future<Map<String, dynamic>> getDistributionsByPersonnelId(
+    String personnelId,
+  ) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/api/personnel-movements/distributions/$personnelId'),
+        Uri.parse(
+          '$_baseUrl/api/personnel-movements/distributions/$personnelId',
+        ),
         headers: ApiConfig.headers,
       );
 

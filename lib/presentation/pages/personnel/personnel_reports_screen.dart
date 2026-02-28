@@ -44,8 +44,10 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         _errorMessage = '';
       });
 
-      final reportData = await ReportsApi.getPersonnelReport(widget.personnelId);
-      
+      final reportData = await ReportsApi.getPersonnelReport(
+        widget.personnelId,
+      );
+
       setState(() {
         _reportData = reportData;
         _isLoading = false;
@@ -67,7 +69,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     }
     if (data is Map) {
       // Convert any Map to Map<String, dynamic>
-      return Map<String, dynamic>.from(data as Map);
+      return Map<String, dynamic>.from(data);
     }
     return {};
   }
@@ -121,18 +123,15 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         title: Text('التقارير والإحصائيات - ${widget.personnelName}'),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _loadReportData,
-          ),
+          IconButton(icon: Icon(Icons.refresh), onPressed: _loadReportData),
           if (!_isLoading) _buildExportMenu(),
         ],
       ),
       body: _isLoading
           ? _buildLoadingIndicator()
           : _errorMessage.isNotEmpty
-              ? _buildErrorWidget()
-              : _buildContent(isWeb, isMobile),
+          ? _buildErrorWidget()
+          : _buildContent(isWeb, isMobile),
     );
   }
 
@@ -188,9 +187,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   }
 
   Widget _buildContent(bool isWeb, bool isMobile) {
-    return SafeArea(
-      child: isWeb ? _buildWebLayout() : _buildMobileLayout(),
-    );
+    return SafeArea(child: isWeb ? _buildWebLayout() : _buildMobileLayout());
   }
 
   Widget _buildLoadingIndicator() {
@@ -300,10 +297,20 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
                     spacing: 20,
                     runSpacing: 8,
                     children: [
-                      _buildSummaryItem('آخر تحديث', _getCurrentDateFormatted()),
-                      _buildSummaryItem('متوسط الأداء', 
-                          ReportsApi.formatPercentage(_getNumber(performance['average_score']))),
-                      _buildSummaryItem('فترة التقرير', _getString(summary['report_period'])),
+                      _buildSummaryItem(
+                        'آخر تحديث',
+                        _getCurrentDateFormatted(),
+                      ),
+                      _buildSummaryItem(
+                        'متوسط الأداء',
+                        ReportsApi.formatPercentage(
+                          _getNumber(performance['average_score']),
+                        ),
+                      ),
+                      _buildSummaryItem(
+                        'فترة التقرير',
+                        _getString(summary['report_period']),
+                      ),
                       _buildSummaryItem('حالة النظام', 'نشط'),
                     ],
                   ),
@@ -313,7 +320,9 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: ReportsApi.getStatusColor(_getString(summary['overall_status'])),
+                color: ReportsApi.getStatusColor(
+                  _getString(summary['overall_status']),
+                ),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -337,14 +346,8 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
       children: [
         Icon(Icons.circle, size: 8, color: Colors.grey),
         SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-        Text(
-          value,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        Text('$label: ', style: TextStyle(color: Colors.grey[600])),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -357,26 +360,19 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 2,
-          child: _buildPerformanceChart(),
-        ),
+        Expanded(flex: 2, child: _buildPerformanceChart()),
         SizedBox(width: 16),
-        Expanded(
-          flex: 1,
-          child: _buildAttendanceChart(),
-        ),
+        Expanded(flex: 1, child: _buildAttendanceChart()),
       ],
     );
   }
 
   Widget _buildPerformanceChart() {
-    final performance = _getMap('performance');
-    final monthlyData = _getList('monthly_scores');
+    final monthlyScores = _getList('monthly_scores');
 
-    final List<ChartData> chartData = monthlyData.map((item) {
+    final List<ChartData> chartData = monthlyScores.map((item) {
       if (item is Map) {
-        final mapItem = Map<String, dynamic>.from(item as Map);
+        final mapItem = Map<String, dynamic>.from(item);
         return ChartData(
           _getString(mapItem['month']),
           _getNumber(mapItem['score']),
@@ -407,9 +403,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
               height: 300,
               child: chartData.isNotEmpty
                   ? SfCartesianChart(
-                      primaryXAxis: CategoryAxis(
-                        labelRotation: -45,
-                      ),
+                      primaryXAxis: CategoryAxis(labelRotation: -45),
                       primaryYAxis: NumericAxis(
                         numberFormat: NumberFormat.compact(),
                       ),
@@ -499,10 +493,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         children: [
           Icon(Icons.bar_chart, size: 48, color: Colors.grey),
           SizedBox(height: 8),
-          Text(
-            message,
-            style: TextStyle(color: Colors.grey),
-          ),
+          Text(message, style: TextStyle(color: Colors.grey)),
         ],
       ),
     );
@@ -511,40 +502,47 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
   Widget _buildStatsGrid() {
     final performance = _getMap('performance');
     final attendance = _getMap('attendance');
-    final training = _getMap('training');
+    // final training = _getMap('training');
     final financial = _getMap('financial');
     final courses = _getList('courses');
 
     final stats = [
       StatItem(
-        'متوسط الأداء', 
-        ReportsApi.formatPercentage(_getNumber(performance['average_score'])), 
-        Icons.assessment, 
-        Colors.blue
+        'متوسط الأداء',
+        ReportsApi.formatPercentage(_getNumber(performance['average_score'])),
+        Icons.assessment,
+        Colors.blue,
       ),
       StatItem(
-        'نسبة الحضور', 
-        ReportsApi.formatPercentage(_getNumber(attendance['attendance_rate'] ?? attendance['stats']?['attendance_rate'])), 
-        Icons.percent, 
-        Colors.green
+        'نسبة الحضور',
+        ReportsApi.formatPercentage(
+          _getNumber(
+            attendance['attendance_rate'] ??
+                attendance['stats']?['attendance_rate'],
+          ),
+        ),
+        Icons.percent,
+        Colors.green,
       ),
       StatItem(
-        'الدورات المكتملة', 
+        'الدورات المكتملة',
         '${courses.where((c) {
           if (c is Map) {
-            final course = Map<String, dynamic>.from(c as Map);
+            final course = Map<String, dynamic>.from(c);
             return _getString(course['status']).toLowerCase().contains('مكتمل');
           }
           return false;
-        }).length}', 
-        Icons.check_circle, 
-        Colors.orange
+        }).length}',
+        Icons.check_circle,
+        Colors.orange,
       ),
       StatItem(
-        'المستحقات', 
-        ReportsApi.formatCurrency(_getNumber(financial['pending'] ?? financial['stats']?['pending'])), 
-        Icons.pending, 
-        Colors.red
+        'المستحقات',
+        ReportsApi.formatCurrency(
+          _getNumber(financial['pending'] ?? financial['stats']?['pending']),
+        ),
+        Icons.pending,
+        Colors.red,
       ),
     ];
 
@@ -610,10 +608,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
             Text(
               stat.label,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -726,12 +721,42 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
 
   List<Widget> _buildReportListTiles() {
     final reports = [
-      ReportItem('تقرير الأداء', Icons.assessment, Colors.blue, _generatePerformanceReport),
-      ReportItem('تقرير التدريب', Icons.school, Colors.green, _generateTrainingReport),
-      ReportItem('تقرير مالي', Icons.attach_money, Colors.orange, _generateFinancialReport),
-      ReportItem('تقرير المعدات', Icons.inventory, Colors.purple, _generateEquipmentReport),
-      ReportItem('تقرير الحضور', Icons.calendar_today, Colors.red, _generateAttendanceReport),
-      ReportItem('تقرير شامل', Icons.dashboard, Colors.teal, _generateComprehensiveReport),
+      ReportItem(
+        'تقرير الأداء',
+        Icons.assessment,
+        Colors.blue,
+        _generatePerformanceReport,
+      ),
+      ReportItem(
+        'تقرير التدريب',
+        Icons.school,
+        Colors.green,
+        _generateTrainingReport,
+      ),
+      ReportItem(
+        'تقرير مالي',
+        Icons.attach_money,
+        Colors.orange,
+        _generateFinancialReport,
+      ),
+      ReportItem(
+        'تقرير المعدات',
+        Icons.inventory,
+        Colors.purple,
+        _generateEquipmentReport,
+      ),
+      ReportItem(
+        'تقرير الحضور',
+        Icons.calendar_today,
+        Colors.red,
+        _generateAttendanceReport,
+      ),
+      ReportItem(
+        'تقرير شامل',
+        Icons.dashboard,
+        Colors.teal,
+        _generateComprehensiveReport,
+      ),
     ];
 
     return reports.map((report) => _buildReportListTile(report)).toList();
@@ -798,10 +823,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
               SizedBox(height: 8),
               Text(
                 description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -944,7 +966,9 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
         children: mapValue.entries.map((entry) {
           return Padding(
             padding: EdgeInsets.symmetric(vertical: 2),
-            child: Text('${_getString(entry.key)}: ${_formatValue(entry.value)}'),
+            child: Text(
+              '${_getString(entry.key)}: ${_formatValue(entry.value)}',
+            ),
           );
         }).toList(),
       );
@@ -968,13 +992,20 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
 
   IconData _getReportIcon(String title) {
     switch (title) {
-      case 'تقرير الأداء': return Icons.assessment;
-      case 'تقرير التدريب': return Icons.school;
-      case 'تقرير مالي': return Icons.attach_money;
-      case 'تقرير المعدات': return Icons.inventory;
-      case 'تقرير الحضور': return Icons.calendar_today;
-      case 'تقرير شامل': return Icons.dashboard;
-      default: return Icons.description;
+      case 'تقرير الأداء':
+        return Icons.assessment;
+      case 'تقرير التدريب':
+        return Icons.school;
+      case 'تقرير مالي':
+        return Icons.attach_money;
+      case 'تقرير المعدات':
+        return Icons.inventory;
+      case 'تقرير الحضور':
+        return Icons.calendar_today;
+      case 'تقرير شامل':
+        return Icons.dashboard;
+      default:
+        return Icons.description;
     }
   }
 
@@ -986,9 +1017,7 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
     doc.addPage(
       pw.Page(
         build: (pw.Context context) {
-          return pw.Center(
-            child: pw.Text('تقرير ${widget.personnelName}'),
-          );
+          return pw.Center(child: pw.Text('تقرير ${widget.personnelName}'));
         },
       ),
     );
@@ -998,7 +1027,10 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
 
   Future<void> _sharePdf() async {
     try {
-      final fileUrl = await ReportsApi.generatePdfReport(widget.personnelId, 'comprehensive');
+      final fileUrl = await ReportsApi.generatePdfReport(
+        widget.personnelId,
+        'comprehensive',
+      );
       _showSuccessMessage('تم إنشاء ملف PDF بنجاح');
     } catch (e) {
       _showErrorMessage('فشل في إنشاء ملف PDF: $e');
@@ -1012,13 +1044,13 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
 
       final List<List<dynamic>> rows = [];
       rows.add(['الشهر', 'التقييم']);
-      
+
       for (var row in monthlyData) {
         if (row is Map) {
           final mapRow = Map<String, dynamic>.from(row as Map);
           rows.add([
             _getString(mapRow['month']),
-            _getNumber(mapRow['score']).toString()
+            _getNumber(mapRow['score']).toString(),
           ]);
         }
       }
@@ -1034,19 +1066,13 @@ class _PersonnelReportsScreenState extends State<PersonnelReportsScreen> {
 
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 }

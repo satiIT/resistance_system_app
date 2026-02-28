@@ -249,7 +249,7 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    casualty.fullName ?? 'غير مسمى',
+                    casualty.fullName ?? 'غير معروف',
                     style: GoogleFonts.tajawal(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -267,11 +267,15 @@ class _CasualtiesScreenState extends State<CasualtiesScreen> {
                         color: Colors.white.withOpacity(0.6),
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        '${casualty.militaryNumber ?? "-"}',
-                        style: GoogleFonts.tajawal(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 13,
+                      Flexible(
+                        child: Text(
+                          '${casualty.militaryNumber ?? "-"}',
+                          style: GoogleFonts.tajawal(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

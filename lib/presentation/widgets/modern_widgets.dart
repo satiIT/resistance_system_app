@@ -746,3 +746,33 @@ class ModernDropdownField<T> extends StatelessWidget {
     );
   }
 }
+
+/// A premium logo widget for the Tech Unit.
+class TechUnitLogo extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const TechUnitLogo({Key? key, this.size = 100, this.color}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        image: const DecorationImage(
+          image: AssetImage('assets/images/logo.png'),
+          fit: BoxFit.cover,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.15),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+    );
+  }
+}

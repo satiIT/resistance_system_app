@@ -112,22 +112,14 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 32),
                     Text(
-                      'المقاومة الشعبية',
+                      'الوحدة الفنية البراء بن مالك',
                       style: GoogleFonts.tajawal(
-                        fontSize: 40,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                         letterSpacing: 1.2,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'لجنة الإسناد - جامعة الخرطوم',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 18,
-                        color: Colors.white.withOpacity(0.8),
-                        fontWeight: FontWeight.w500,
-                      ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
                     const SizedBox(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/inventory_item.dart';
 import '../../../core/services/inventory_api.dart';
+import '../../widgets/modern_widgets.dart';
 
 class InventoryFormScreen extends StatefulWidget {
   final InventoryItem? existingItem;
@@ -16,12 +18,10 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
   late InventoryItem _item;
   bool _isLoading = false;
   bool _isEditMode = false;
-  double? _availableStock; // المخزون المتاح للصنف المحدد في المخزن المحدد
+  double? _availableStock;
 
-  // قوائم الاختيارات
   final List<String> _movementTypes = ['وارد', 'منصرف', 'نقل'];
 
-  // قائمة الأصناف مع معرفاتها
   final List<Map<String, dynamic>> _items = [
     {'id': 1, 'name': 'دقيق', 'code': 'FLO001'},
     {'id': 2, 'name': 'سكر', 'code': 'SUG001'},
@@ -42,7 +42,6 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
     {'id': 17, 'name': 'أدوية', 'code': 'MED001'},
   ];
 
-  // قائمة المخازن
   final List<Map<String, dynamic>> _stores = [
     {'id': 1, 'name': 'المخزن المركزي'},
     {'id': 2, 'name': 'مخزن المواد الغذائية'},
@@ -66,7 +65,6 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
     'كيلو',
   ];
 
-  // متغيرات للقوائم المنسدلة
   Map<String, dynamic>? _selectedItem;
   Map<String, dynamic>? _selectedFromStore;
   Map<String, dynamic>? _selectedToStore;
@@ -78,16 +76,12 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
 
     if (_isEditMode) {
       _item = widget.existingItem!;
-
-      // تعيين العنصر المحدد
       if (_item.itemId != null) {
         _selectedItem = _items.firstWhere(
           (i) => i['id'] == _item.itemId,
           orElse: () => {'id': _item.itemId, 'name': _item.itemName ?? ''},
         );
       }
-
-      // تعيين المخازن المحددة
       if (_item.fromStore != null) {
         _selectedFromStore = _stores.firstWhere(
           (s) => s['id'] == _item.fromStore,
@@ -97,7 +91,6 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
           },
         );
       }
-
       if (_item.toStore != null) {
         _selectedToStore = _stores.firstWhere(
           (s) => s['id'] == _item.toStore,
@@ -112,7 +105,6 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
       );
     }
 
-    // جلب المخزون إذا كنا في وضع التعديل وكان هناك صنف ومخزن مصدر
     if (_isEditMode && _item.itemId != null && _item.fromStore != null) {
       _fetchAvailableStock();
     }
@@ -155,25 +147,17 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // التحقق من اختيار الصنف
       if (_selectedItem == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('يرجى اختيار الصنف'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showError('يرجى اختيار الصنف');
         return;
       }
 
-      // تعيين itemId من العنصر المحدد
       _item = _item.copyWith(
         itemId: _selectedItem!['id'],
         itemName: _selectedItem!['name'],
         itemCode: _selectedItem!['code'],
       );
 
-      // تعيين المخازن حسب نوع الحركة
       if (_item.movementType == 'وارد' && _selectedToStore != null) {
         _item = _item.copyWith(
           toStore: _selectedToStore!['id'],
@@ -195,13 +179,9 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
         }
       }
 
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
-        print('📤 حفظ حركة المخزون: ${_item.toJson()}');
-
         if (_isEditMode) {
           await InventoryApi.updateInventoryItem(_item);
           _showSuccess('تم تحديث حركة المخزون بنجاح');
@@ -213,9 +193,7 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
       } catch (e) {
         _showError('خطأ في الحفظ: $e');
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -232,603 +210,298 @@ class _InventoryFormScreenState extends State<InventoryFormScreen> {
     );
   }
 
-  Widget _buildBasicInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info, color: Colors.blue),
-                SizedBox(width: 8),
-                Text(
-                  'المعلومات الأساسية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-
-            // تاريخ الحركة
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'تاريخ الحركة *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.calendar_today),
-              ),
-              readOnly: true,
-              controller: TextEditingController(
-                text:
-                    '${_item.movementDate.year}-${_item.movementDate.month.toString().padLeft(2, '0')}-${_item.movementDate.day.toString().padLeft(2, '0')}',
-              ),
-              onTap: () async {
-                final selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: _item.movementDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    _item = _item.copyWith(movementDate: selectedDate);
-                  });
-                }
-              },
-            ),
-            SizedBox(height: 12),
-
-            // نوع الحركة
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'نوع الحركة *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.compare_arrows),
-              ),
-              value: _item.movementType,
-              items: _movementTypes.map((type) {
-                return DropdownMenuItem(value: type, child: Text(type));
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _item = _item.copyWith(movementType: value!);
-                  // إعادة تعيين المخازن عند تغيير نوع الحركة
-                  if (value != 'نقل') {
-                    _selectedFromStore = null;
-                    _selectedToStore = null;
-                  }
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى اختيار نوع الحركة';
-                }
-                return null;
-              },
-            ),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    return ModernPageScaffold(
+      title: _isEditMode ? 'تعديل حركة' : 'حركة مخزنية جديدة',
+      children: [
+        const ModernScreenHeader(
+          title: 'إدارة المخزن',
+          subtitle: 'قم بتسجيل تفاصيل الوارد والمنصرف بدقة لضمان توازن المخزون',
         ),
-      ),
-    );
-  }
-
-  Widget _buildItemSelectionSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.inventory, color: Colors.green),
-                SizedBox(width: 8),
-                Text(
-                  'اختيار الصنف',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-
-            // اختيار الصنف
-            DropdownButtonFormField<Map<String, dynamic>>(
-              decoration: InputDecoration(
-                labelText: 'الصنف *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.category),
+        const SizedBox(height: 24),
+        Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildBasicInfoSection(),
+              _buildItemSelectionSection(),
+              _buildItemDetailsSection(),
+              _buildAdditionalInfoSection(),
+              const SizedBox(height: 12),
+              ModernGradientButton(
+                text: _isEditMode ? 'تحديث البيانات' : 'حفظ الحركة',
+                onPressed: _saveItem,
+                isLoading: _isLoading,
+                icon: Icons.save_rounded,
+                width: double.infinity,
               ),
-              value: _selectedItem,
-              items: [
-                DropdownMenuItem(value: null, child: Text('اختر الصنف...')),
-                ..._items.map((item) {
-                  return DropdownMenuItem(
-                    value: item,
-                    child: Text('${item['name']} (${item['code']})'),
-                  );
-                }).toList(),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _selectedItem = value;
-                  if (value != null) {
-                    _item = _item.copyWith(
-                      itemId: value['id'],
-                      itemName: value['name'],
-                      itemCode: value['code'],
-                    );
-                  }
-                });
-                _fetchAvailableStock();
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'يرجى اختيار الصنف';
-                }
-                return null;
-              },
-            ),
-
-            SizedBox(height: 16),
-
-            // حقول المخازن حسب نوع الحركة
-            if (_item.movementType == 'وارد') ...[
-              SizedBox(height: 12),
-              DropdownButtonFormField<Map<String, dynamic>>(
-                decoration: InputDecoration(
-                  labelText: 'المخزن المستلم *',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  prefixIcon: Icon(Icons.store),
-                ),
-                value: _selectedToStore,
-                items: [
-                  DropdownMenuItem(value: null, child: Text('اختر المخزن...')),
-                  ..._stores.map((store) {
-                    return DropdownMenuItem(
-                      value: store,
-                      child: Text(store['name']),
-                    );
-                  }).toList(),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedToStore = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'يرجى اختيار المخزن المستلم';
-                  }
-                  return null;
-                },
-              ),
-            ],
-
-            if (_item.movementType == 'منصرف') ...[
-              SizedBox(height: 12),
-              DropdownButtonFormField<Map<String, dynamic>>(
-                decoration: InputDecoration(
-                  labelText: 'المخزن المصدر *',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  prefixIcon: Icon(Icons.store),
-                ),
-                value: _selectedFromStore,
-                items: [
-                  DropdownMenuItem(value: null, child: Text('اختر المخزن...')),
-                  ..._stores.map((store) {
-                    return DropdownMenuItem(
-                      value: store,
-                      child: Text(store['name']),
-                    );
-                  }).toList(),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedFromStore = value;
-                  });
-                  _fetchAvailableStock();
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'يرجى اختيار المخزن المصدر';
-                  }
-                  return null;
-                },
-              ),
-            ],
-
-            if (_item.movementType == 'نقل') ...[
-              SizedBox(height: 12),
-              DropdownButtonFormField<Map<String, dynamic>>(
-                decoration: InputDecoration(
-                  labelText: 'المخزن المصدر *',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  prefixIcon: Icon(Icons.store),
-                ),
-                value: _selectedFromStore,
-                items: [
-                  DropdownMenuItem(value: null, child: Text('اختر المخزن...')),
-                  ..._stores.map((store) {
-                    return DropdownMenuItem(
-                      value: store,
-                      child: Text(store['name']),
-                    );
-                  }).toList(),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedFromStore = value;
-                  });
-                  _fetchAvailableStock();
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'يرجى اختيار المخزن المصدر';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 12),
-              DropdownButtonFormField<Map<String, dynamic>>(
-                decoration: InputDecoration(
-                  labelText: 'المخزن المستلم *',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  prefixIcon: Icon(Icons.store),
-                ),
-                value: _selectedToStore,
-                items: [
-                  DropdownMenuItem(value: null, child: Text('اختر المخزن...')),
-                  ..._stores.map((store) {
-                    return DropdownMenuItem(
-                      value: store,
-                      child: Text(store['name']),
-                    );
-                  }).toList(),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedToStore = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'يرجى اختيار المخزن المستلم';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItemDetailsSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.add_box, color: Colors.orange),
-                SizedBox(width: 8),
-                Text(
-                  'تفاصيل الصنف',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-
-            // الكمية
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'الكمية *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.numbers),
-              ),
-              keyboardType: TextInputType.number,
-              initialValue: _item.quantity > 0 ? _item.quantity.toString() : '',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال الكمية';
-                }
-                final qty = double.tryParse(value);
-                if (qty == null) {
-                  return 'يرجى إدخال رقم صحيح';
-                }
-                if (qty <= 0) {
-                  return 'الكمية يجب أن تكون أكبر من صفر';
-                }
-
-                // التحقق من المخزون المتاح في حالة المنصرف أو النقل
-                if ((_item.movementType == 'منصرف' ||
-                        _item.movementType == 'نقل') &&
-                    _availableStock != null &&
-                    qty > _availableStock!) {
-                  return 'الكمية تتجاوز المخزون المتاح ($_availableStock)';
-                }
-
-                return null;
-              },
-              onSaved: (value) =>
-                  _item = _item.copyWith(quantity: double.parse(value!)),
-            ),
-            if (_availableStock != null &&
-                (_item.movementType == 'منصرف' || _item.movementType == 'نقل'))
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0, right: 8.0),
-                child: Text(
-                  'المخزون المتاح: $_availableStock',
-                  style: TextStyle(
-                    color: _availableStock! <= 0 ? Colors.red : Colors.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  side: const BorderSide(color: Colors.white24),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-              ),
-            SizedBox(height: 12),
-
-            // نوع العبوة
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'نوع العبوة *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.inventory),
-              ),
-              value: _item.packaging,
-              items: [
-                DropdownMenuItem(
-                  value: null,
-                  child: Text('اختر نوع العبوة...'),
-                ),
-                ..._packagingTypes.map((packaging) {
-                  return DropdownMenuItem(
-                    value: packaging,
-                    child: Text(packaging),
-                  );
-                }).toList(),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _item = _item.copyWith(packaging: value);
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى اختيار نوع العبوة';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfoSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.purple),
-                SizedBox(width: 8),
-                Text(
-                  'معلومات إضافية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-
-            // الجهة (مورد/مستلم)
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: _item.movementType == 'وارد'
-                    ? 'الجهة الموردة *'
-                    : 'الجهة المستلمة *',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(
-                  _item.movementType == 'وارد' ? Icons.support : Icons.person,
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.tajawal(color: Colors.white),
                 ),
               ),
-              initialValue: _item.movementType == 'وارد'
-                  ? _item.supplierEntity
-                  : _item.receiverEntity,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return _item.movementType == 'وارد'
-                      ? 'يرجى إدخال اسم المورد'
-                      : 'يرجى إدخال اسم المستلم';
-                }
-                return null;
-              },
-              onSaved: (value) {
-                if (_item.movementType == 'وارد') {
-                  _item = _item.copyWith(supplierEntity: value);
-                } else {
-                  _item = _item.copyWith(receiverEntity: value);
-                }
-              },
-            ),
-            SizedBox(height: 12),
-
-            // تاريخ الانتهاء
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'تاريخ انتهاء الصلاحية',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.calendar_month),
-              ),
-              readOnly: true,
-              controller: TextEditingController(
-                text: _item.expiryDate != null
-                    ? '${_item.expiryDate!.year}-${_item.expiryDate!.month.toString().padLeft(2, '0')}-${_item.expiryDate!.day.toString().padLeft(2, '0')}'
-                    : '',
-              ),
-              onTap: () async {
-                final selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate:
-                      _item.expiryDate ??
-                      DateTime.now().add(Duration(days: 365)),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(Duration(days: 3650)),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    _item = _item.copyWith(expiryDate: selectedDate);
-                  });
-                }
-              },
-            ),
-            SizedBox(height: 12),
-
-            // رقم الدفعة
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'رقم الدفعة',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.qr_code),
-              ),
-              initialValue: _item.batchNumber,
-              onSaved: (value) => _item = _item.copyWith(batchNumber: value),
-            ),
-            SizedBox(height: 12),
-
-            // المعتمد
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'المعتمد',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.verified_user),
-              ),
-              initialValue: _item.approvedBy,
-              onSaved: (value) => _item = _item.copyWith(approvedBy: value),
-            ),
-            SizedBox(height: 12),
-
-            // ملاحظات
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'ملاحظات',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[50],
-                alignLabelWithHint: true,
-                prefixIcon: Icon(Icons.note),
-              ),
-              initialValue: _item.notes,
-              maxLines: 3,
-              onSaved: (value) => _item = _item.copyWith(notes: value),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              icon: _isLoading ? SizedBox() : Icon(Icons.save),
-              label: _isLoading
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text(_isEditMode ? 'تحديث السجل' : 'حفظ السجل'),
-              onPressed: _isLoading ? null : _saveItem,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 15),
-                backgroundColor: Colors.teal,
-              ),
-            ),
+              const SizedBox(height: 40),
+            ],
           ),
-          SizedBox(width: 10),
-          Expanded(
-            child: OutlinedButton.icon(
-              icon: Icon(Icons.cancel),
-              label: Text('إلغاء'),
-              onPressed: _isLoading ? null : () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 15),
-              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBasicInfoSection() {
+    return ModernSectionCard(
+      title: 'المعلومات الأساسية',
+      icon: Icons.info_outline,
+      child: Column(
+        children: [
+          ModernTextField(
+            label: 'تاريخ الحركة',
+            prefixIcon: Icons.calendar_today_rounded,
+            readOnly: true,
+            controller: TextEditingController(
+              text:
+                  '${_item.movementDate.year}-${_item.movementDate.month.toString().padLeft(2, '0')}-${_item.movementDate.day.toString().padLeft(2, '0')}',
             ),
+            onTap: () async {
+              final selectedDate = await showDatePicker(
+                context: context,
+                initialDate: _item.movementDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (selectedDate != null) {
+                setState(
+                  () => _item = _item.copyWith(movementDate: selectedDate),
+                );
+              }
+            },
+          ),
+          ModernDropdownField<String>(
+            label: 'نوع الحركة',
+            prefixIcon: Icons.swap_vert_rounded,
+            value: _item.movementType,
+            items: _movementTypes
+                .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _item = _item.copyWith(movementType: value!);
+                if (value != 'نقل') {
+                  _selectedFromStore = null;
+                  _selectedToStore = null;
+                }
+              });
+            },
           ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _isEditMode ? 'تعديل حركة المخزون' : 'إضافة حركة مخزون جديدة',
-        ),
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
-      ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: ListView(
-            children: [
-              _buildBasicInfoSection(),
-              SizedBox(height: 16),
-              _buildItemSelectionSection(),
-              SizedBox(height: 16),
-              _buildItemDetailsSection(),
-              SizedBox(height: 16),
-              _buildAdditionalInfoSection(),
-              SizedBox(height: 20),
-              _buildActionButtons(),
-            ],
+  Widget _buildItemSelectionSection() {
+    return ModernSectionCard(
+      title: 'اختيار الصنف والمخزن',
+      icon: Icons.inventory_2_outlined,
+      child: Column(
+        children: [
+          ModernDropdownField<Map<String, dynamic>>(
+            label: 'الصنف',
+            prefixIcon: Icons.category_rounded,
+            value: _selectedItem,
+            items: _items
+                .map(
+                  (item) => DropdownMenuItem(
+                    value: item,
+                    child: Text('${item['name']} (${item['code']})'),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedItem = value;
+                if (value != null) {
+                  _item = _item.copyWith(
+                    itemId: value['id'],
+                    itemName: value['name'],
+                    itemCode: value['code'],
+                  );
+                }
+              });
+              _fetchAvailableStock();
+            },
           ),
-        ),
+          if (_item.movementType == 'وارد' || _item.movementType == 'نقل')
+            ModernDropdownField<Map<String, dynamic>>(
+              label: _item.movementType == 'وارد'
+                  ? 'المخزن المستلم'
+                  : 'المخزن الوجهة',
+              prefixIcon: Icons.store_rounded,
+              value: _selectedToStore,
+              items: _stores
+                  .map(
+                    (store) => DropdownMenuItem(
+                      value: store,
+                      child: Text(store['name']),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _selectedToStore = value),
+            ),
+          if (_item.movementType == 'منصرف' || _item.movementType == 'نقل')
+            ModernDropdownField<Map<String, dynamic>>(
+              label: 'المخزن المصدر',
+              prefixIcon: Icons.storefront_rounded,
+              value: _selectedFromStore,
+              items: _stores
+                  .map(
+                    (store) => DropdownMenuItem(
+                      value: store,
+                      child: Text(store['name']),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() => _selectedFromStore = value);
+                _fetchAvailableStock();
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemDetailsSection() {
+    return ModernSectionCard(
+      title: 'تفاصيل الكمية',
+      icon: Icons.analytics_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ModernTextField(
+            label: 'الكمية',
+            prefixIcon: Icons.add_chart_rounded,
+            keyboardType: TextInputType.number,
+            initialValue: _item.quantity > 0 ? _item.quantity.toString() : '',
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'يرجى إدخال الكمية';
+              final qty = double.tryParse(value);
+              if (qty == null || qty <= 0)
+                return 'الكمية يجب أن تكون أكبر من صفر';
+              if ((_item.movementType == 'منصرف' ||
+                      _item.movementType == 'نقل') &&
+                  _availableStock != null &&
+                  qty > _availableStock!) {
+                return 'الكمية تتجاوز المخزون المتاح ($_availableStock)';
+              }
+              return null;
+            },
+            onSaved: (value) =>
+                _item = _item.copyWith(quantity: double.parse(value!)),
+          ),
+          if (_availableStock != null &&
+              (_item.movementType == 'منصرف' || _item.movementType == 'نقل'))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: ModernStatusBadge(
+                text: 'المخزون المتاح: $_availableStock',
+                color: _availableStock! <= 0 ? Colors.red : Colors.green,
+              ),
+            ),
+          ModernDropdownField<String>(
+            label: 'نوع العبوة',
+            prefixIcon: Icons.inventory_2_rounded,
+            value: _item.packaging,
+            items: _packagingTypes
+                .map((pkg) => DropdownMenuItem(value: pkg, child: Text(pkg)))
+                .toList(),
+            onChanged: (value) =>
+                setState(() => _item = _item.copyWith(packaging: value)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdditionalInfoSection() {
+    return ModernSectionCard(
+      title: 'بيانات إضافية',
+      icon: Icons.more_horiz_rounded,
+      child: Column(
+        children: [
+          ModernTextField(
+            label: _item.movementType == 'وارد'
+                ? 'الجهة الموردة'
+                : 'الجهة المستلمة',
+            prefixIcon: _item.movementType == 'وارد'
+                ? Icons.local_shipping_rounded
+                : Icons.person_pin_rounded,
+            initialValue: _item.movementType == 'وارد'
+                ? _item.supplierEntity
+                : _item.receiverEntity,
+            onSaved: (value) {
+              if (_item.movementType == 'وارد') {
+                _item = _item.copyWith(supplierEntity: value);
+              } else {
+                _item = _item.copyWith(receiverEntity: value);
+              }
+            },
+          ),
+          ModernTextField(
+            label: 'تاريخ انتهاء الصلاحية',
+            prefixIcon: Icons.event_busy_rounded,
+            readOnly: true,
+            controller: TextEditingController(
+              text: _item.expiryDate != null
+                  ? '${_item.expiryDate!.year}-${_item.expiryDate!.month.toString().padLeft(2, '0')}-${_item.expiryDate!.day.toString().padLeft(2, '0')}'
+                  : '',
+            ),
+            onTap: () async {
+              final selectedDate = await showDatePicker(
+                context: context,
+                initialDate:
+                    _item.expiryDate ??
+                    DateTime.now().add(const Duration(days: 365)),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 3650)),
+              );
+              if (selectedDate != null) {
+                setState(
+                  () => _item = _item.copyWith(expiryDate: selectedDate),
+                );
+              }
+            },
+          ),
+          ModernTextField(
+            label: 'رقم الدفعة (Batch No)',
+            prefixIcon: Icons.tag_rounded,
+            initialValue: _item.batchNumber,
+            onSaved: (value) => _item = _item.copyWith(batchNumber: value),
+          ),
+          ModernTextField(
+            label: 'المعتمد (Approved By)',
+            prefixIcon: Icons.assignment_turned_in_rounded,
+            initialValue: _item.approvedBy,
+            onSaved: (value) => _item = _item.copyWith(approvedBy: value),
+          ),
+          ModernTextField(
+            label: 'ملاحظات',
+            prefixIcon: Icons.notes_rounded,
+            initialValue: _item.notes,
+            maxLines: 3,
+            onSaved: (value) => _item = _item.copyWith(notes: value),
+          ),
+        ],
       ),
     );
   }

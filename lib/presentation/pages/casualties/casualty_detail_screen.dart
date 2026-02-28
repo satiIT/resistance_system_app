@@ -102,7 +102,7 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                value ?? 'غير محدد',
+                value ?? 'غير معروف',
                 style: GoogleFonts.tajawal(
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
@@ -113,7 +113,7 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
           else
             Expanded(
               child: Text(
-                value ?? 'غير محدد',
+                value ?? 'غير معروف',
                 style: GoogleFonts.tajawal(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -132,7 +132,7 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
   }
 
   String _getIncidentDateFormatted(Casualty casualty) {
-    if (casualty.incidentDate == null) return 'غير محدد';
+    if (casualty.incidentDate == null) return 'غير معروف';
     return '${casualty.incidentDate!.year}-${casualty.incidentDate!.month.toString().padLeft(2, '0')}-${casualty.incidentDate!.day.toString().padLeft(2, '0')}';
   }
 
@@ -464,7 +464,7 @@ class _CasualtyDetailScreenState extends State<CasualtyDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.casualty.fullName ?? 'غير موثق',
+                  widget.casualty.fullName ?? 'غير معروف',
                   style: GoogleFonts.tajawal(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

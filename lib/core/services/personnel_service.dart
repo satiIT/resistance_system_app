@@ -1,12 +1,9 @@
-// lib/core/services/personnel_service.dart
 import 'dart:convert';
-import 'dart:io'; // Import for encoding
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class PersonnelService {
-  // 🔹 استخدام عنوان IP بدلاً من localhost للجوال
-  // static const String baseUrl = 'http://10.0.2.2:5000/api'; // للاندرويد
-  static const String baseUrl = 'http://localhost:5000/api'; // للويب
+  static String get baseUrl => '${ApiConfig.baseUrl}/api';
   // static const String baseUrl = 'http://192.168.1.100:5000/api'; // للشبكة المحلية
 
   // Headers مشتركة مع UTF-8
@@ -27,13 +24,13 @@ class PersonnelService {
     } catch (e) {
       print('❌ خطأ في فك ترميز الاستجابة: $e');
       print('📄 النص الخام: ${response.body}');
-      
+
       // محاولة بديلة باستخدام Latin-1 (قد يعمل مع بعض الحروف)
       try {
         return json.decode(latin1.decode(response.bodyBytes));
       } catch (e2) {
         print('❌ فشل فك الترميز بالبديل: $e2');
-        
+
         // محاولة التحليل كسلسلة نصية مباشرة
         try {
           final responseBody = String.fromCharCodes(response.bodyBytes);
@@ -133,7 +130,9 @@ class PersonnelService {
         throw Exception('المستنفر غير موجود (404)');
       } else {
         final errorMessage = utf8.decode(response.bodyBytes);
-        throw Exception('فشل في جلب بيانات المستنفر: ${response.statusCode} - $errorMessage');
+        throw Exception(
+          'فشل في جلب بيانات المستنفر: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -148,10 +147,10 @@ class PersonnelService {
     try {
       print('🌐 جاري إنشاء مستنفر جديد في: $baseUrl/personnel');
       print('📦 البيانات المرسلة: ${json.encode(data)}');
-      
+
       // ✅ **استخدام utf8.encode لترميز الجسم**
       final body = utf8.encode(json.encode(data));
-      
+
       final response = await http.post(
         Uri.parse('$baseUrl/personnel'),
         headers: getHeaders(),
@@ -193,10 +192,10 @@ class PersonnelService {
   ) async {
     try {
       print('🌐 جاري تحديث مستنفر في: $baseUrl/personnel/$id');
-      
+
       // ✅ **استخدام utf8.encode**
       final body = utf8.encode(json.encode(data));
-      
+
       final response = await http.put(
         Uri.parse('$baseUrl/personnel/$id'),
         headers: getHeaders(),
@@ -266,7 +265,7 @@ class PersonnelService {
       // ✅ **ترميز استعلام البحث**
       final encodedQuery = Uri.encodeComponent(query);
       print('🌐 جاري البحث في: $baseUrl/personnel/search?q=$encodedQuery');
-      
+
       final response = await http.get(
         Uri.parse('$baseUrl/personnel/search?q=$encodedQuery'),
         headers: getHeaders(),
@@ -308,8 +307,10 @@ class PersonnelService {
     try {
       // ✅ **ترميز اسم الولاية**
       final encodedState = Uri.encodeComponent(state);
-      print('🌐 جاري التصفية حسب الولاية: $baseUrl/personnel/state/$encodedState');
-      
+      print(
+        '🌐 جاري التصفية حسب الولاية: $baseUrl/personnel/state/$encodedState',
+      );
+
       final response = await http.get(
         Uri.parse('$baseUrl/personnel/state/$encodedState'),
         headers: getHeaders(),
@@ -353,7 +354,7 @@ class PersonnelService {
       print(
         '🌐 جاري التصفية حسب المحلية: $baseUrl/personnel/locality/$encodedLocality',
       );
-      
+
       final response = await http.get(
         Uri.parse('$baseUrl/personnel/locality/$encodedLocality'),
         headers: getHeaders(),
@@ -459,7 +460,9 @@ class PersonnelService {
         return _getDefaultStates();
       } else {
         final errorMessage = utf8.decode(response.bodyBytes);
-        throw Exception('فشل في جلب قائمة الولايات: ${response.statusCode} - $errorMessage');
+        throw Exception(
+          'فشل في جلب قائمة الولايات: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -501,7 +504,9 @@ class PersonnelService {
         return _getDefaultLocalities();
       } else {
         final errorMessage = utf8.decode(response.bodyBytes);
-        throw Exception('فشل في جلب قائمة المحليات: ${response.statusCode} - $errorMessage');
+        throw Exception(
+          'فشل في جلب قائمة المحليات: ${response.statusCode} - $errorMessage',
+        );
       }
     } catch (e) {
       print('❌ خطأ في الاتصال: $e');
@@ -580,23 +585,27 @@ class PersonnelService {
   static Future<void> testArabicEncoding() async {
     try {
       print('🧪 اختبار ترميز النص العربي...');
-      
+
       // اختبار مع نص عربي
       final testResponse = await http.get(
         Uri.parse('$baseUrl/personnel'),
         headers: getHeaders(),
       );
-      
+
       if (testResponse.statusCode == 200) {
         final rawBytes = testResponse.bodyBytes;
         final utf8String = utf8.decode(rawBytes);
         final latin1String = latin1.decode(rawBytes);
-        
+
         print('📊 نتائج اختبار الترميز:');
         print('   طول البيانات (بايت): ${rawBytes.length}');
-        print('   الترميز UTF-8 ناجح: ${utf8String.contains('عربي') || utf8String.contains('مستنفر')}');
-        print('   الترميز Latin-1 ناجح: ${latin1String.contains('عربي') || latin1String.contains('مستنفر')}');
-        
+        print(
+          '   الترميز UTF-8 ناجح: ${utf8String.contains('عربي') || utf8String.contains('مستنفر')}',
+        );
+        print(
+          '   الترميز Latin-1 ناجح: ${latin1String.contains('عربي') || latin1String.contains('مستنفر')}',
+        );
+
         // عرض عينة من النص
         if (utf8String.length > 100) {
           print('   عينة من النص (UTF-8): ${utf8String.substring(0, 100)}...');

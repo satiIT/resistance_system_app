@@ -126,7 +126,9 @@ class InventoryItem {
         return staticItems[itemId]!['name']!;
       }
     }
-    return safeName.isEmpty && id != null ? 'صنف #$id' : safeName;
+    return safeName.isEmpty
+        ? (id != null ? 'صنف #$id' : 'غير معروف')
+        : safeName;
   }
 
   static String _resolveCode(dynamic id, dynamic code) {
@@ -248,8 +250,10 @@ class InventoryItem {
     }
   }
 
-  String get entity =>
-      movementType == 'وارد' ? supplierEntity ?? '' : receiverEntity ?? '';
+  String get entity {
+    final val = movementType == 'وارد' ? supplierEntity : receiverEntity;
+    return (val != null && val.trim().isNotEmpty) ? val : 'غير معروف';
+  }
 
   String get description => notes ?? '';
 

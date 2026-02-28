@@ -9,13 +9,13 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'نظام الإسناد المقاوم';
+  String get appTitle => 'Tech_unit_system';
 
   @override
   String get dashboardTitle => 'لوحة التحكم الرقمية';
 
   @override
-  String get personnel => 'المستنفرين';
+  String get personnel => 'المجاهدين';
 
   @override
   String get training => 'التدريب';
@@ -85,7 +85,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logout => 'تسجيل الخروج';
 
   @override
-  String get totalPersonnel => 'إجمالي المستنفرين';
+  String get totalPersonnel => 'إجمالي المجاهدين';
 
   @override
   String get currentTasks => 'المهام الحالية';
@@ -97,11 +97,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get emergencyCases => 'حالات الطوارئ';
 
   @override
-  String get personnelManagement => 'إدارة شؤون المستنفرين';
+  String get personnelManagement => 'إدارة شؤون المجاهدين';
 
   @override
   String get personnelSubtitle =>
-      'عرض وإدارة قاعدة بيانات المستنفرين والمجندين في النظام.';
+      'عرض وإدارة قاعدة بيانات المجاهدين في النظام.';
 
   @override
   String get searchHint => 'ابحث بالاسم، الرقم العسكري، أو الرقم القومي...';

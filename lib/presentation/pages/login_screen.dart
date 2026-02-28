@@ -1,10 +1,11 @@
-// lib/presentation/pages/login_screen.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:resistance_system_app/core/theme/app_theme.dart';
 import 'package:resistance_system_app/presentation/widgets/modern_widgets.dart';
-import 'package:universal_platform/universal_platform.dart';
+import 'package:resistance_system_app/l10n/app_localizations.dart';
 import 'main_dashboard.dart';
+import '../../core/services/auth_service.dart';
 import 'intelligence/intelligence_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,9 +17,11 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
-  final TextEditingController _militaryIdController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _obscurePassword = true;
+  bool _isLoading = false;
   late AnimationController _fadeController;
 
   @override
@@ -33,108 +36,119 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _fadeController.dispose();
-    _militaryIdController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isWeb = UniversalPlatform.isWeb;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isWeb
-                ? [AppColors.slate900, AppColors.slate800]
-                : [AppColors.primary, AppColors.primaryDark],
+      backgroundColor: AppColors.slate900,
+      body: Stack(
+        children: [
+          // Dynamic Animated Background
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.slate900,
+                    AppColors.slate800,
+                    AppColors.primaryDark.withOpacity(0.8),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
-            // Decorative background elements
-            _buildDecorationBlob(
-              top: -100,
-              right: -100,
+
+          // Decorative Blobs
+          Positioned(
+            top: -150,
+            right: -100,
+            child: _buildBlurBlob(
               color: AppColors.primary.withOpacity(0.2),
+              size: 400,
             ),
-            _buildDecorationBlob(
-              bottom: -150,
-              left: -150,
+          ),
+          Positioned(
+            bottom: -200,
+            left: -150,
+            child: _buildBlurBlob(
               color: AppColors.secondary.withOpacity(0.15),
+              size: 500,
             ),
+          ),
 
-            Center(
-              child: FadeTransition(
-                opacity: _fadeController,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 450),
-                    child: GlassContainer(
-                      blur: 15,
-                      opacity: 0.1,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 48,
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: FadeTransition(
+                  opacity: _fadeController,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Logo Section
+                      TweenAnimationBuilder<double>(
+                        duration: const Duration(seconds: 1),
+                        tween: Tween(begin: 0, end: 1),
+                        builder: (context, value, child) {
+                          return Transform.scale(scale: value, child: child);
+                        },
+                        child: const TechUnitLogo(size: 100),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Welcome Text
+                      Text(
+                        l10n.appTitle,
+                        style: GoogleFonts.tajawal(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // App Logo & Title
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.2),
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.security,
-                                size: 64,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              'نظام الإسناد المقاوم',
-                              style: GoogleFonts.tajawal(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              'نظام إدارة الموارد واللوجستيات',
-                              style: GoogleFonts.tajawal(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                            ),
-                            const SizedBox(height: 48),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'نظام الإدارة المتكامل',
+                        style: GoogleFonts.tajawal(
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
 
-                            // Form Fields
-                            _buildTextField(
-                              controller: _militaryIdController,
-                              label: 'الرقم العسكري',
-                              icon: Icons.badge_rounded,
+                      // Form Section in Glass Card
+                      GlassContainer(
+                        padding: const EdgeInsets.all(32),
+                        borderRadius: 32,
+                        blur: 20,
+                        child: Column(
+                          children: [
+                            _buildModernTextField(
+                              controller: _emailController,
+                              label: 'البريد الإلكتروني',
+                              hint: 'example@domain.com',
+                              icon: Icons.alternate_email_rounded,
                             ),
                             const SizedBox(height: 24),
-                            _buildTextField(
+                            _buildModernTextField(
                               controller: _passwordController,
                               label: 'كلمة المرور',
-                              icon: Icons.lock_rounded,
+                              hint: '••••••••',
+                              icon: Icons.lock_outline_rounded,
                               isPassword: true,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton(
@@ -142,85 +156,116 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: Text(
                                   'نسيت كلمة المرور؟',
                                   style: GoogleFonts.tajawal(
-                                    color: Colors.white.withOpacity(0.6),
-                                    fontSize: 12,
+                                    color: AppColors.primary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 32),
-
-                            // Login Button
-                            ModernGradientButton(
-                              text: 'تسجيل الدخول',
-                              icon: Icons.login_rounded,
-                              onPressed: () => _handleLogin(context),
-                            ),
-
-                            const SizedBox(height: 24),
-                            const Divider(color: Colors.white24),
-                            const SizedBox(height: 24),
-
-                            // Intelligence Access
-                            TextButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const IntelligenceLoginScreen(),
+                            _isLoading
+                                ? const CircularProgressIndicator(
+                                    color: AppColors.primary,
+                                  )
+                                : ModernGradientButton(
+                                    text: 'دخول النظام',
+                                    icon: Icons.arrow_forward_rounded,
+                                    onPressed: () => _handleLogin(context),
+                                    height: 56,
                                   ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.admin_panel_settings_rounded,
-                                color: Colors.white,
-                              ),
-                              label: Text(
-                                'دخول ضباط الاستخبارات',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ),
-                    ),
+
+                      const SizedBox(height: 40),
+
+                      // Footer Options
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 1,
+                            width: 30,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'أو',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.3),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: 1,
+                            width: 30,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const IntelligenceLoginScreen(),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.admin_panel_settings_outlined),
+                        label: Text(
+                          'دخول الاستخبارات',
+                          style: GoogleFonts.tajawal(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDecorationBlob({
-    double? top,
-    double? bottom,
-    double? left,
-    double? right,
-    required Color color,
-  }) {
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: Container(
-        width: 400,
-        height: 400,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  Widget _buildBlurBlob({required Color color, required double size}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+        child: Container(color: Colors.transparent),
       ),
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildModernTextField({
     required TextEditingController controller,
     required String label,
+    required String hint,
     required IconData icon,
     bool isPassword = false,
   }) {
@@ -230,40 +275,51 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           label,
           style: GoogleFonts.tajawal(
-            color: Colors.white.withOpacity(0.9),
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
           ),
           child: TextField(
             controller: controller,
             obscureText: isPassword && _obscurePassword,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: Colors.white.withOpacity(0.2),
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: AppColors.primary.withOpacity(0.7),
+                size: 20,
+              ),
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.white.withOpacity(0.7),
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        color: Colors.white.withOpacity(0.3),
+                        size: 20,
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
                     )
                   : null,
               border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 18,
+                horizontal: 16,
+              ),
             ),
           ),
         ),
@@ -271,9 +327,8 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  void _handleLogin(BuildContext context) {
-    if (_militaryIdController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
+  void _handleLogin(BuildContext context) async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('يرجى ملء جميع الحقول', style: GoogleFonts.tajawal()),
@@ -282,10 +337,28 @@ class _LoginScreenState extends State<LoginScreen>
       );
       return;
     }
-    // Simple mock login
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainDashboard()),
+
+    setState(() => _isLoading = true);
+
+    final result = await _authService.login(
+      _emailController.text.trim(),
+      _passwordController.text,
     );
+
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainDashboard()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'], style: GoogleFonts.tajawal()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }

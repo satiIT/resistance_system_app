@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Resistance Support System'**
+  /// **'Tech_unit_system'**
   String get appTitle;
 
   /// No description provided for @dashboardTitle.

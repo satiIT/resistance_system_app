@@ -5,14 +5,16 @@ import 'package:resistance_system_app/core/theme/app_theme.dart';
 import 'package:resistance_system_app/l10n/app_localizations.dart';
 import 'package:resistance_system_app/presentation/pages/splash_screen.dart';
 import 'package:universal_platform/universal_platform.dart';
+import 'package:resistance_system_app/core/config/api_config.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiConfig.initialize();
 
   if (UniversalPlatform.isWeb) {
     SystemChrome.setApplicationSwitcherDescription(
       const ApplicationSwitcherDescription(
-        label: 'المقاومة الشعبية - نظام الإدارة',
+        label: 'Tech_unit_system',
         primaryColor: 0xFF764ba2,
       ),
     );
@@ -44,7 +46,7 @@ class ResistanceSystemApp extends StatelessWidget {
     return Consumer<LocaleProvider>(
       builder: (context, localeProvider, _) {
         return MaterialApp(
-          title: 'المقاومة الشعبية',
+          title: 'Tech_unit_system',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: ThemeMode.system,

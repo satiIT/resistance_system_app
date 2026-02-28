@@ -1,293 +1,188 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/inventory_item.dart';
+import '../../widgets/modern_widgets.dart';
 
 class InventoryDetailScreen extends StatelessWidget {
   final InventoryItem item;
 
   InventoryDetailScreen({required this.item});
 
-  Widget _buildDetailItem(String label, String? value, {bool isImportant = false, Color? valueColor}) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isImportant ? Colors.red : Colors.black87,
+  @override
+  Widget build(BuildContext context) {
+    return ModernPageScaffold(
+      title: 'تفاصيل الحركة',
+      children: [
+        ModernScreenHeader(
+          title: item.itemName ?? 'غير معروف',
+          subtitle: 'تفاصيل حركة المخزون رقم #${item.id ?? '---'}',
+        ),
+        const SizedBox(height: 24),
+
+        _buildMainCard(),
+
+        ModernSectionCard(
+          title: 'معلومات الحركة',
+          icon: Icons.swap_vert_rounded,
+          child: Column(
+            children: [
+              _buildDetailRow(
+                'نوع الحركة',
+                item.movementType,
+                color: item.typeColor,
+              ),
+              _buildDetailRow(
+                'الكمية',
+                '${item.quantity} ${item.packaging ?? ""}',
+              ),
+              _buildDetailRow('التاريخ', _formatDate(item.movementDate)),
+              if (item.approvedBy != null)
+                _buildDetailRow('المعتمد', item.approvedBy!),
+            ],
+          ),
+        ),
+
+        ModernSectionCard(
+          title: 'الأطراف والمخازن',
+          icon: Icons.door_back_door_rounded,
+          child: Column(
+            children: [
+              if (item.movementType == 'وارد') ...[
+                _buildDetailRow(
+                  'الجهة الموردة',
+                  item.supplierEntity ?? 'غير معروف',
+                ),
+                if (item.toStoreName != null)
+                  _buildDetailRow('المخزن المستلم', item.toStoreName!),
+              ] else if (item.movementType == 'منصرف') ...[
+                _buildDetailRow(
+                  'الجهة المستلمة',
+                  item.receiverEntity ?? 'غير معروف',
+                ),
+                if (item.fromStoreName != null)
+                  _buildDetailRow('المخزن المصدر', item.fromStoreName!),
+              ] else if (item.movementType == 'نقل') ...[
+                if (item.fromStoreName != null)
+                  _buildDetailRow('من مخزن', item.fromStoreName!),
+                if (item.toStoreName != null)
+                  _buildDetailRow('إلى مخزن', item.toStoreName!),
+              ],
+            ],
+          ),
+        ),
+
+        if (item.expiryDate != null || item.batchNumber != null)
+          ModernSectionCard(
+            title: 'بيانات الصلاحية والتشغيلة',
+            icon: Icons.timer_rounded,
+            child: Column(
+              children: [
+                if (item.expiryDate != null)
+                  _buildDetailRow(
+                    'تاريخ الانتهاء',
+                    _formatDate(item.expiryDate!),
+                    color: item.expiryColor,
+                  ),
+                if (item.batchNumber != null)
+                  _buildDetailRow('رقم الدفعة', item.batchNumber!),
+                _buildDetailRow(
+                  'الحالة',
+                  item.expiryStatus,
+                  color: item.expiryColor,
+                ),
+              ],
             ),
           ),
-          Expanded(
+
+        if (item.notes != null && item.notes!.isNotEmpty)
+          ModernSectionCard(
+            title: 'ملاحظات إضافية',
+            icon: Icons.notes_rounded,
             child: Text(
-              value ?? 'غير محدد',
-              style: TextStyle(
-                color: valueColor ?? (isImportant ? Colors.red : Colors.grey[700]),
-              ),
+              item.notes!,
+              style: GoogleFonts.tajawal(color: Colors.white70, height: 1.5),
             ),
+          ),
+
+        const SizedBox(height: 40),
+      ],
+    );
+  }
+
+  Widget _buildMainCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [item.typeColor.withOpacity(0.2), Colors.black12],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: item.typeColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: item.typeColor.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(item.typeIcon, color: item.typeColor, size: 32),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.movementType,
+                  style: GoogleFonts.tajawal(
+                    color: item.typeColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  '${item.quantity} وحدة في ${item.packaging ?? "عبوة"}',
+                  style: GoogleFonts.tajawal(color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          ModernStatusBadge(
+            text: item.movementType == 'وارد' ? 'دخول' : 'خروج',
+            color: item.typeColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusIndicator(String status, Color color) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('تفاصيل حركة المخزون'),
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // بطاقة المعلومات الأساسية
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: item.typeColor,
-                          child: Icon(item.typeIcon, color: Colors.white),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.itemName ?? 'غير محدد',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                item.description,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: item.typeColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _buildStatusIndicator(item.description, item.typeColor),
-                        SizedBox(width: 8),
-                        if (item.isExpired)
-                          _buildStatusIndicator('منتهي الصلاحية', Colors.red),
-                        if (!item.isExpired && item.expiryDate != null)
-                          _buildStatusIndicator(item.expiryStatus, item.expiryColor),
-                      ],
-                    ),
-                  ],
-                ),
+  Widget _buildDetailRow(String label, String value, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.tajawal(color: Colors.white54, fontSize: 14),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.tajawal(
+                color: color ?? Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
               ),
             ),
-
-            SizedBox(height: 16),
-
-            // معلومات الحركة
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'معلومات الحركة',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    _buildDetailItem('نوع الحركة', item.movementType),
-                    _buildDetailItem('الصنف', item.itemName),
-                    _buildDetailItem('الكمية', '${item.quantity} ${item.packaging ?? ""}'),
-                    _buildDetailItem('التاريخ', _formatDate(item.movementDate)),
-                    _buildDetailItem('العبوة', item.packaging),
-                    if (item.approvedBy != null)
-                      _buildDetailItem('تمت الموافقة بواسطة', item.approvedBy),
-                  ],
-                ),
-              ),
-            ),
-
-            SizedBox(height: 16),
-
-            // معلومات الجهات
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'معلومات الجهات',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    if (item.movementType == 'وارد') ...[
-                      _buildDetailItem('الجهة الموردة', item.supplierEntity),
-                      if (item.toStoreName != null)
-                        _buildDetailItem('المخزن المستلم', item.toStoreName),
-                    ] else if (item.movementType == 'منصرف') ...[
-                      _buildDetailItem('الجهة المستلمة', item.receiverEntity),
-                      if (item.fromStoreName != null)
-                        _buildDetailItem('المخزن المصدر', item.fromStoreName),
-                    ] else if (item.movementType == 'نقل') ...[
-                      if (item.fromStoreName != null)
-                        _buildDetailItem('من المخزن', item.fromStoreName),
-                      if (item.toStoreName != null)
-                        _buildDetailItem('إلى المخزن', item.toStoreName),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            // معلومات الصلاحية
-            if (item.expiryDate != null) ...[
-              SizedBox(height: 16),
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'معلومات الصلاحية',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      _buildDetailItem(
-                        'تاريخ انتهاء الصلاحية', 
-                        _formatDate(item.expiryDate!),
-                        valueColor: item.expiryColor,
-                      ),
-                      _buildDetailItem(
-                        'حالة الصلاحية',
-                        item.expiryStatus,
-                        valueColor: item.expiryColor,
-                      ),
-                      if (item.batchNumber != null)
-                        _buildDetailItem('رقم الدفعة', item.batchNumber),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
-            // معلومات إضافية
-            if (item.notes != null || item.packagingDetails != null) ...[
-              SizedBox(height: 16),
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'معلومات إضافية',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      if (item.packagingDetails != null)
-                        _buildDetailItem('تفاصيل العبوة', item.packagingDetails),
-                      if (item.notes != null)
-                        _buildDetailItem('ملاحظات', item.notes),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
-            // معلومات التصنيف
-            if (item.category != null || item.itemCode != null) ...[
-              SizedBox(height: 16),
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'معلومات التصنيف',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.brown,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      if (item.itemCode != null)
-                        _buildDetailItem('كود الصنف', item.itemCode),
-                      if (item.category != null)
-                        _buildDetailItem('الفئة', item.category),
-                      if (item.unitOfMeasure != null)
-                        _buildDetailItem('وحدة القياس', item.unitOfMeasure),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
-            SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/training_record.dart';
 import '../models/training_course.dart';
+import '../config/api_config.dart';
 
 class TrainingApi {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api';
 
   // === دوال سجلات التدريب ===
   static Map<String, String> get headers {

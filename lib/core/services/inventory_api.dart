@@ -2,9 +2,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/inventory_item.dart';
+import '../config/api_config.dart';
 
 class InventoryApi {
-  static const String baseUrl = 'http://localhost:5000/api/inventory';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api/inventory';
 
   // إضافة headers للـ UTF-8
   static Map<String, String> get headers {

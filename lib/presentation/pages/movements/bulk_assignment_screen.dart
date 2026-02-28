@@ -1,7 +1,6 @@
 // lib/presentation/pages/dashboard/bulk_assignment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:resistance_system_app/core/services/movements_service.dart';
-import 'dart:math' as math;
 import 'package:universal_platform/universal_platform.dart';
 import '../../../core/responsive/responsive_layout.dart';
 import '../../../core/services/personnel_service.dart';
@@ -15,7 +14,7 @@ class BulkAssignmentScreen extends StatefulWidget {
 
 class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   Map<String, dynamic> _assignmentData = {
     'movement_type': 'مهمة',
     'priority': 'عادية',
@@ -43,42 +42,52 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
 
     try {
       final List<dynamic> response = await PersonnelService.getAllPersonnel();
-      
+
       setState(() {
-        _availablePersonnel = response.map<Map<String, dynamic>>((personnel) {
-          // تحويل البيانات من dynamic إلى Map<String, dynamic>
-          final Map<String, dynamic> personnelMap = personnel is Map ? Map<String, dynamic>.from(personnel) : {};
-          
-          // معالجة ID ليكون رقم صحيح
-          final dynamic id = personnelMap['id'];
-          final int personnelId = id is int ? id : (id is String ? int.tryParse(id) ?? 0 : 0);
-          
-          // بناء الاسم الكامل
-          final String fullName = '${personnelMap['first_name'] ?? ''} '
-              '${personnelMap['second_name'] ?? ''} '
-              '${personnelMap['third_name'] ?? ''} '
-              '${personnelMap['fourth_name'] ?? ''}'.trim();
-          
-          return {
-            'id': personnelId,
-            'name': fullName.isNotEmpty ? fullName : 'غير معروف',
-            'military_id': personnelMap['military_id']?.toString() ?? 'غير معروف',
-            'unit': personnelMap['unit'] ?? 'غير محدد',
-            'status': personnelMap['status'] ?? 'غير معروف',
-            'selected': false,
-            // حفظ البيانات الأصلية للرجوع إليها
-            'original_data': personnelMap,
-          };
-        }).where((personnel) => personnel['id'] > 0).toList(); // استبعاد الـ IDs غير الصالحة
-        
+        _availablePersonnel = response
+            .map<Map<String, dynamic>>((personnel) {
+              // تحويل البيانات من dynamic إلى Map<String, dynamic>
+              final Map<String, dynamic> personnelMap = personnel is Map
+                  ? Map<String, dynamic>.from(personnel)
+                  : {};
+
+              // معالجة ID ليكون رقم صحيح
+              final dynamic id = personnelMap['id'];
+              final int personnelId = id is int
+                  ? id
+                  : (id is String ? int.tryParse(id) ?? 0 : 0);
+
+              // بناء الاسم الكامل
+              final String fullName =
+                  '${personnelMap['first_name'] ?? ''} '
+                          '${personnelMap['second_name'] ?? ''} '
+                          '${personnelMap['third_name'] ?? ''} '
+                          '${personnelMap['fourth_name'] ?? ''}'
+                      .trim();
+
+              return {
+                'id': personnelId,
+                'name': fullName.isNotEmpty ? fullName : 'غير معروف',
+                'military_id':
+                    personnelMap['military_id']?.toString() ?? 'غير معروف',
+                'unit': personnelMap['unit'] ?? 'غير محدد',
+                'status': personnelMap['status'] ?? 'غير معروف',
+                'selected': false,
+                // حفظ البيانات الأصلية للرجوع إليها
+                'original_data': personnelMap,
+              };
+            })
+            .where((personnel) => personnel['id'] > 0)
+            .toList(); // استبعاد الـ IDs غير الصالحة
+
         _filteredPersonnel = List.from(_availablePersonnel);
       });
-      
+
       print('✅ تم تحميل ${_availablePersonnel.length} مستنفر');
     } catch (e) {
       print('❌ خطأ في تحميل البيانات: $e');
       _showError('فشل في تحميل بيانات المستنفرين: $e');
-      
+
       // استخدام بيانات وهمية كبديل
       _loadMockPersonnelData();
     } finally {
@@ -167,7 +176,9 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                 builder: (context, constraints) {
                   return Form(
                     key: _formKey,
-                    child: isWeb ? _buildWebLayout(constraints) : _buildMobileLayout(constraints),
+                    child: isWeb
+                        ? _buildWebLayout(constraints)
+                        : _buildMobileLayout(constraints),
                   );
                 },
               ),
@@ -182,18 +193,14 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         // نموذج بيانات المهمة
         Expanded(
           flex: 1,
-          child: SingleChildScrollView(
-            child: _buildAssignmentForm(),
-          ),
+          child: SingleChildScrollView(child: _buildAssignmentForm()),
         ),
         // قائمة المستنفرين
         Expanded(
           flex: 1,
           child: SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-              ),
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: _buildPersonnelSelection(),
             ),
           ),
@@ -206,9 +213,7 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
     return SingleChildScrollView(
       physics: AlwaysScrollableScrollPhysics(),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: constraints.maxHeight,
-        ),
+        constraints: BoxConstraints(minHeight: constraints.maxHeight),
         child: Padding(
           padding: EdgeInsets.all(12),
           child: Column(
@@ -468,7 +473,11 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.people_outline, size: 48, color: Colors.grey),
+                          Icon(
+                            Icons.people_outline,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 8),
                           Text(
                             'لا توجد بيانات',
@@ -551,14 +560,20 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('الرقم العسكري: ${personnel['military_id'] ?? 'غير معروف'}', 
-                style: TextStyle(fontSize: 12)),
-            Text('الوحدة: ${personnel['unit'] ?? 'غير محدد'}', 
-                style: TextStyle(fontSize: 12)),
+            Text(
+              'الرقم العسكري: ${personnel['military_id'] ?? 'غير معروف'}',
+              style: TextStyle(fontSize: 12),
+            ),
+            Text(
+              'الوحدة: ${personnel['unit'] ?? 'غير محدد'}',
+              style: TextStyle(fontSize: 12),
+            ),
             Text(
               'الحالة: ${personnel['status'] ?? 'غير معروف'}',
               style: TextStyle(
-                color: (personnel['status'] == 'نشط' || personnel['status'] == 'مستنفر')
+                color:
+                    (personnel['status'] == 'نشط' ||
+                        personnel['status'] == 'مستنفر')
                     ? Colors.green
                     : Colors.orange,
                 fontSize: 12,
@@ -586,8 +601,8 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
           return personnel['name']?.toString().toLowerCase().contains(
                 query.toLowerCase(),
               ) ??
-              false ||
-              personnel['military_id']!.toString().contains(query) ?? false;
+              false || personnel['military_id']!.toString().contains(query) ??
+              false;
         }).toList();
       }
     });
@@ -632,7 +647,8 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
                   backgroundColor: Colors.blue,
                   child: Text(
                     (personnel['military_id']?.toString() ?? '000').substring(
-                        (personnel['military_id']?.toString().length ?? 3) - 2),
+                      (personnel['military_id']?.toString().length ?? 3) - 2,
+                    ),
                   ),
                 ),
                 title: Text(personnel['name'] ?? 'غير معروف'),
@@ -668,75 +684,77 @@ class _BulkAssignmentScreenState extends State<BulkAssignmentScreen> {
   }
 
   // في ملف bulk_assignment_screen.dart - تحديث دالة _submitAssignment
-Future<void> _submitAssignment() async {
-  final selectedPersonnel = _availablePersonnel
-      .where((p) => p['selected'] == true)
-      .toList();
+  Future<void> _submitAssignment() async {
+    final selectedPersonnel = _availablePersonnel
+        .where((p) => p['selected'] == true)
+        .toList();
 
-  if (selectedPersonnel.isEmpty) {
-    _showError('يرجى اختيار مستنفر واحد على الأقل');
-    return;
-  }
-
-  if (_assignmentData['movement_date']?.isEmpty ?? true) {
-    _showError('يرجى تحديد تاريخ البدء');
-    return;
-  }
-
-  if (_assignmentData['to_location']?.isEmpty ?? true) {
-    _showError('يرجى تحديد الوحدة الهدف');
-    return;
-  }
-
-  setState(() {
-    _isSubmitting = true;
-  });
-
-  try {
-    // تحضير بيانات الإسناد الجماعي
-    List<Map<String, dynamic>> assignments = [];
-    
-    for (var personnel in selectedPersonnel) {
-      // Ensure personnel_id is properly typed
-      final personnelId = personnel['id'] is int ? personnel['id'] : int.tryParse(personnel['id']?.toString() ?? '0');
-      
-      if (personnelId == null || personnelId == 0) {
-        _showError('رقم المستنفر غير صالح: ${personnel['name']}');
-        continue;
-      }
-
-      assignments.add({
-        'personnel_id': personnelId,
-        'movement_type': _assignmentData['movement_type'],
-        'movement_date': _assignmentData['movement_date'],
-        'from_location': _assignmentData['from_location'],
-        'to_location': _assignmentData['to_location'],
-        'purpose': _assignmentData['mission_description'], // سيتم حفظه في mission_description
-        'authorized_by': _assignmentData['authorized_by'],
-        'transport_mode': _assignmentData['transport_mode'],
-        'status': 'نشط',
-        'notes': _assignmentData['notes'],
-      });
-    }
-
-    if (assignments.isEmpty) {
-      _showError('لا توجد بيانات صالحة للإرسال');
+    if (selectedPersonnel.isEmpty) {
+      _showError('يرجى اختيار مستنفر واحد على الأقل');
       return;
     }
 
-    // إرسال البيانات إلى API
-    final results = await MovementsService.createBulkAssignments(assignments);
-    
-    _showSuccessDialog(selectedPersonnel.length);
-    
-  } catch (e) {
-    _showError('خطأ في الإسناد: $e');
-  } finally {
+    if (_assignmentData['movement_date']?.isEmpty ?? true) {
+      _showError('يرجى تحديد تاريخ البدء');
+      return;
+    }
+
+    if (_assignmentData['to_location']?.isEmpty ?? true) {
+      _showError('يرجى تحديد الوحدة الهدف');
+      return;
+    }
+
     setState(() {
-      _isSubmitting = false;
+      _isSubmitting = true;
     });
+
+    try {
+      // تحضير بيانات الإسناد الجماعي
+      List<Map<String, dynamic>> assignments = [];
+
+      for (var personnel in selectedPersonnel) {
+        // Ensure personnel_id is properly typed
+        final personnelId = personnel['id'] is int
+            ? personnel['id']
+            : int.tryParse(personnel['id']?.toString() ?? '0');
+
+        if (personnelId == null || personnelId == 0) {
+          _showError('رقم المستنفر غير صالح: ${personnel['name']}');
+          continue;
+        }
+
+        assignments.add({
+          'personnel_id': personnelId,
+          'movement_type': _assignmentData['movement_type'],
+          'movement_date': _assignmentData['movement_date'],
+          'from_location': _assignmentData['from_location'],
+          'to_location': _assignmentData['to_location'],
+          'purpose':
+              _assignmentData['mission_description'], // سيتم حفظه في mission_description
+          'authorized_by': _assignmentData['authorized_by'],
+          'transport_mode': _assignmentData['transport_mode'],
+          'status': 'نشط',
+          'notes': _assignmentData['notes'],
+        });
+      }
+
+      if (assignments.isEmpty) {
+        _showError('لا توجد بيانات صالحة للإرسال');
+        return;
+      }
+
+      // إرسال البيانات إلى API
+      final results = await MovementsService.createBulkAssignments(assignments);
+
+      _showSuccessDialog(selectedPersonnel.length);
+    } catch (e) {
+      _showError('خطأ في الإسناد: $e');
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
   }
-}
 
   void _showSuccessDialog(int count) {
     showDialog(

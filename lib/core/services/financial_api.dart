@@ -1,10 +1,11 @@
 // core/services/financial_api.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/financial_item.dart';
 
 class FinancialApi {
-  static const String baseUrl = 'http://localhost:5000/api/finance';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api/finance';
 
   // === قسم الوارد ===
 
@@ -22,10 +23,14 @@ class FinancialApi {
           final List<dynamic> data = responseData['data'];
           return data.map((json) => FinancialItem.fromJson(json)).toList();
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات الوارد');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل بيانات الوارد',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل البيانات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل البيانات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في getIncomingFunds: $e');
@@ -51,7 +56,10 @@ class FinancialApi {
         }
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء السجل - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في إنشاء السجل - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في createIncomingFund: $e');
@@ -77,7 +85,10 @@ class FinancialApi {
         }
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في التحديث - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في التحديث - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في updateIncomingFund: $e');
@@ -88,13 +99,14 @@ class FinancialApi {
   // حذف سجل وارد
   static Future<void> deleteIncomingFund(int id) async {
     try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/incoming/$id'),
-      );
+      final response = await http.delete(Uri.parse('$baseUrl/incoming/$id'));
 
       if (response.statusCode != 200) {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في الحذف - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في الحذف - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في deleteIncomingFund: $e');
@@ -118,10 +130,14 @@ class FinancialApi {
           final List<dynamic> data = responseData['data'];
           return data.map((json) => FinancialItem.fromJson(json)).toList();
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات المنصرف');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل بيانات المنصرف',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل البيانات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل البيانات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في getOutgoingFunds: $e');
@@ -143,11 +159,16 @@ class FinancialApi {
         if (responseData['success'] == true) {
           return FinancialItem.fromJson(responseData['data']);
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في إنشاء سجل المنصرف');
+          throw Exception(
+            responseData['message'] ?? 'فشل في إنشاء سجل المنصرف',
+          );
         }
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء السجل - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في إنشاء السجل - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في createOutgoingFund: $e');
@@ -169,11 +190,16 @@ class FinancialApi {
         if (responseData['success'] == true) {
           return FinancialItem.fromJson(responseData['data']);
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحديث سجل المنصرف');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحديث سجل المنصرف',
+          );
         }
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في التحديث - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في التحديث - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في updateOutgoingFund: $e');
@@ -184,13 +210,14 @@ class FinancialApi {
   // حذف سجل منصرف
   static Future<void> deleteOutgoingFund(int id) async {
     try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/outgoing/$id'),
-      );
+      final response = await http.delete(Uri.parse('$baseUrl/outgoing/$id'));
 
       if (response.statusCode != 200) {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في الحذف - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في الحذف - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في deleteOutgoingFund: $e');
@@ -204,7 +231,7 @@ class FinancialApi {
   static Future<Map<String, dynamic>> getFinancialStats() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/stats'));
-      
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
         if (responseData['success'] == true) {
@@ -213,7 +240,9 @@ class FinancialApi {
           throw Exception(responseData['message'] ?? 'فشل في تحميل الإحصائيات');
         }
       } else {
-        throw Exception('فشل في تحميل الإحصائيات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل الإحصائيات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في getFinancialStats: $e');
@@ -225,17 +254,21 @@ class FinancialApi {
   static Future<List<FinancialItem>> getTopExpenses() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/top/expenses'));
-      
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
         if (responseData['success'] == true) {
           final List<dynamic> data = responseData['data'];
           return data.map((json) => FinancialItem.fromJson(json)).toList();
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل أعلى المصروفات');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل أعلى المصروفات',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل أعلى المصروفات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل أعلى المصروفات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في getTopExpenses: $e');
@@ -247,17 +280,21 @@ class FinancialApi {
   static Future<List<FinancialItem>> getTopIncoming() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/top/incoming'));
-      
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
         if (responseData['success'] == true) {
           final List<dynamic> data = responseData['data'];
           return data.map((json) => FinancialItem.fromJson(json)).toList();
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل أكبر الواردات');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل أكبر الواردات',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل أكبر الواردات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل أكبر الواردات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('خطأ في getTopIncoming: $e');

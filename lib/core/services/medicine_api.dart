@@ -2,9 +2,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/medicine_item.dart';
+import '../config/api_config.dart';
 
 class MedicineApi {
-  static const String baseUrl = 'http://localhost:5000/api/medicine';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api/medicine';
 
   static Map<String, String> get headers {
     return {

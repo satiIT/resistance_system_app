@@ -30,6 +30,12 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
 
+  // Scroll controllers for info tabs to fix Scrollbar error
+  final List<ScrollController> _tabControllers = List.generate(
+    5,
+    (_) => ScrollController(),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +72,14 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _tabControllers) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   /// Robust field getter that handles:
@@ -523,11 +537,11 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
                 ),
                 child: TabBarView(
                   children: [
-                    _wrapTabWithScrollbar(_buildBasicInfoTab()),
-                    _wrapTabWithScrollbar(_buildGeographicalInfoTab()),
-                    _wrapTabWithScrollbar(_buildMilitaryInfoTab()),
-                    _wrapTabWithScrollbar(_buildFamilyInfoTab()),
-                    _wrapTabWithScrollbar(_buildMedicalInfoTab()),
+                    _wrapTabWithScrollbar(_buildBasicInfoTab(), 0),
+                    _wrapTabWithScrollbar(_buildGeographicalInfoTab(), 1),
+                    _wrapTabWithScrollbar(_buildMilitaryInfoTab(), 2),
+                    _wrapTabWithScrollbar(_buildFamilyInfoTab(), 3),
+                    _wrapTabWithScrollbar(_buildMedicalInfoTab(), 4),
                   ],
                 ),
               ),
@@ -538,13 +552,18 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
     );
   }
 
-  Widget _wrapTabWithScrollbar(Widget tab) {
-    return Scrollbar(thumbVisibility: true, child: tab);
+  Widget _wrapTabWithScrollbar(Widget tab, int index) {
+    return Scrollbar(
+      controller: _tabControllers[index],
+      thumbVisibility: true,
+      child: tab,
+    );
   }
 
   Widget _buildBasicInfoTab() {
     final l10n = AppLocalizations.of(context)!;
     return ListView(
+      controller: _tabControllers[0],
       padding: const EdgeInsets.all(8),
       children: [
         _buildInfoRow(l10n.fullName, _fullName()),
@@ -561,6 +580,7 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
   Widget _buildGeographicalInfoTab() {
     final l10n = AppLocalizations.of(context)!;
     return ListView(
+      controller: _tabControllers[1],
       padding: const EdgeInsets.all(8),
       children: [
         _buildInfoRow(l10n.state, _getField('state')),
@@ -580,6 +600,7 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
   Widget _buildMilitaryInfoTab() {
     final l10n = AppLocalizations.of(context)!;
     return ListView(
+      controller: _tabControllers[2],
       padding: const EdgeInsets.all(8),
       children: [
         _buildInfoRow(l10n.rank, _getField('rank')),
@@ -599,6 +620,7 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
   Widget _buildFamilyInfoTab() {
     final l10n = AppLocalizations.of(context)!;
     return ListView(
+      controller: _tabControllers[3],
       padding: const EdgeInsets.all(8),
       children: [
         _buildInfoRow(l10n.wivesCount, _getField('wives_count')),
@@ -615,6 +637,7 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
   Widget _buildMedicalInfoTab() {
     final l10n = AppLocalizations.of(context)!;
     return ListView(
+      controller: _tabControllers[4],
       padding: const EdgeInsets.all(8),
       children: [
         _buildInfoRow(l10n.healthStatus, _getField('health_status')),

@@ -2,16 +2,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class ArmamentApi {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api';
 
   // Headers مشتركة
   static Map<String, String> getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   // === دوال التسليح الأساسية ===
@@ -28,10 +26,14 @@ class ArmamentApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات التسليح');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل بيانات التسليح',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل بيانات التسليح - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل بيانات التسليح - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -50,12 +52,16 @@ class ArmamentApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات التسليح');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل بيانات التسليح',
+          );
         }
       } else if (response.statusCode == 404) {
         throw Exception('سجل التسليح غير موجود');
       } else {
-        throw Exception('فشل في تحميل بيانات التسليح - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل بيانات التسليح - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -74,17 +80,23 @@ class ArmamentApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل تسليح المستنفر');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل تسليح المستنفر',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل تسليح المستنفر - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل تسليح المستنفر - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> createArmament(Map<String, dynamic> armamentData) async {
+  static Future<Map<String, dynamic>> createArmament(
+    Map<String, dynamic> armamentData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/personnel-armament'),
@@ -97,18 +109,26 @@ class ArmamentApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في إنشاء سجل التسليح');
+          throw Exception(
+            responseData['message'] ?? 'فشل في إنشاء سجل التسليح',
+          );
         }
       } else {
         final Map<String, dynamic> errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في إنشاء سجل التسليح - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في إنشاء سجل التسليح - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> updateArmament(int id, Map<String, dynamic> armamentData) async {
+  static Future<Map<String, dynamic>> updateArmament(
+    int id,
+    Map<String, dynamic> armamentData,
+  ) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/personnel-armament/$id'),
@@ -121,11 +141,16 @@ class ArmamentApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحديث سجل التسليح');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحديث سجل التسليح',
+          );
         }
       } else {
         final Map<String, dynamic> errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في تحديث سجل التسليح - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في تحديث سجل التسليح - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -146,7 +171,10 @@ class ArmamentApi {
         }
       } else {
         final Map<String, dynamic> errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في حذف سجل التسليح - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في حذف سجل التسليح - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -167,10 +195,14 @@ class ArmamentApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل إحصائيات التسليح');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل إحصائيات التسليح',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل إحصائيات التسليح - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل إحصائيات التسليح - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');

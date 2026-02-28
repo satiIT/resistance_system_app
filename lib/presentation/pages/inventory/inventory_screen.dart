@@ -86,7 +86,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
           child: Icon(item.typeIcon, color: Colors.white),
         ),
         title: Text(
-          item.itemName ?? 'غير محدد',
+          (item.itemName != null && item.itemName!.isNotEmpty)
+              ? item.itemName!
+              : 'غير معروف',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
@@ -206,7 +208,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          item.itemName ?? 'غير محدد',
+                          (item.itemName != null && item.itemName!.isNotEmpty)
+                              ? item.itemName!
+                              : 'غير معروف',
                           style: TextStyle(fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
                         ),

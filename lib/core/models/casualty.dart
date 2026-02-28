@@ -178,8 +178,12 @@ class Casualty {
       ),
       fullName: DataParser.smartGetString(
         json,
-        'full_name',
-        defaultValue: 'غير معرف',
+        'personnel_name',
+        defaultValue: DataParser.smartGetString(
+          json,
+          'full_name',
+          defaultValue: 'غير معروف',
+        ),
       ),
     );
   }

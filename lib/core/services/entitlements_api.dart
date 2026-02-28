@@ -2,16 +2,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class EntitlementsApi {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static String get baseUrl => '${ApiConfig.baseUrl}/api';
 
   // Headers مشتركة
   static Map<String, String> getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   // === دوال الاستحقاقات الأساسية ===
@@ -28,10 +26,14 @@ class EntitlementsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات الاستحقاقات');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل بيانات الاستحقاقات',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل بيانات الاستحقاقات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل بيانات الاستحقاقات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -50,19 +52,25 @@ class EntitlementsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل بيانات الاستحقاق');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل بيانات الاستحقاق',
+          );
         }
       } else if (response.statusCode == 404) {
         throw Exception('الاستحقاق غير موجود');
       } else {
-        throw Exception('فشل في تحميل بيانات الاستحقاق - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل بيانات الاستحقاق - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<List<dynamic>> getEntitlementsByPersonnelId(int personnelId) async {
+  static Future<List<dynamic>> getEntitlementsByPersonnelId(
+    int personnelId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/personnel-entitlements/personnel/$personnelId'),
@@ -74,44 +82,56 @@ class EntitlementsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل استحقاقات المستنفر');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل استحقاقات المستنفر',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل استحقاقات المستنفر - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل استحقاقات المستنفر - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> createEntitlement(Map<String, dynamic> entitlementData) async {
-  try {
-    // التحقق من صحة البيانات قبل الإرسال
-    validateEntitlementData(entitlementData);
-    
-    final response = await http.post(
-      Uri.parse('$baseUrl/personnel-entitlements'),
-      headers: getHeaders(),
-      body: json.encode(entitlementData),
-    );
+  static Future<Map<String, dynamic>> createEntitlement(
+    Map<String, dynamic> entitlementData,
+  ) async {
+    try {
+      // التحقق من صحة البيانات قبل الإرسال
+      validateEntitlementData(entitlementData);
 
-    if (response.statusCode == 201) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      if (responseData['success'] == true) {
-        return responseData['data'];
+      final response = await http.post(
+        Uri.parse('$baseUrl/personnel-entitlements'),
+        headers: getHeaders(),
+        body: json.encode(entitlementData),
+      );
+
+      if (response.statusCode == 201) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          return responseData['data'];
+        } else {
+          throw Exception(responseData['message'] ?? 'فشل في إنشاء الاستحقاق');
+        }
       } else {
-        throw Exception(responseData['message'] ?? 'فشل في إنشاء الاستحقاق');
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        throw Exception(
+          errorData['message'] ??
+              'فشل في إنشاء الاستحقاق - رمز الخطأ: ${response.statusCode}',
+        );
       }
-    } else {
-      final Map<String, dynamic> errorData = json.decode(response.body);
-      throw Exception(errorData['message'] ?? 'فشل في إنشاء الاستحقاق - رمز الخطأ: ${response.statusCode}');
+    } catch (e) {
+      throw Exception('خطأ في الاتصال: $e');
     }
-  } catch (e) {
-    throw Exception('خطأ في الاتصال: $e');
   }
-}
 
-  static Future<Map<String, dynamic>> updateEntitlement(int id, Map<String, dynamic> entitlementData) async {
+  static Future<Map<String, dynamic>> updateEntitlement(
+    int id,
+    Map<String, dynamic> entitlementData,
+  ) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/personnel-entitlements/$id'),
@@ -128,7 +148,10 @@ class EntitlementsApi {
         }
       } else {
         final Map<String, dynamic> errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في تحديث الاستحقاق - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في تحديث الاستحقاق - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -149,7 +172,10 @@ class EntitlementsApi {
         }
       } else {
         final Map<String, dynamic> errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'فشل في حذف الاستحقاق - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          errorData['message'] ??
+              'فشل في حذف الاستحقاق - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -170,17 +196,23 @@ class EntitlementsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل الاستحقاقات حسب النوع');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل الاستحقاقات حسب النوع',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل الاستحقاقات حسب النوع - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل الاستحقاقات حسب النوع - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<List<dynamic>> calculateAutomaticEntitlements(int personnelId) async {
+  static Future<List<dynamic>> calculateAutomaticEntitlements(
+    int personnelId,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/personnel-entitlements/calculate/$personnelId'),
@@ -192,10 +224,14 @@ class EntitlementsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في حساب الاستحقاقات التلقائية');
+          throw Exception(
+            responseData['message'] ?? 'فشل في حساب الاستحقاقات التلقائية',
+          );
         }
       } else {
-        throw Exception('فشل في حساب الاستحقاقات التلقائية - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في حساب الاستحقاقات التلقائية - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -214,21 +250,31 @@ class EntitlementsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في تحميل إحصائيات الاستحقاقات');
+          throw Exception(
+            responseData['message'] ?? 'فشل في تحميل إحصائيات الاستحقاقات',
+          );
         }
       } else {
-        throw Exception('فشل في تحميل إحصائيات الاستحقاقات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في تحميل إحصائيات الاستحقاقات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
     }
   }
 
-  static Future<List<dynamic>> searchEntitlements(Map<String, dynamic> filters) async {
+  static Future<List<dynamic>> searchEntitlements(
+    Map<String, dynamic> filters,
+  ) async {
     try {
-      final queryParams = filters.entries.map((e) => '${e.key}=${e.value}').join('&');
+      final queryParams = filters.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
       final response = await http.get(
-        Uri.parse('$baseUrl/personnel-entitlements/search/advanced?$queryParams'),
+        Uri.parse(
+          '$baseUrl/personnel-entitlements/search/advanced?$queryParams',
+        ),
         headers: getHeaders(),
       );
 
@@ -237,10 +283,14 @@ class EntitlementsApi {
         if (responseData['success'] == true) {
           return responseData['data'];
         } else {
-          throw Exception(responseData['message'] ?? 'فشل في البحث في الاستحقاقات');
+          throw Exception(
+            responseData['message'] ?? 'فشل في البحث في الاستحقاقات',
+          );
         }
       } else {
-        throw Exception('فشل في البحث في الاستحقاقات - رمز الخطأ: ${response.statusCode}');
+        throw Exception(
+          'فشل في البحث في الاستحقاقات - رمز الخطأ: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('خطأ في الاتصال: $e');
@@ -324,23 +374,24 @@ class EntitlementsApi {
     if (date == null) return '--';
     return date;
   }
-  static void validateEntitlementData(Map<String, dynamic> data) {
-  if (data['amount'] == null) {
-    throw Exception('حقل المبلغ مطلوب');
-  }
-  
-  final amount = double.tryParse(data['amount'].toString());
-  if (amount == null || amount <= 0) {
-    throw Exception('المبلغ يجب أن يكون رقم موجب');
-  }
-  
-  if (data['entitlement_type'] == null || data['entitlement_type'].toString().isEmpty) {
-    throw Exception('نوع الاستحقاق مطلوب');
-  }
-  
-  if (data['personnel_id'] == null) {
-    throw Exception('معرف المستنفر مطلوب');
-  }
-}
 
+  static void validateEntitlementData(Map<String, dynamic> data) {
+    if (data['amount'] == null) {
+      throw Exception('حقل المبلغ مطلوب');
+    }
+
+    final amount = double.tryParse(data['amount'].toString());
+    if (amount == null || amount <= 0) {
+      throw Exception('المبلغ يجب أن يكون رقم موجب');
+    }
+
+    if (data['entitlement_type'] == null ||
+        data['entitlement_type'].toString().isEmpty) {
+      throw Exception('نوع الاستحقاق مطلوب');
+    }
+
+    if (data['personnel_id'] == null) {
+      throw Exception('معرف المستنفر مطلوب');
+    }
+  }
 }

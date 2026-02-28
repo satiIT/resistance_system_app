@@ -764,15 +764,16 @@ class _PersonnelFormScreenState extends State<PersonnelFormScreen> {
                 color: isDark ? AppColors.slate800 : Colors.grey[300]!,
               ),
             ),
-            suffixIcon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 8),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   if (isRequired)
                     const Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: Icon(Icons.star, color: Colors.red, size: 10),
+                      padding: EdgeInsets.only(left: 4.0),
+                      child: Icon(Icons.star, color: Colors.red, size: 8),
                     ),
                   Icon(
                     Icons.calendar_month_rounded,
