@@ -25,6 +25,7 @@ import 'change_password_screen.dart';
 import 'login_screen.dart';
 import 'org/departments_screen.dart';
 import 'org/reports_screen.dart';
+import 'intelligence/intelligence_dashboard.dart';
 
 class MainDashboard extends StatefulWidget {
   const MainDashboard({Key? key}) : super(key: key);
@@ -161,19 +162,13 @@ class _MainDashboardState extends State<MainDashboard> {
         l10n.financeSubtitle,
         roles: ['admin', 'finance'],
       ),
-      DashboardItem(
-        l10n.reports,
-        Icons.insert_chart_rounded,
-        Colors.indigo,
-        l10n.reportsSubtitle,
-        roles: ['admin', 'finance'],
-      ),
+     
       DashboardItem(
         l10n.intelligence,
         Icons.admin_panel_settings_rounded,
         AppColors.slate800,
         l10n.intelligenceSubtitle,
-        roles: ['admin'],
+        roles: ['admin', 'intelligence'],
       ),
       DashboardItem(
         'المستخدمين',
@@ -211,6 +206,7 @@ class _MainDashboardState extends State<MainDashboard> {
           'operations',
           'dept_governor',
           'group_governor',
+          'intelligence',
         ],
       ),
     ];
@@ -879,6 +875,11 @@ class _MainDashboardState extends State<MainDashboard> {
             personnelId: _currentUser?['personnel_id'],
           ),
         ),
+      );
+    } else if (title == l10n.intelligence) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const IntelligenceDashboard()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

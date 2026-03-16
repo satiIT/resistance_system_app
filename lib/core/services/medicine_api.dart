@@ -147,7 +147,18 @@ class MedicineApi {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(decodedBody);
         if (responseData['success'] == true) {
-          return responseData['data'];
+          final data = responseData['data'];
+          // Backend returns a List of per-type stats; convert to a summary map
+          if (data is List) {
+            int totalMovements = 0;
+            for (final item in data) {
+              final count = item['total_movements'] ?? item['count'] ?? 0;
+              totalMovements += (int.tryParse(count.toString()) ?? 0);
+            }
+            return {'total_movements': totalMovements, 'details': data};
+          }
+          // If it's already a map, return as-is
+          return data as Map<String, dynamic>;
         } else {
           throw Exception(responseData['message'] ?? 'فشل في تحميل الإحصائيات');
         }

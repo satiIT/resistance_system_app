@@ -9,10 +9,10 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'Tech_unit_system';
+  String get appTitle => 'منصة سابقات';
 
   @override
-  String get dashboardTitle => 'لوحة التحكم الرقمية';
+  String get dashboardTitle => 'لوحة قيادة منصة سابقات';
 
   @override
   String get personnel => 'المجاهدين';

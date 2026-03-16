@@ -101,13 +101,13 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Tech_unit_system'**
+  /// **'Sabiqat Platform'**
   String get appTitle;
 
   /// No description provided for @dashboardTitle.
   ///
   /// In en, this message translates to:
-  /// **'Digital Control Panel'**
+  /// **'Sabiqat Platform Dashboard'**
   String get dashboardTitle;
 
   /// No description provided for @personnel.

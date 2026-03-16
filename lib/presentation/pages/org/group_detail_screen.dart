@@ -14,6 +14,10 @@ class GroupDetailScreen extends StatefulWidget {
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
   List<dynamic> _personnel = [];
+
+  static int _parseInt(dynamic val, [int fallback = 0]) => val == null
+      ? fallback
+      : (val is int ? val : int.tryParse(val.toString()) ?? fallback);
   bool _isLoading = true;
 
   @override
@@ -76,7 +80,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                       onTap: () async {
                         try {
                           await OrgService.addPersonnelToGroup(
-                            p['id'],
+                            _parseInt(p['id']),
                             widget.group.id,
                           );
                           Navigator.pop(context);
@@ -98,9 +102,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
-  Future<void> _removePersonnel(int id) async {
+  Future<void> _removePersonnel(dynamic id) async {
+    final intId = _parseInt(id);
     try {
-      await OrgService.removePersonnelFromGroup(id);
+      await OrgService.removePersonnelFromGroup(intId);
       _loadPersonnel();
     } catch (e) {
       ScaffoldMessenger.of(
@@ -131,7 +136,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               itemCount: _personnel.length,
               itemBuilder: (context, index) {
                 final p = _personnel[index];
-                final isGovernor = p['id'] == widget.group.governorId;
+                final isGovernor =
+                    _parseInt(p['id']) == widget.group.governorId;
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -165,7 +171,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                         Icons.remove_circle_outline,
                         color: Colors.red,
                       ),
-                      onPressed: () => _removePersonnel(p['id']),
+                      onPressed: () => _removePersonnel(_parseInt(p['id'])),
                     ),
                   ),
                 );

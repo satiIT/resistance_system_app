@@ -9,10 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Tech_unit_system';
+  String get appTitle => 'Sabiqat Platform';
 
   @override
-  String get dashboardTitle => 'Digital Control Panel';
+  String get dashboardTitle => 'Sabiqat Platform Dashboard';
 
   @override
   String get personnel => 'Personnel';

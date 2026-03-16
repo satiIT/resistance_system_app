@@ -44,7 +44,8 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
   @override
   void initState() {
     super.initState();
-    _isEditMode = widget.existingCasualty != null;
+    _isEditMode =
+        widget.existingCasualty != null && widget.existingCasualty!.id != null;
     _initializeData();
   }
 
@@ -53,9 +54,13 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
       final personnel = await CasualtyApi.getPersonnelList();
       setState(() {
         _personnelList = personnel;
-        if (_isEditMode) {
+        if (widget.existingCasualty != null) {
           _casualty = widget.existingCasualty!;
           _showCompensationFields = _casualty.isMartyr;
+          // جلب بيانات المستنفر إذا كان المعرف موجوداً (حتى في وضع الإضافة)
+          if (_casualty.personnelId != null && _casualty.personnelId != 0) {
+            _loadPersonnelData(_casualty.personnelId!);
+          }
         } else {
           _casualty = Casualty(
             personnelId: 0,
@@ -79,6 +84,16 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.error),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -116,14 +131,19 @@ class _CasualtyFormScreenState extends State<CasualtyFormScreen> {
       }
       setState(() => _isLoading = true);
       try {
-        if (_isEditMode) {
+        final bool isUpdate =
+            _isEditMode && _casualty.id != null && _casualty.id != 0;
+
+        if (isUpdate) {
           await CasualtyApi.updateCasualty(_casualty);
+          _showSuccessSnackBar('تم تحديث البيانات بنجاح');
         } else {
           await CasualtyApi.createCasualty(_casualty);
+          _showSuccessSnackBar('تم حفظ البيانات بنجاح');
         }
         Navigator.pop(context, true);
       } catch (e) {
-        _showErrorSnackBar('خطأ حفظ البيانات: $e');
+        _showErrorSnackBar('خطأ في حفظ البيانات: $e');
       } finally {
         setState(() => _isLoading = false);
       }

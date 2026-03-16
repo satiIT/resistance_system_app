@@ -6,7 +6,7 @@ class ApiConfig {
   // 1. URLs defined
   static const String ngrokUrl =
       'https://woebegone-ian-septifragally.ngrok-free.dev';
-  static const String ipAddress = '127.0.0.1';
+  static const String ipAddress = '192.168.1.55';
   static const String localPort = '5000';
 
   static String _baseUrl = '';

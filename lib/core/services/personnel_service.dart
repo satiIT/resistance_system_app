@@ -146,15 +146,18 @@ class PersonnelService {
   ) async {
     try {
       print('🌐 جاري إنشاء مستنفر جديد في: $baseUrl/personnel');
-      print('📦 البيانات المرسلة: ${json.encode(data)}');
+
+      // ✅ تطهير البيانات بشكل متقدم قبل الإرسال
+      final sanitizedData = _sanitizeForApi(data);
+      print('📦 البيانات المرسلة (بعد التطهير): ${json.encode(sanitizedData)}');
 
       // ✅ **استخدام utf8.encode لترميز الجسم**
-      final body = utf8.encode(json.encode(data));
+      final body = utf8.encode(json.encode(sanitizedData));
 
       final response = await http.post(
         Uri.parse('$baseUrl/personnel'),
         headers: getHeaders(),
-        body: body, // ✅ استخدام الجسم المشفر
+        body: body,
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
@@ -185,7 +188,7 @@ class PersonnelService {
     }
   }
 
-  // 🔹 تحديث مستنفر - مع إصلاح الـ endpoint
+  // 🔹 تحديث مستنفر - مع إصلاح الـ endpoint وتطهير البيانات
   static Future<Map<String, dynamic>> updatePersonnel(
     String id,
     Map<String, dynamic> data,
@@ -193,8 +196,13 @@ class PersonnelService {
     try {
       print('🌐 جاري تحديث مستنفر في: $baseUrl/personnel/$id');
 
+      // ✅ تطهير البيانات بشكل متقدم (متعدد المستويات)
+      final sanitizedData = _sanitizeForApi(data);
+      final jsonBody = json.encode(sanitizedData);
+      print('📦 البيانات المرسلة للتحديث (بعد التطهير): $jsonBody');
+
       // ✅ **استخدام utf8.encode**
-      final body = utf8.encode(json.encode(data));
+      final body = utf8.encode(jsonBody);
 
       final response = await http.put(
         Uri.parse('$baseUrl/personnel/$id'),
@@ -203,6 +211,9 @@ class PersonnelService {
       );
 
       print('📡 حالة الاستجابة: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('📄 نص الاستجابة (خطأ): ${response.body}');
+      }
 
       if (response.statusCode == 200) {
         final decodedBody = _decodeResponse(response);
@@ -611,8 +622,67 @@ class PersonnelService {
           print('   عينة من النص (UTF-8): ${utf8String.substring(0, 100)}...');
         }
       }
-    } catch (e) {
-      print('❌ خطأ في اختبار الترميز: $e');
+    } catch (e) {}
+  }
+
+  // 🔹 دالة لتطهير البيانات من القيم الفارغة التي تسبب مشاكل في الـ Boolean والأنواع الأخرى
+  static dynamic _sanitizeForApi(dynamic data) {
+    if (data == null) return null;
+
+    if (data is Map) {
+      final Map<String, dynamic> result = {};
+      data.forEach((key, value) {
+        if (value == null) {
+          result[key] = null;
+        } else if (value is String) {
+          final trimmed = value.trim();
+
+          // 1. معالجة السلاسل الفارغة -> null (ضروري للـ Booleans والتاريخ في DB)
+          if (trimmed.isEmpty ||
+              trimmed.toLowerCase() == 'null' ||
+              trimmed == 'undefined') {
+            result[key] = null;
+          }
+          // 2. معالجة القيم المنطقية الصريحة كمصطلحات
+          else if (trimmed.toLowerCase() == 'true') {
+            result[key] = true;
+          } else if (trimmed.toLowerCase() == 'false') {
+            result[key] = false;
+          }
+          // 3. معالجة حالات خاصة لبعض قواعد البيانات (0/1 للـ Boolean)
+          else if (key.startsWith('is_')) {
+            if (trimmed == '1') {
+              result[key] = true;
+            } else if (trimmed == '0') {
+              result[key] = false;
+            } else {
+              result[key] = trimmed;
+            }
+          }
+          // 4. محاولة تحويل الأرقام للحقول المعروفة أنها رقمية
+          else {
+            final numValue = num.tryParse(trimmed);
+            if (numValue != null &&
+                (key.contains('count') ||
+                    key.contains('id') ||
+                    key.contains('number') ||
+                    key.contains('age'))) {
+              result[key] = numValue;
+            } else {
+              result[key] = trimmed;
+            }
+          }
+        } else if (value is Map || value is List) {
+          result[key] = _sanitizeForApi(value);
+        } else {
+          // قيم أخرى (bool, int, double صريحة)
+          result[key] = value;
+        }
+      });
+      return result;
+    } else if (data is List) {
+      return data.map((item) => _sanitizeForApi(item)).toList();
     }
+    return data;
   }
 }

@@ -16,7 +16,7 @@ class AuthService {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200 && data['success'] == true) {
         await _saveAuthData(data['token'], data['user']);
@@ -32,24 +32,39 @@ class AuthService {
     }
   }
 
-  // Register User (Admin Only)
+  // Register User (Admin Only) - Updated with department_id, group_id, personnel_id
   Future<Map<String, dynamic>> registerUser(
     String email,
     String password,
-    String role,
-  ) async {
+    String role, {
+    int? departmentId,
+    int? groupId,
+    int? personnelId,
+  }) async {
     try {
       final token = await getToken();
+
+      Map<String, dynamic> body = {
+        'email': email,
+        'password': password,
+        'role': role,
+      };
+
+      if (departmentId != null) body['department_id'] = departmentId;
+      if (groupId != null) body['group_id'] = groupId;
+      if (personnelId != null) body['personnel_id'] = personnelId;
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/api/auth/register'),
         headers: {...ApiConfig.headers, 'Authorization': 'Bearer $token'},
-        body: jsonEncode({'email': email, 'password': password, 'role': role}),
+        body: jsonEncode(body),
       );
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data;
     } catch (e) {
-      return {'success': false, 'message': 'حدث خطأ أثناء إضافة المستخدم'};
+      print('Register error: $e');
+      return {'success': false, 'message': 'حدث خطأ أثناء إضافة المستخدم: $e'};
     }
   }
 
@@ -62,12 +77,13 @@ class AuthService {
         headers: {...ApiConfig.headers, 'Authorization': 'Bearer $token'},
       );
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
       if (data['success'] == true) {
-        return data['users'];
+        return data['users'] ?? [];
       }
       return [];
     } catch (e) {
+      print('Get users error: $e');
       return [];
     }
   }
@@ -80,7 +96,7 @@ class AuthService {
         Uri.parse('${ApiConfig.baseUrl}/api/auth/users/$id'),
         headers: {...ApiConfig.headers, 'Authorization': 'Bearer $token'},
       );
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } catch (e) {
       return {'success': false, 'message': 'حدث خطأ أثناء حذف المستخدم'};
     }
@@ -101,7 +117,7 @@ class AuthService {
           'newPassword': newPassword,
         }),
       );
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } catch (e) {
       return {'success': false, 'message': 'حدث خطأ أثناء تغيير كلمة المرور'};
     }
@@ -112,6 +128,36 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
+    await prefs.remove('intelligence_session_id');
+  }
+
+  // Intelligence Section Login
+  Future<Map<String, dynamic>> intelLogin(String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/intelligence/auth'),
+        headers: ApiConfig.headers,
+        body: jsonEncode({'password': password}),
+      );
+
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('intelligence_session_id', data['session_id']);
+        return {'success': true, 'session_id': data['session_id']};
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'كلمة المرور غير صحيحة',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'حدث خطأ في الاتصال بقسم الاستخبارات',
+      };
+    }
   }
 
   // Helper Methods
@@ -138,5 +184,29 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;
+  }
+
+  // Get user role
+  Future<String?> getUserRole() async {
+    final user = await getCurrentUser();
+    return user?['role'];
+  }
+
+  // Get user department id
+  Future<int?> getUserDepartmentId() async {
+    final user = await getCurrentUser();
+    return user?['department_id'];
+  }
+
+  // Get user group id
+  Future<int?> getUserGroupId() async {
+    final user = await getCurrentUser();
+    return user?['group_id'];
+  }
+
+  // Get user personnel id
+  Future<int?> getUserPersonnelId() async {
+    final user = await getCurrentUser();
+    return user?['personnel_id'];
   }
 }

@@ -12,7 +12,19 @@ class DataParser {
 
     for (final key in keys) {
       if (data.containsKey(key) && data[key] != null) {
-        final value = data[key].toString().trim();
+        final val = data[key];
+
+        // Handle nested maps (e.g., rank: {id: 1, name: "Captain"})
+        if (val is Map) {
+          if (val.containsKey('name') && val['name'] != null) {
+            return val['name'].toString().trim();
+          }
+          if (val.containsKey('${key}_name') && val['${key}_name'] != null) {
+            return val['${key}_name'].toString().trim();
+          }
+        }
+
+        final value = val.toString().trim();
         if (value.isNotEmpty && value != 'null') {
           return value;
         }
@@ -29,12 +41,14 @@ class DataParser {
   }) {
     if (data == null) return defaultValue;
 
-    // Generate variations: snake_case, camelCase, PascalCase
+    // Generate variations: snake_case, camelCase, PascalCase, and _name suffixes
     final keys = [
       baseKey, // first_name
-      _toCamelCase(baseKey), // firstName
-      _toPascalCase(baseKey), // FirstName
-      baseKey.toUpperCase(), // FIRST_NAME
+      '${baseKey}_name', // first_name_name? well, for 'rank' -> 'rank_name'
+      _toCamelCase(baseKey),
+      '${_toCamelCase(baseKey)}Name', // rankName
+      _toPascalCase(baseKey),
+      baseKey.toUpperCase(),
     ];
 
     return getString(data, keys, defaultValue: defaultValue);

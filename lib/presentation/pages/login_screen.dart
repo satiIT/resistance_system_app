@@ -6,7 +6,6 @@ import 'package:resistance_system_app/presentation/widgets/modern_widgets.dart';
 import 'package:resistance_system_app/l10n/app_localizations.dart';
 import 'main_dashboard.dart';
 import '../../core/services/auth_service.dart';
-import 'intelligence/intelligence_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -208,36 +207,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                       const SizedBox(height: 24),
 
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const IntelligenceLoginScreen(),
-                            ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                          ),
-                        ),
-                        icon: const Icon(Icons.admin_panel_settings_outlined),
-                        label: Text(
-                          'دخول الاستخبارات',
-                          style: GoogleFonts.tajawal(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 40),
                     ],
                   ),

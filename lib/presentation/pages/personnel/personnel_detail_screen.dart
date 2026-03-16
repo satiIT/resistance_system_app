@@ -7,6 +7,7 @@ import 'package:universal_platform/universal_platform.dart';
 
 import '../../../core/responsive/responsive_layout.dart';
 import '../../../core/services/personnel_service.dart';
+import '../../../core/services/casualty_api.dart';
 import '../../../core/utils/data_parser.dart';
 import 'personnel_form_screen.dart';
 import 'personnel_training_screen.dart';
@@ -14,6 +15,8 @@ import 'personnel_movements_screen.dart';
 import 'personnel_equipment_screen.dart';
 import 'personnel_entitlements_screen.dart';
 import 'personnel_reports_screen.dart';
+import '../casualties/casualty_form_screen.dart';
+import '../../../core/models/casualty.dart';
 
 class PersonnelDetailScreen extends StatefulWidget {
   final int personnelId;
@@ -194,6 +197,175 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
     );
   }
 
+  Future<void> _updateStatus(String newStatus) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.updateData),
+        content: Text('${l10n.updateRecord} $newStatus؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.ok, style: const TextStyle(color: Colors.blue)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final updatedData = Map<String, dynamic>.from(_personnelDetails);
+      updatedData['status'] = newStatus;
+
+      await PersonnelService.updatePersonnel(
+        widget.personnelId.toString(),
+        updatedData,
+      );
+
+      await _loadPersonnelDetails();
+
+      if (mounted) {
+        final successMsg = l10n.success;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$successMsg: $newStatus'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // ✅ التغيير التلقائي: التوجيه لصفحة الجرحى والشهداء
+        if (newStatus.contains('شهيد') ||
+            newStatus.contains('جريح') ||
+            newStatus.toLowerCase().contains('martyr') ||
+            newStatus.toLowerCase().contains('wounded')) {
+          _navigateToCasualtyForm(newStatus);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    status = status.toLowerCase();
+    if (status.contains('نشط') || status.contains('active')) {
+      return Colors.green;
+    }
+    if (status.contains('شهيد') || status.contains('martyr')) {
+      return Colors.red;
+    }
+    if (status.contains('جريح') || status.contains('wounded')) {
+      return Colors.orange;
+    }
+    if (status.contains('غير نشط') || status.contains('inactive')) {
+      return Colors.grey;
+    }
+    if (status.contains('متقاعد') || status.contains('retired')) {
+      return Colors.blue;
+    }
+    return Colors.grey;
+  }
+
+  Future<void> _navigateToCasualtyForm(String status) async {
+    final personnelId = int.tryParse(widget.personnelId.toString()) ?? 0;
+    final caseType =
+        status.contains('شهيد') || status.toLowerCase().contains('martyr')
+        ? 'شهيد'
+        : 'جريح';
+
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      // ✅ التحقق من وجود سجل سابق لمنع التكرار
+      final existingCasualties = await CasualtyApi.getByPersonnelId(
+        personnelId,
+      );
+      Casualty? existingByCaseType;
+
+      for (var c in existingCasualties) {
+        if (c.caseType == caseType) {
+          existingByCaseType = c;
+          break;
+        }
+      }
+
+      if (mounted) {
+        if (existingByCaseType != null) {
+          // إذا وجد سجل سابق بنفس الحالة، ننتقل لوضع التعديل
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  CasualtyFormScreen(existingCasualty: existingByCaseType),
+            ),
+          ).then((_) => _loadPersonnelDetails());
+        } else {
+          // إذا لم يوجد سجل، ننشئ مسودة جديدة
+          final casualty = Casualty(
+            personnelId: personnelId,
+            caseType: caseType,
+            incidentDate: DateTime.now(),
+            fullName: _fullName(),
+            militaryNumber: _getField('military_id'),
+          );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  CasualtyFormScreen(existingCasualty: casualty),
+            ),
+          ).then((_) => _loadPersonnelDetails());
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking duplicates: $e');
+      // في حالة الفشل، ننتقل للمسودة كخيار احتياطي
+      if (mounted) {
+        final casualty = Casualty(
+          personnelId: personnelId,
+          caseType: caseType,
+          incidentDate: DateTime.now(),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                CasualtyFormScreen(existingCasualty: casualty),
+          ),
+        ).then((_) => _loadPersonnelDetails());
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   Widget _buildActionButton(
     String title,
     IconData icon,
@@ -314,6 +486,38 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
                 _showReports,
               ),
 
+              const SizedBox(height: 8),
+              const Divider(),
+              const SizedBox(height: 8),
+
+              // Status Management Actions
+              if (!_getField('status').toLowerCase().contains('نشط') &&
+                  !_getField('status').toLowerCase().contains('active'))
+                _buildActionButton(
+                  l10n.active,
+                  Icons.check_circle,
+                  Colors.green,
+                  () => _updateStatus(l10n.active),
+                ),
+
+              if (!_getField('status').toLowerCase().contains('شهيد') &&
+                  !_getField('status').toLowerCase().contains('martyr'))
+                _buildActionButton(
+                  l10n.martyr,
+                  Icons.person_off_rounded,
+                  Colors.red,
+                  () => _updateStatus(l10n.martyr),
+                ),
+
+              if (!_getField('status').toLowerCase().contains('جريح') &&
+                  !_getField('status').toLowerCase().contains('wounded'))
+                _buildActionButton(
+                  l10n.wounded,
+                  Icons.medical_services,
+                  Colors.orange,
+                  () => _updateStatus(l10n.wounded),
+                ),
+
               Divider(
                 height: 30,
                 thickness: 1,
@@ -362,13 +566,18 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? AppColors.slate400 : Colors.grey[600],
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.slate400 : Colors.grey[600],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
@@ -383,6 +592,8 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
                 color: color,
                 fontWeight: FontWeight.w500,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -401,84 +612,87 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
       elevation: 2,
       color: isDark ? AppColors.darkSurface : Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         child: Row(
           children: [
             CircleAvatar(
-              radius: 35,
+              radius: 30,
               backgroundColor: AppColors.primary,
               child: Text(
                 idText,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 12,
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     name,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : AppColors.slate900,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     '${l10n.militaryId}: ${_getField('military_id')}',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: isDark ? AppColors.slate400 : AppColors.slate700,
                     ),
-                  ),
-                  Text(
-                    '${l10n.nationalId}: ${_getField('national_id')}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? AppColors.slate400 : AppColors.slate700,
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     '${l10n.status}: $status',
                     style: TextStyle(
-                      color:
-                          status.toLowerCase().contains('نشط') ||
-                              status.toLowerCase().contains('active')
-                          ? Colors.green
-                          : Colors.orange,
-                      fontSize: 13,
+                      color: _getStatusColor(status),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Chip(
-                  label: Text(
-                    _getField('rank'),
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                  backgroundColor: Colors.blue.withOpacity(0.1),
-                ),
+                _buildCompactBadge(_getField('rank'), Colors.blue),
                 const SizedBox(height: 4),
-                Chip(
-                  label: Text(
-                    _getField('unit'),
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                  backgroundColor: Colors.green.withOpacity(0.1),
-                ),
+                _buildCompactBadge(_getField('unit'), Colors.green),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCompactBadge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      constraints: const BoxConstraints(maxWidth: 80),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, color: color),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -833,6 +1047,31 @@ class _PersonnelDetailScreenState extends State<PersonnelDetailScreen> {
                   Colors.blue,
                   _editPersonnel,
                 ),
+                // Status Actions
+                if (!_getField('status').toLowerCase().contains('نشط') &&
+                    !_getField('status').toLowerCase().contains('active'))
+                  _buildMobileActionButton(
+                    l10n.active,
+                    Icons.check_circle,
+                    Colors.green,
+                    () => _updateStatus(l10n.active),
+                  ),
+                if (!_getField('status').toLowerCase().contains('شهيد') &&
+                    !_getField('status').toLowerCase().contains('martyr'))
+                  _buildMobileActionButton(
+                    l10n.martyr,
+                    Icons.person_off_rounded,
+                    Colors.red,
+                    () => _updateStatus(l10n.martyr),
+                  ),
+                if (!_getField('status').toLowerCase().contains('جريح') &&
+                    !_getField('status').toLowerCase().contains('wounded'))
+                  _buildMobileActionButton(
+                    l10n.wounded,
+                    Icons.medical_services,
+                    Colors.orange,
+                    () => _updateStatus(l10n.wounded),
+                  ),
                 _buildMobileActionButton(
                   l10n.trainingHistory,
                   Icons.school,
